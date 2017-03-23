@@ -1,0 +1,27 @@
+#EDITED by Neil
+# Macro file for the initialization phase of "Legend.cc"
+# when runing in interactive mode
+#
+# Sets some default verbose
+#
+#/control/verbose 0
+#/exp/setShieldingStyle GERDA
+#/exp/setFillGas ArgonLiquid
+#/exp/update
+
+/vis/open OGLSQt 600x600-0+0
+#
+/vis/viewer/set/style wireframe
+/vis/viewer/set/auxiliaryEdge true
+/vis/viewer/set/lineSegmentsPerCircle 100
+#Set direction from target to camera.
+/vis/viewer/set/viewpointVector 1 1.5 1.1
+/vis/viewer/set/viewpointThetaPhi 80 90 deg
+/vis/viewer/zoom 63.2736
+#    The compound command "/vis/drawVolume"
+#    is equivalent to the following set of commands:
+#
+#    /vis/scene/create
+#    /vis/scene/add/volume
+# Create an empty scene and add the detector geometry to it
+/vis/drawVolume
