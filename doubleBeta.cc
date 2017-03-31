@@ -33,6 +33,7 @@
 #include "PrimaryGeneratorAction.hh"
 #include "RunAction.hh"
 #include "EventAction.hh"
+#include "TrackingAction.hh"
 #include "SteppingAction.hh"
 
 #include "G4RunManager.hh"
@@ -85,7 +86,6 @@ int main(int argc,char** argv)
   runManager->SetUserAction(gen_action);
 
   // Set user action classes
-  //
 
   RunAction* run_action = new RunAction(detector,gen_action);
   runManager->SetUserAction(run_action);
@@ -93,6 +93,9 @@ int main(int argc,char** argv)
   EventAction* event_action = new EventAction(run_action);
   runManager->SetUserAction(event_action);
 
+  TrackingAction* tracking_action = new TrackingAction();
+  runManager->SetUserAction(tracking_action);
+  
   G4UserSteppingAction* stepping_action = new SteppingAction(detector, event_action);
   runManager->SetUserAction(stepping_action);
 

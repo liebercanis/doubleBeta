@@ -4,12 +4,14 @@
 #
 # Sets some default verbose
 #
-#/control/verbose 0
 #/exp/setShieldingStyle GERDA
 #/exp/setFillGas ArgonLiquid
 #/exp/update
+/control/verbose 2
+/run/verbose 2
 
-/vis/open OGLSQt 600x600-0+0
+/vis/open OGLSQt 
+# 600x600-0+0
 #
 /vis/viewer/set/style wireframe
 /vis/viewer/set/auxiliaryEdge true

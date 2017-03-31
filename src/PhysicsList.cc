@@ -181,6 +181,8 @@ void PhysicsList::ConstructProcess()
 
   ConstructOp();
 
+  ConstructCerenkov();
+
   ConstructHad();
 
   ConstructGeneral();
@@ -426,12 +428,14 @@ void PhysicsList::ConstructEM() {
   }
 }
 
-
 // Optical Processes ////////////////////////////////////////////////////////
 #include "G4Scintillation.hh"
 #include "G4OpAbsorption.hh"
-//#include "G4OpRayleigh.hh"
+#include "G4OpRayleigh.hh"
 #include "G4OpBoundaryProcess.hh"
+#include "G4Cerenkov.hh"
+#include "OpWLS.hh"
+
 
 void PhysicsList::ConstructOp() 
 {
@@ -461,48 +465,71 @@ void PhysicsList::ConstructOp()
 
   // optical processes
   G4OpAbsorption* theAbsorptionProcess = new G4OpAbsorption();
-  //  G4OpRayleigh* theRayleighScatteringProcess = new G4OpRayleigh();
+  G4OpRayleigh* theRayleighScatteringProcess = new G4OpRayleigh();
   G4OpBoundaryProcess* theBoundaryProcess = new G4OpBoundaryProcess();
+  theBoundaryProcess->SetVerboseLevel(OpVerbLevel);
   //  theAbsorptionProcess->DumpPhysicsTable();
   //  theRayleighScatteringProcess->DumpPhysicsTable();
   theAbsorptionProcess->SetVerboseLevel(OpVerbLevel);
   // theRayleighScatteringProcess->SetVerboseLevel(OpVerbLevel);
-  theBoundaryProcess->SetVerboseLevel(OpVerbLevel);
+  OpWLS* theWLSProcess = new OpWLS();
+  theWLSProcess->SetVerboseLevel(OpVerbLevel);
+  
 
   auto particleIterator=GetParticleIterator();
   particleIterator->reset();
-  while( (*particleIterator)() )
-    {
-      G4ParticleDefinition* particle = particleIterator->value();
-      G4ProcessManager* pmanager = particle->GetProcessManager();
-      G4String particleName = particle->GetParticleName();
-      if (theScintProcessDef->IsApplicable(*particle)) {
-	//      if(particle->GetPDGMass() > 5.0*GeV) 
-	if(particle->GetParticleName() == "GenericIon") {
-	  pmanager->AddProcess(theScintProcessNuc); // AtRestDiscrete
-	  pmanager->SetProcessOrderingToLast(theScintProcessNuc,idxAtRest);
-	  pmanager->SetProcessOrderingToLast(theScintProcessNuc,idxPostStep);
-	}	  
-	else if(particle->GetParticleName() == "alpha") {
-	  pmanager->AddProcess(theScintProcessAlpha);
-	  pmanager->SetProcessOrderingToLast(theScintProcessAlpha,idxAtRest);
-	  pmanager->SetProcessOrderingToLast(theScintProcessAlpha,idxPostStep);
-	}
-	else {
-	  pmanager->AddProcess(theScintProcessDef);
-	  pmanager->SetProcessOrderingToLast(theScintProcessDef,idxAtRest);
-	  pmanager->SetProcessOrderingToLast(theScintProcessDef,idxPostStep);
-	}	  
-      }
-      
-      if (particleName == "opticalphoton") {
-	pmanager->AddDiscreteProcess(theAbsorptionProcess);
-	//	pmanager->AddDiscreteProcess(theRayleighScatteringProcess);
-	pmanager->AddDiscreteProcess(theBoundaryProcess);
-      }
+  while( (*particleIterator)() ) {
+    G4ParticleDefinition* particle = particleIterator->value();
+    G4ProcessManager* pmanager = particle->GetProcessManager();
+    G4String particleName = particle->GetParticleName();
+    if (theScintProcessDef->IsApplicable(*particle)) {
+      //      if(particle->GetPDGMass() > 5.0*GeV) 
+      if(particle->GetParticleName() == "GenericIon") {
+        pmanager->AddProcess(theScintProcessNuc); // AtRestDiscrete
+        pmanager->SetProcessOrderingToLast(theScintProcessNuc,idxAtRest);
+        pmanager->SetProcessOrderingToLast(theScintProcessNuc,idxPostStep);
+      }	else if(particle->GetParticleName() == "alpha") {
+        pmanager->AddProcess(theScintProcessAlpha);
+        pmanager->SetProcessOrderingToLast(theScintProcessAlpha,idxAtRest);
+        pmanager->SetProcessOrderingToLast(theScintProcessAlpha,idxPostStep);
+      } else {
+        pmanager->AddProcess(theScintProcessDef);
+        pmanager->SetProcessOrderingToLast(theScintProcessDef,idxAtRest);
+        pmanager->SetProcessOrderingToLast(theScintProcessDef,idxPostStep);
+      }	  
     }
+
+    if (particleName == "opticalphoton") {
+      pmanager->AddDiscreteProcess(theAbsorptionProcess);
+      pmanager->AddDiscreteProcess(theRayleighScatteringProcess);
+      pmanager->AddDiscreteProcess(theBoundaryProcess);
+      pmanager->AddDiscreteProcess(theWLSProcess);
+    }
+  }
 }
 
+#include "G4Cerenkov.hh"
+
+void PhysicsList::ConstructCerenkov(){
+
+  G4Cerenkov*   theCerenkovProcess = new G4Cerenkov("Cerenkov");
+  G4int MaxNumPhotons = 300;
+  G4ProcessManager * pmanager = 0;
+  //theCerenkovProcess->SetTrackSecondariesFirst(true);
+  //theCerenkovProcess->SetMaxNumPhotonsPerStep(MaxNumPhotons);
+  
+  auto particleIterator=GetParticleIterator();
+  particleIterator->reset();
+  while( (*particleIterator)() ){
+    G4ParticleDefinition* particle = particleIterator->value();
+    pmanager = particle->GetProcessManager();
+    //G4String particleName = particle->GetParticleName();
+    if (theCerenkovProcess->IsApplicable(*particle)) {
+      pmanager->AddProcess(theCerenkovProcess);
+      pmanager->SetProcessOrdering(theCerenkovProcess,idxPostStep);
+    }
+  }
+}
 
 // Hadronic processes ////////////////////////////////////////////////////////
 

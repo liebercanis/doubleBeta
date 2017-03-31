@@ -2,8 +2,11 @@
 /// \brief Implementation of the EventAction class
 
 #include "EventAction.hh"
+#include "LegendAnalysis.hh"
+#include "UserEventInformation.hh"
 #include "RunAction.hh"
 
+#include "G4VisManager.hh"
 #include "G4RunManager.hh"
 #include "G4Event.hh"
 
@@ -28,9 +31,11 @@ EventAction::~EventAction()
 
 void EventAction::BeginOfEventAction(const G4Event* event)
 {
+  G4EventManager::GetEventManager()->SetUserInformation(new UserEventInformation);
+  
   G4int eventNb = event->GetEventID();
   if (eventNb%fPrintModulo == 0) {
-    G4cout << "\n---> Begin of event: " << eventNb << G4endl;
+    G4cout << "\n************ Begin of event: " << eventNb << G4endl;
   }
 
 	direction.setX(0);
@@ -46,9 +51,32 @@ void EventAction::BeginOfEventAction(const G4Event* event)
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-void EventAction::EndOfEventAction(const G4Event* /*event*/)
+void EventAction::EndOfEventAction(const G4Event* anEvent)
 {
-	if (counter) runAct->Fill(direction,position,counter,length);
+  G4cout << " **********  end of event action ********** " << anEvent->GetEventID() << G4endl;
+  G4cout << "\t number of primary verticies = "<< anEvent->GetNumberOfPrimaryVertex() <<G4endl;
+  G4TrajectoryContainer* trajectoryContainer = anEvent->GetTrajectoryContainer();
+  G4int n_trajectories = 0;
+  if(trajectoryContainer) n_trajectories = trajectoryContainer->entries();
+  G4cout << "\t number of trajectories = "<< n_trajectories <<G4endl;
+ // extract the trajectories and draw them
+  G4int nOptical =0;
+  if(G4VVisManager::GetConcreteInstance()) {
+    for (G4int i=0; i<n_trajectories; i++) {
+      auto trj = ((*(anEvent->GetTrajectoryContainer()))[i]);
+      //if(i<5) trj->ShowTrajectory(); // print out to G4cout
+      
+      if(trj->GetParticleName()=="opticalphoton") {
+        ++nOptical;
+      }
+      trj->DrawTrajectory();
+    }
+  }
+  G4cout << "\t number of optical  = "<< nOptical <<G4endl;
+  
+  // fill the analysis tree
+  LegendAnalysis::Instance()->anaEvent( anEvent );
+  //anEvent->Print();
 }
 
 

@@ -1,0 +1,3 @@
+/gun/particle gamma 
+/gun/energy 0.001 GeV
+/run/beamOn 10

@@ -23,53 +23,60 @@
 // * acceptance of all terms of the Geant4 Software license.          *
 // ********************************************************************
 //
-// $Id$
 //
-/// \file SteppingAction.hh
-/// \brief Definition of the SteppingAction class
-
-#ifndef SteppingAction_h
-#define SteppingAction_h 1
-#include "LegendAnalysis.hh"
-
-#include "G4UserSteppingAction.hh"
-#include "G4OpBoundaryProcess.hh"
-
+/// \file optical/Legend/include/UserTrackInformation.hh
+/// \brief Definition of the UserTrackInformation class
+//
+#include "G4VUserTrackInformation.hh"
 #include "globals.hh"
 
-class DetectorConstruction;
-class EventAction;
+#ifndef UserTrackInformation_h
+#define UserTrackInformation_h 1
+//IF you are going to add a status it must be a power of 2 because of the bitwise
+//functionallity of the AddTrackStatus Function
+//--Neil
+enum TrackStatus { active=1, hitPMT=2, absorbed=4, boundaryAbsorbed=8,
+                      absorbedLAr=16, inactive=32, hitWLS = 64};
 
-/// Stepping action class
-///
-/// It holds data member fEnergy for accumulating the energy deposit
-/// in a selected volume step by step.
-/// The selected volume is set from  the detector construction via the
-/// SetVolume() function. The accumulated energy deposit is reset for each
-/// new event via the Reset() function from the event action.
+/*TrackStatus:
+  active: still being tracked
+  hitPMT: stopped by being detected in a PMT
+  absorbed: stopped by being absorbed with G4OpAbsorbtion
+  boundaryAbsorbed: stopped by being aborbed with G4OpAbsorbtion
+  hitSphere: track hit the sphere at some point
+  inactive: track is stopped for some reason
+   -This is the sum of all stopped flags so can be used to remove stopped flags
+ 
+*/
 
-class SteppingAction : public G4UserSteppingAction
+class UserTrackInformation : public G4VUserTrackInformation
 {
   public:
-    SteppingAction(DetectorConstruction*, EventAction*);
-    virtual ~SteppingAction();
 
-    // method from the base class
-    virtual void UserSteppingAction(const G4Step*);
+    UserTrackInformation();
+    virtual ~UserTrackInformation();
 
+    //Sets the track status to s (does not check validity of flags)
+    void SetTrackStatusFlags(int s){fStatus=s;}
+    //Does a smart add of track status flags (disabling old flags that conflict)
+    //If s conflicts with itself it will not be detected
+    void AddTrackStatusFlag(int s);
+ 
+    int GetTrackStatus()const {return fStatus;}
+ 
+    void IncReflections(){fReflections++;}
+    G4int GetReflectionCount()const {return fReflections;}
+
+    void SetForceDrawTrajectory(G4bool b){fForcedraw=b;}
+    G4bool GetForceDrawTrajectory(){return fForcedraw;}
+
+    inline virtual void Print() const{};
 
   private:
- 
-    TDirectory* fDir;
-    TH1F* hWLSPhotonE;
 
-    G4bool fOneStepPrimaries;
-    G4OpBoundaryProcessStatus fExpectedNextStatus;
-    
-    DetectorConstruction* detector;
-    EventAction*          eventaction;
+    int fStatus;
+    G4int fReflections;
+    G4bool fForcedraw;
 };
-
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 #endif

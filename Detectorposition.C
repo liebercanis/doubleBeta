@@ -1,40 +1,15 @@
-#include "TFile.h"
-#include "TTree.h"
-#include "TChain.h"
-#include "TString.h"
-#include "TCanvas.h"
-#include "TH2D.h"
-#include "TProof.h"
-#include "TVectorD.h"
-#include "TMath.h"
-
-#include <iostream>
-#include <string>
-#include <vector>
-#include <fstream>
-#include <sstream>
-
-# define M_PI           3.14159265358979323846  /* pi */
 using namespace std;
+vector<TString> names;
 
-void Detectorposition(){
-  ifstream in ("Detectorposition.txt");
-  TString bla;
-  TString name;
-  vector<TString> names;
-  while(in >> bla >> bla >> bla >> bla >> bla >> bla >> name ){
-    //cout << name << endl;
-    names.push_back(name);
-  }
-  in.close();
-
-
+void readJson() 
+{
   int i = 0;
   int j = 0;
+  TString bla;
+  TString name;
   for(j = 0; j<names.size();j++){
     ifstream in2 ("MJD.JSON");
     name = "\"" + names[j] + "\":{";
-
     while(in2 >> bla){
       if(bla.Contains(name)){
         cout << "---------------found " << names[j];  
@@ -50,7 +25,23 @@ void Detectorposition(){
     }
     in2.close();
   }
-
-
-
 }
+
+
+void Detectorposition(){
+  ifstream in ("Detectorposition.txt");
+  TString bla;
+  TString name;
+  char line[180];
+  while(in >> bla >> bla >> bla >> bla >> bla >> bla >> name ){
+    names.push_back(name);
+    in.getline(line,100);
+  }
+  in.close();
+
+  printf(" number of detectors is %i\n",(int) names.size());
+  for(unsigned in=0; in<names.size(); ++in) printf(" %s \n",names[in].Data());
+
+  readJson();
+}
+

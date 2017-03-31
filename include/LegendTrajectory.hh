@@ -23,37 +23,69 @@
 // * acceptance of all terms of the Geant4 Software license.          *
 // ********************************************************************
 //
-// $Id: PrimaryGeneratorAction.hh 68752 2013-04-05 10:23:47Z gcosmo $
+// $Id: LegendTrajectory.hh 72349 2013-07-16 12:13:16Z gcosmo $
 //
-/// \file optical/Legend/include/PrimaryGeneratorAction.hh
-/// \brief Definition of the PrimaryGeneratorAction class
+/// \file optical/Legend/include/LegendTrajectory.hh
+/// \brief Definition of the LegendTrajectory class
 //
-//
-#ifndef PrimaryGeneratorAction_h
-#define PrimaryGeneratorAction_h 1
+#ifndef LegendTrajectory_h
+#define LegendTrajectory_h 1
 
-#include "G4VUserPrimaryGeneratorAction.hh"
-#include "G4SystemOfUnits.hh"
+#include "G4Trajectory.hh"
+#include "G4Allocator.hh"
+#include "G4ios.hh"
 #include "globals.hh"
+#include "G4ParticleDefinition.hh"
+#include "G4TrajectoryPoint.hh"
+#include "G4Track.hh"
+#include "G4Step.hh"
 
-class G4ParticleGun;
-class G4Event;
+class G4Polyline;                   // Forward declaration.
 
-class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
+typedef std::vector<G4VTrajectoryPoint*>  TrajectoryPointContainer;
+
+class LegendTrajectory : public G4Trajectory
 {
   public:
 
-    PrimaryGeneratorAction();
-    virtual ~PrimaryGeneratorAction();
-    G4double pGun_nrg = 511*keV;
+    LegendTrajectory();
+    LegendTrajectory(const G4Track* aTrack);
+    LegendTrajectory(LegendTrajectory &);
+    virtual ~LegendTrajectory();
  
-  public:
+    virtual void DrawTrajectory() const;
+    virtual void AppendStep(const G4Step* aStep);
+ 
+    inline void* operator new(size_t);
+    inline void  operator delete(void*);
 
-    virtual void GeneratePrimaries(G4Event* anEvent);
+    void SetDrawTrajectory(G4bool b){fDrawit=b;}
+    void WLS(){fWls=true;}
+    void SetForceDrawTrajectory(G4bool b){fForceDraw=b;}
+    void SetForceNoDrawTrajectory(G4bool b){fForceNoDraw=b;}
 
   private:
 
-    G4ParticleGun* fParticleGun;
+    TrajectoryPointContainer *positionRecord;
+    G4bool fWls;
+    G4bool fDrawit;
+    G4bool fForceNoDraw;
+    G4bool fForceDraw;
+    G4ParticleDefinition* fParticleDefinition;
 };
+
+extern G4ThreadLocal G4Allocator<LegendTrajectory>* LegendTrajectoryAllocator;
+
+inline void* LegendTrajectory::operator new(size_t)
+{
+  if(!LegendTrajectoryAllocator)
+      LegendTrajectoryAllocator = new G4Allocator<LegendTrajectory>;
+  return (void*)LegendTrajectoryAllocator->MallocSingle();
+}
+
+inline void LegendTrajectory::operator delete(void* aTrajectory)
+{
+  LegendTrajectoryAllocator->FreeSingle((LegendTrajectory*)aTrajectory);
+}
 
 #endif

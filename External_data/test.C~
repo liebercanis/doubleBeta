@@ -41,12 +41,17 @@ void test(int ntry=1000)
   TCanvas *c3 = new TCanvas("tpb-bins","tpb-bins");
   htpb2->Draw();
   
+  return;
+
   float sum=0;
-  for(int i=0; i<htpb2->GetNbinsX() ; ++i ) {
+  for(int i=0; htpb2->GetNbinsX() ; ++i ) {
      sum +=  htpb2->GetBinContent(i);
      hinte->SetBinContent(i,sum);
   }
      
+    
+
+
   TCanvas *c4 = new TCanvas("tpb-integral","tpb-integral");
   hinte->Draw();
 

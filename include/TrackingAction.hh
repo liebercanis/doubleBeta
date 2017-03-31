@@ -23,45 +23,40 @@
 // * acceptance of all terms of the Geant4 Software license.          *
 // ********************************************************************
 //
-// $Id: PrimaryGeneratorAction.cc 68752 2013-04-05 10:23:47Z gcosmo $
+// $Id: TrackingAction.hh 68752 2013-04-05 10:23:47Z gcosmo $
 //
-/// \file optical/Legend/src/PrimaryGeneratorAction.cc
-/// \brief Implementation of the PrimaryGeneratorAction class
+/// \file optical/Legend/include/TrackingAction.hh
+/// \brief Definition of the TrackingAction class
 //
 //
-#include "PrimaryGeneratorAction.hh"
+#ifndef TrackingAction_h
+#define TrackingAction_h 1
 
-#include "G4Event.hh"
-#include "G4ParticleGun.hh"
-#include "G4ParticleTable.hh"
-#include "G4ParticleDefinition.hh"
-#include "G4SystemOfUnits.hh"
+#include "LegendAnalysis.hh"
+
+#include "G4UserTrackingAction.hh"
+#include "G4VTrajectory.hh"
 #include "globals.hh"
+#include "G4SystemOfUnits.hh"
+class TrackingAction : public G4UserTrackingAction {
 
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+  public:
 
-PrimaryGeneratorAction::PrimaryGeneratorAction(){
-  G4int n_particle = 1;
-  fParticleGun = new G4ParticleGun(n_particle);
+    TrackingAction();
+    virtual ~TrackingAction() {};
+
+    virtual void PreUserTrackingAction(const G4Track*);
+    virtual void PostUserTrackingAction(const G4Track*);
+    TDirectory *fDir;
+    TH1F *hTrackPhotonE;
+    TH1F *hAbsorbedPhotonE;
+    TH1F *hWLSPhotonE;
+    TH1F *hPMTPhotonE;
+    TH1F *hCherenkovPhotonE;
+    TH1F *hTrackStatus;
+  private:
+  
  
-  G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
- 
-  G4String particleName;
-  fParticleGun->SetParticleDefinition(particleTable->FindParticle(particleName="gamma"));
-  //Default energy,position,momentum
-  fParticleGun->SetParticleEnergy(pGun_nrg);//511.0*keV);
-  fParticleGun->SetParticlePosition(G4ThreeVector(0.0 ,0.,0.));// 0.0, -20.0*cm));
-  fParticleGun->SetParticleMomentumDirection(G4ThreeVector(0.,0.,1.));
-}
+};
 
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
-PrimaryGeneratorAction::~PrimaryGeneratorAction(){
-    delete fParticleGun;
-}
-
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
-void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent){
-  fParticleGun->GeneratePrimaryVertex(anEvent);
-}
+#endif

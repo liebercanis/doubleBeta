@@ -23,45 +23,30 @@
 // * acceptance of all terms of the Geant4 Software license.          *
 // ********************************************************************
 //
-// $Id: PrimaryGeneratorAction.cc 68752 2013-04-05 10:23:47Z gcosmo $
+// $Id: UserTrackInformation.cc 68752 2013-04-05 10:23:47Z gcosmo $
 //
-/// \file optical/Legend/src/PrimaryGeneratorAction.cc
-/// \brief Implementation of the PrimaryGeneratorAction class
+/// \file optical/Legend/src/UserTrackInformation.cc
+/// \brief Implementation of the UserTrackInformation class
 //
 //
-#include "PrimaryGeneratorAction.hh"
-
-#include "G4Event.hh"
-#include "G4ParticleGun.hh"
-#include "G4ParticleTable.hh"
-#include "G4ParticleDefinition.hh"
-#include "G4SystemOfUnits.hh"
-#include "globals.hh"
+#include "UserTrackInformation.hh"
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-PrimaryGeneratorAction::PrimaryGeneratorAction(){
-  G4int n_particle = 1;
-  fParticleGun = new G4ParticleGun(n_particle);
- 
-  G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
- 
-  G4String particleName;
-  fParticleGun->SetParticleDefinition(particleTable->FindParticle(particleName="gamma"));
-  //Default energy,position,momentum
-  fParticleGun->SetParticleEnergy(pGun_nrg);//511.0*keV);
-  fParticleGun->SetParticlePosition(G4ThreeVector(0.0 ,0.,0.));// 0.0, -20.0*cm));
-  fParticleGun->SetParticleMomentumDirection(G4ThreeVector(0.,0.,1.));
-}
+UserTrackInformation::UserTrackInformation()
+  : fStatus(active),fReflections(0),fForcedraw(false) {}
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-PrimaryGeneratorAction::~PrimaryGeneratorAction(){
-    delete fParticleGun;
-}
+UserTrackInformation::~UserTrackInformation() {}
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent){
-  fParticleGun->GeneratePrimaryVertex(anEvent);
+void UserTrackInformation::AddTrackStatusFlag(int s)
+{
+  if(s&active) //track is now active
+    fStatus&=~inactive; //remove any flags indicating it is inactive
+  else if(s&inactive) //track is now inactive
+    fStatus&=~active; //remove any flags indicating it is active
+  fStatus|=s; //add new flags
 }

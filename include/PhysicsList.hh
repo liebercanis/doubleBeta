@@ -71,9 +71,9 @@ protected:
   // these methods Construct physics processes and register them
   virtual void ConstructGeneral();
   virtual void ConstructEM();
+  virtual void ConstructCerenkov();
   virtual void ConstructHad();
   virtual void ConstructOp();
-
 
   virtual void AddTransportation();
 

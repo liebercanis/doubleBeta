@@ -100,6 +100,10 @@ void  LegendAnalysis::anaEvent( const G4Event *anEvent)
    
 void  LegendAnalysis::anaTrajectories(G4TrajectoryContainer* trajectoryContainer)
 {
+  if(trajectoryContainer==NULL) {
+    G4cout << " anaTrajectories called with null container " << G4endl;
+    return;
+  }
   fEvent->nTraj = trajectoryContainer->entries();
   for(int ij=0; ij < fEvent->nTraj; ++ij) {
     G4VTrajectory* gtrj =  (*trajectoryContainer)[ij];
