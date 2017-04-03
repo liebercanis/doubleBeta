@@ -62,6 +62,8 @@ class SteppingAction : public G4UserSteppingAction
  
     TDirectory* fDir;
     TH1F* hWLSPhotonE;
+    TH1F* hBoundaryStatus;
+    TH1F* hParticleType;
 
     G4bool fOneStepPrimaries;
     G4OpBoundaryProcessStatus fExpectedNextStatus;

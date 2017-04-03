@@ -5,6 +5,8 @@
 /// \brief Implementation of the SteppingAction class
 
 #include "SteppingAction.hh"
+#include "G4SDManager.hh"
+#include "PMTSD.hh"
 #include "UserEventInformation.hh"
 #include "UserTrackInformation.hh"
 #include "DetectorConstruction.hh"
@@ -29,6 +31,8 @@ SteppingAction::SteppingAction(DetectorConstruction* det, EventAction* evt)
   G4double LowE = 1.7712*eV;//700 nm
   G4double HighE = 12.3984*eV;//100 nm
   hWLSPhotonE = new TH1F("StepWLSPhotonE"," photon energy from WLS",1000,LowE,HighE);
+  hBoundaryStatus = new TH1F("StepBoundaryStatus"," boundary status ",Dichroic,0,Dichroic); // last in enum G4OpBoundaryProcessStatus
+  hParticleType = new TH1F("StepParticleType"," step particle type ",100,0,100);
 
 }
 
@@ -95,6 +99,7 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
   //This is a primary track 
   // did we miss any secondaries from the primary track?
   if(aTrack->GetParentID()==0){
+    //G4cout<<"SteppingAction::Primary Vertex found "<<G4endl;
     G4TrackVector* fSecondary = fpSteppingManager->GetfSecondary();
     G4int tN2ndariesTot = fpSteppingManager->GetfN2ndariesAtRestDoIt()
       + fpSteppingManager->GetfN2ndariesAlongStepDoIt()
@@ -146,6 +151,14 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
   G4ParticleDefinition* particleType = aTrack->GetDefinition();
 
   //Optical Photons
+  /*
+  G4cout<<"\t SteppingAction:: particleType " 
+    << particleType->GetParticleName() 
+    << "  type  " << particleType->GetParticleType() 
+    << "  PDG " << particleType->GetPDGEncoding() << G4endl;
+    */
+  hParticleType->Fill(particleType->GetPDGEncoding());
+
   if(particleType==G4OpticalPhoton::OpticalPhotonDefinition()){
 
     //Need local definition for ScintSDHit processing
@@ -178,6 +191,8 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
     
     boundaryStatus=boundary->GetStatus();
     
+    hBoundaryStatus->Fill(boundaryStatus);
+    // G4cout << " Stepping geom boundary process " << boundaryStatus  << G4endl;
     //Check to see if the partcile was actually at a boundary
     //Otherwise the boundary status may not be valid
     //Prior to Geant4.6.0-p1 this would not have been enough to check
@@ -213,17 +228,13 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
         case Detection:
           {
             //Note, this assumes that the volume causing detection
-            //is the photocathode because it is the only one with
-            //non-zero efficiency
-            //Triger sensitive detector manually since photon is
-            //absorbed but status was Detection
-            /*G4SDManager* SDman = G4SDManager::GetSDMpointer();
-              G4String sdName="PhotoCathode";//"/LegendDet/pmtSD";
-              LegendPMTSD* pmtSD = (LegendPMTSD*)SDman->FindSensitiveDetector(sdName);
-              if(pmtSD) pmtSD->ProcessHits_constStep(step,NULL);
-               */
-
-            trackInformation->AddTrackStatusFlag(hitPMT);
+            // is the photocathode because it is the only one with non-zero efficiency
+            //Triger sensitive detector manually since photon is absorbed but status was Detection
+            G4SDManager* SDman = G4SDManager::GetSDMpointer();
+            G4String sdName="PhotoCathode";//"/LegendDet/pmtSD";
+            PMTSD* pmtSD = (PMTSD*)SDman->FindSensitiveDetector(sdName);
+            if(pmtSD) pmtSD->ProcessHits_constStep(step,NULL);
+            else G4cout << "  Stepping action cannot find PhotoCathode " << G4endl;
             break;
           }
 
@@ -246,6 +257,8 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
   } else if(processName == "phot" ){ 
   } else if(processName == "eIoni"){
   } else if(processName == "compt"){
+  } else if(processName == "eBrem"){
+  } else if(processName == "conv"){
   } else if(processName != ""){
     G4cout<<"LegendSteppingAction:: Process Name that Neil could not find is ... "<<processName<<" !!!"<<G4endl;
   }

@@ -32,7 +32,7 @@
 #define DetectorConstruction_h 1
 
 #include "LegendAnalysis.hh"
-
+#include "PMTSD.hh"
 #include "globals.hh"
 #include "G4NistManager.hh"
 #include "G4VUserDetectorConstruction.hh"
@@ -125,12 +125,12 @@ class DetectorConstruction : public G4VUserDetectorConstruction
     G4Box* solidWorld;
     G4VPhysicalVolume* physicalWorld;
     G4LogicalVolume* logicalWorld;
-    G4Polycone* solid_innerVessel;   
-    
+  
 
     //Materials...most are found in materials files
     G4Material* mat_fillGas;
     G4Material*  fTPB;
+    G4OpticalSurface* fPMTGlassOptSurface;
     G4MaterialPropertiesTable *tpbTable;
     G4MaterialPropertiesTable *fPMTGlassOptTable;
     G4Material* mat_ArLiq;
@@ -140,21 +140,10 @@ class DetectorConstruction : public G4VUserDetectorConstruction
     G4Material* Det_mat;
  
     //Surface Objects
-    G4LogicalSkinSurface *  skin_copper;
-    G4LogicalSkinSurface *  skin_photocath;
-    G4LogicalSkinSurface* fSkin_WLS;
-    G4OpticalSurface* fWLSoptSurf;
-    G4OpticalSurface* fPMTGlassOptSurface;
-    G4LogicalBorderSurface * wlsCylinder_LogicalInnerSuface ;
-    G4LogicalBorderSurface * wlsCylinder_LogicalOuterSurface ;
-    G4LogicalBorderSurface * wlsDiskTop_LogicalInnerSuface ;
-    G4LogicalBorderSurface * wlsDiskTop_LogicalOuterSurface ;
-    G4LogicalBorderSurface * wlsDiskBottom_LogicalInnerSuface ;
-    G4LogicalBorderSurface * wlsDiskBottom_LogicalOuterSurface ;
+    G4LogicalVolume* logicalWLSDisk1;
+    G4LogicalVolume* logicalWLSDisk2;
 
-    G4MaterialPropertiesTable* fMPTPStyrene;
-
-  
+     
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

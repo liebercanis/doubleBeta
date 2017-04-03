@@ -30,7 +30,7 @@
 
 #include "DetectorConstruction.hh"
 // use of stepping action to set the accounting volume
-
+#include "G4SDManager.hh"
 #include "G4RunManager.hh"
 #include "G4Box.hh"
 #include "G4Tubs.hh"
@@ -139,6 +139,18 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 	logicalWorld->SetVisAttributes (G4VisAttributes::Invisible);
   physicalWorld = new G4PVPlacement(0,G4ThreeVector(),logicalWorld,"phy_World",0,false,0,checkOverlaps);
 
+	G4Box* solid_Rock = new G4Box("sol_Rock",50*m,50*m,30*m);
+	G4Box* solid_Lab = new G4Box("sol_Lab",35*m,10*m,4*m);
+	G4SubtractionSolid *solid_Rock2 = new G4SubtractionSolid("sol_Rock2", solid_Rock, solid_Lab ,0 , G4ThreeVector(-25*m,0,10.5*m));
+	G4Tubs* solid_CutOut = new G4Tubs("sol_CutOut",0, 6.50001*m ,6.50001*m, 0, 2*M_PI);
+	G4SubtractionSolid *solid_Rock3 = new G4SubtractionSolid("sol_Rock2", solid_Rock2, solid_CutOut ,0 , G4ThreeVector(0,0,0));
+
+
+  G4LogicalVolume* logical_Rock = new G4LogicalVolume(solid_Rock3,mat_Rock,"log_Rock");
+	logical_Rock->SetVisAttributes ( new G4VisAttributes(G4Colour(0.1,0.1,0.7,0.5) ) );//(0.7, 0.7, 0.7, 0.5) )); //grey 50% transparent
+  new G4PVPlacement(0,G4ThreeVector(),logical_Rock,"phy_Rock",logicalWorld,false,0,checkOverlaps);
+
+
   vector<string> Detectors;
   string input;
   string s;
@@ -181,6 +193,9 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4cout << "DetectorConstruction Detector size = " << Detectors.size() <<G4endl;
   char mess[200]; 
   G4int nhalfDet = Detectors.size()/2;
+
+  // here I do the detector placement and some approximate calculations 
+  // for the surrounding cylinders. (MG)
 
   for (int i =0;i< Detectors.size() ;i++){
     G4String Detector_name;
@@ -228,18 +243,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     G4ThreeVector r(Detector_r[0],Detector_r[1],Detector_r[2]);
     G4ThreeVector z(Detector_z[0],Detector_z[1],Detector_z[2]);
 
-
-    // copper shielding
-    //solid_innerVessel = new G4Polycone("sol_innerVessel", 0, 2*M_PI,6,innerVessel_Z,innerVessel_RMin,innerVessel_RMax);
     /*
-        G4Polycone( const G4String& name, 
-                    G4double phiStart,     // initial phi starting angle
-                    G4double phiTotal,     // total phi angle
-                    G4int numZPlanes,      // number of z planes
-              const G4double zPlane[],     // position of z planes
-              const G4double rInner[],     // tangent distance to inner surface
-              const G4double rOuter[]  );  // tangent distance to outer surface
-    */
     sprintf(mess," placement of detector %i number %i at (%f,%f,%f) \n",i,Detector_number,Detector_position.x(),Detector_position.y(),Detector_position.z());
     G4cout<< mess;
     sprintf(mess," zPlane %f %f %f \n",z[0],z[1],z[2]);
@@ -248,6 +252,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     G4cout<< mess;
     sprintf(mess," r out  %f %f %f \n",r[0],r[1],r[2]);
     G4cout<< mess;
+    */
 
     // mean positions and maximum sizes 
     G4double maxz = max(-z[0],z[2]);
@@ -314,13 +319,19 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   sprintf(mess,"\t group 1 radius  %f  half z %f \n",group1rmax,group1zmax); G4cout<< mess;
   sprintf(mess,"\t group 2 radius  %f  half z %f \n",group2rmax,group2zmax); G4cout<< mess;
   G4cout<< "\t *******************************************" <<G4endl;
-  //G4Tubs(Name,RMin,RMax,Half-z,SPhi,DPhi)
+
+  
+  /*
+  // construct cylindrical tubes surrounding detectors
+  // G4Tubs(Name,RMin,RMax,Half-z,SPhi,DPhi)
+  // could be simplified with 1 logical volume for both cylinders
+  */
   G4Tubs* group1Tube = new G4Tubs("group1Tube",0,group1rmax,group1rmax+tubeWall,group1zmax,twopi);
-  G4LogicalVolume* group1Logical = new G4LogicalVolume(group1Tube,G4Material::GetMaterial("MetalCopper"),"group1Logical" );
+  G4LogicalVolume* group1Logical = new G4LogicalVolume(group1Tube,fTPB,"group1Logical" );
 
   G4Tubs* group2Tube = new G4Tubs("group1Tube",0,group2rmax,group2rmax+tubeWall,group2zmax,twopi);
-  G4LogicalVolume* group2Logical = new G4LogicalVolume(group2Tube,G4Material::GetMaterial("MetalCopper"),"group2Logical" );
-  //logical_innerVessel->SetVisAttributes ( new G4VisAttributes(G4Colour(0.62, 0.3, 0.2,0.7) ));
+  G4LogicalVolume* group2Logical = new G4LogicalVolume(group2Tube,fTPB,"group2Logical" );
+     
   
   // place detectors in tubes
   for(unsigned idet=0; idet < detPositions.size(); ++ idet) {
@@ -334,12 +345,35 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
      else 
       new G4PVPlacement (0,detRelPositions[idet],Det_logical,detNames[idet],group2Logical,false,detNumbers[idet],0);     
   }
-  
-
+ 
+  /* add liquid argon sphere and place cylinders inside  */
 	G4Sphere* source_solid = new G4Sphere("source",100*cm,100.0001*cm,0,2*M_PI,0,2*M_PI);
 	G4LogicalVolume* source_logical = new G4LogicalVolume(source_solid,mat_ArLiq,"source_log");
+	source_logical->SetVisAttributes(new G4VisAttributes(G4Colour(0.1, 0.1, 0.9,0.9)));
+  
   G4VPhysicalVolume* group1Physical = new G4PVPlacement(0,group1pos,group1Logical,"group1Physical",source_logical,false,0,checkOverlaps);
   G4VPhysicalVolume* group2Physical = new G4PVPlacement(0,group2pos,group2Logical,"group2Physical",source_logical,false,0,checkOverlaps);
+
+  /* add top and bottom disks to 1 */
+  G4Tubs* WLSDisk1 = new G4Tubs("WLSDisk1",0.,group1rmax+tubeWall,tubeWall,0,twopi);
+  logicalWLSDisk1 = new G4LogicalVolume(WLSDisk1,fTPB,"LogicalWLSDisk1");
+	logicalWLSDisk1->SetVisAttributes ( new G4VisAttributes(G4Colour(0.99, 0.3, 0.2,0.7) ));
+  G4ThreeVector WLSDisk1TopPos = group1pos+G4ThreeVector(0,0,group1zmax); 
+  G4PVPlacement* WLSDisk1Top = new G4PVPlacement(0,WLSDisk1TopPos,logicalWLSDisk1,"WLSDisk1Top",source_logical,false,0,checkOverlaps);
+  G4ThreeVector WLSDisk1BotPos = group1pos+G4ThreeVector(0,0,-group1zmax); 
+  G4PVPlacement* WLSDisk1Bot = new G4PVPlacement(0,WLSDisk1BotPos,logicalWLSDisk1,"WLSDisk1Bot",source_logical,false,0,checkOverlaps);
+
+ /* add top and bottom disks to 2 */
+  G4Tubs* WLSDisk2 = new G4Tubs("WLSDisk1",0.,group2rmax+tubeWall,tubeWall,0,twopi);
+  logicalWLSDisk2 = new G4LogicalVolume(WLSDisk2,fTPB,"LogicalWLSDisk2");
+	logicalWLSDisk2->SetVisAttributes ( new G4VisAttributes(G4Colour(0.99, 0.3, 0.2,0.7) ));
+  G4ThreeVector WLSDisk2TopPos = group2pos+G4ThreeVector(0,0,group2zmax); 
+  G4PVPlacement* WLSDisk2Top = new G4PVPlacement(0,WLSDisk2TopPos,logicalWLSDisk2,"WLSDisk2Top",source_logical,false,0,checkOverlaps);
+  G4ThreeVector WLSDisk2BotPos = group2pos+G4ThreeVector(0,0,-group1zmax); 
+  G4PVPlacement* WLSDisk2Bot = new G4PVPlacement(0,WLSDisk2BotPos,logicalWLSDisk2,"WLSDisk2Bot",source_logical,false,0,checkOverlaps);
+  
+
+  /* put sphere inside world */
   G4ThreeVector source_center(0,0,0);
   G4VPhysicalVolume* source_phys = new G4PVPlacement (0,source_center,source_logical,"source_phys",logicalWorld,false,0,1);
 
@@ -468,13 +502,11 @@ G4double DetectorConstruction::LArRayLength(const G4double lambda,const
 
 void DetectorConstruction::ConstructSDandField()
 {
-  //Using GERDA methods and headers for making
-  //G4SDManager* SDman   =  G4SDManager::GetSDMpointer();
-  //LegendScintSD* ScintSD  = new LegendScintSD("ScintSD");
-  //PMT are sensitive, use kind words
-  //LegendPMTSD* PMTSD = new LegendPMTSD("PhotoCathode",numPMT,"PhCathodeHC" );    
-  //SDman->AddNewDetector(PMTSD); 
-  //logical_PMTGlass->SetSensitiveDetector(PMTSD);
+  G4SDManager* SDman   =  G4SDManager::GetSDMpointer();  
+  PMTSD* PMTSD1 = new PMTSD("PhotoCathode",1,"PhCathodeHC" );    
+  SDman->AddNewDetector(PMTSD1); 
+  logicalWLSDisk1->SetSensitiveDetector(PMTSD1);
+  logicalWLSDisk2->SetSensitiveDetector(PMTSD1); 
 }
 
 void DetectorConstruction::UpdateGeometry()
