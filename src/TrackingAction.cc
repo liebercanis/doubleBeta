@@ -49,15 +49,21 @@ TrackingAction::TrackingAction()
   gDirectory->pwd();
   G4double LowE = 2.4796*eV;//500 nm
   G4double HighE = 12.3984*eV;//100 nm
+  /* 
+  G4double LowE = 1.7712*eV;//700 nm
+  G4double HighE = 12.3984*eV;//100 nm
+  hWLSPhotonE = new TH1F("StepWLSPhotonE"," photon energy from WLS",1000,LowE,HighE);
+   */
   G4double LowWLS =  h_Planck*c_light/(700.0*nm);//700 nm
   G4double HighWLS = h_Planck*c_light/(200.0*nm);//200 nm
-  hTrackPhotonE = new TH1F("TrackPhotonE"," scint photon energy in LAr",1000,LowE,HighE);
+  hTrackScintE = new TH1F("TrackScintE"," scint photon energy in LAr",1000,LowE,HighE);
+  hTrackPhotonE = new TH1F("TrackPhotonE"," all photon energy in LAr",1000,LowE,HighE);
   hAbsorbedPhotonE = new TH1F("AbsorbedPhotonE"," absorbed scint photon energy in LAr",1000,LowE,HighE);
   hWLSPhotonE = new TH1F("WLSPhotonE"," WLS photon energy ",1000,LowWLS,HighWLS);
   hPMTPhotonE = new TH1F("PMTPhotonE"," WLS photon energy ",1000,LowWLS,HighWLS);
   hCherenkovPhotonE  = new TH1F("CherenkovPhotonE"," WLS photon energy ",1000,LowWLS,HighWLS);
-  hTrackStatus = new TH1F("TrackStatus"," track status ",7,0,7);
-  
+  hTrackStatus = new TH1F("TrackStatus"," track status ", TrackBit::MaxHistogramBit+1,0, TrackBit::MaxHistogramBit+1);
+   
   G4cout << " ...  = " << G4endl;
   
 }
@@ -87,6 +93,8 @@ void TrackingAction::PostUserTrackingAction(const G4Track* aTrack){
     return;
   }
 
+  trajectory->SetForceDrawTrajectory(true);
+  trajectory->SetDrawTrajectory(true);
   UserTrackInformation* trackInformation=(UserTrackInformation*) aTrack->GetUserInformation();
   
   //LegendAnalysis::Instance()->FillTrajectory(trajectory);
@@ -94,39 +102,30 @@ void TrackingAction::PostUserTrackingAction(const G4Track* aTrack){
   //G4double KE = aTrack->GetKineticEnergy();//Returns energy in MeV
   
   const G4VProcess* creator=aTrack->GetCreatorProcess();
-  if(!creator) { 
-    G4cout << " WARNING TrackingAction called with NULL track G4VProcess!  energy = " << totE << G4endl;
+  if(!creator) {
+    //G4cout << " WARNING TrackingAction called with NULL track G4VProcess!  energy = " << totE << G4endl;
+    hTrackStatus->Fill(isBad); 
     return;
   } 
   //else 
-  //  G4cout<<" PostUser tracking action process is " << creator->GetProcessName() << " energy " << totE << G4endl;
+    //  G4cout<<" PostUser tracking action process is " << creator->GetProcessName() << " energy " << totE << G4endl;
 
   if(aTrack->GetDefinition() ==G4OpticalPhoton::OpticalPhotonDefinition()){
-    //enum TrackStatus { active=1, hitPMT=2, absorbed=4, boundaryAbsorbed=8,hitSphere=16, inactive=14}; 
-    if(trackInformation->GetTrackStatus()&active) hTrackStatus->Fill(0); 
-    else if(trackInformation->GetTrackStatus()&hitPMT) hTrackStatus->Fill(1); 
-    else if(trackInformation->GetTrackStatus()&absorbed) hTrackStatus->Fill(2); 
-    else if(trackInformation->GetTrackStatus()&boundaryAbsorbed) hTrackStatus->Fill(3); 
-    else if(trackInformation->GetTrackStatus()&absorbedLAr) hTrackStatus->Fill(4); 
-    else if(trackInformation->GetTrackStatus()&inactive) hTrackStatus->Fill(5); 
-    else  hTrackStatus->Fill(6); 
+    hTrackStatus->Fill(trackInformation->GetTrackBit()); 
+    //G4cout << " optical photon creator process " << creator->GetProcessName() << " track status " << trackInformation->GetTrackStatus() << G4endl;
     
+    hTrackPhotonE->Fill(totE);
+    if(trackInformation->GetTrackStatus()&absorbed) hAbsorbedPhotonE->Fill(totE);
+    if(creator->GetProcessName() ==  "Scintillation") hTrackScintE->Fill(totE);
+    if(creator->GetProcessName() == "Cerenkov") hCherenkovPhotonE->Fill(totE);
+    
+    // use track status set in SteppingAction
     if(trackInformation->GetTrackStatus()&hitPMT) {
       hPMTPhotonE->Fill(totE);
-    }
-    
-    if(creator->GetProcessName() ==  "Scintillation"){ 
-      //LAr_Spectrum->Fill(KE);
-      hTrackPhotonE->Fill(totE);
-      if(trackInformation->GetTrackStatus()&absorbed){
-        hAbsorbedPhotonE->Fill(totE);
-        trajectory->SetDrawTrajectory(true);
-      }
-    } else if(creator->GetProcessName() ==  "OpWLS"){
-      hWLSPhotonE->Fill(totE);
       trajectory->SetDrawTrajectory(true);
-    } else if(creator->GetProcessName() == "Cerenkov") {
-      hCherenkovPhotonE->Fill(totE);
-    } else G4cout << " UNKNOWN optical photon creator  " << creator->GetProcessName()<< " definition  " << aTrack->GetDefinition() << " ???? " << G4endl;
+    } else if(trackInformation->GetTrackStatus()&hitWLS) {
+      trajectory->SetDrawTrajectory(true);
+      hWLSPhotonE->Fill(totE);
+    } //else G4cout << " UNKNOWN optical photon creator process " << creator->GetProcessName()<< " track definition is  " << aTrack->GetDefinition() << " ???? " << G4endl;
   }
 }

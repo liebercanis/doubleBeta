@@ -28,9 +28,6 @@ SteppingAction::SteppingAction(DetectorConstruction* det, EventAction* evt)
   G4cout<<" StepAction working root directory  is  " << G4endl;  
   gDirectory->pwd();
   G4cout << " ... " << G4endl;
-  G4double LowE = 1.7712*eV;//700 nm
-  G4double HighE = 12.3984*eV;//100 nm
-  hWLSPhotonE = new TH1F("StepWLSPhotonE"," photon energy from WLS",1000,LowE,HighE);
   hBoundaryStatus = new TH1F("StepBoundaryStatus"," boundary status ",Dichroic,0,Dichroic); // last in enum G4OpBoundaryProcessStatus
   hParticleType = new TH1F("StepParticleType"," step particle type ",100,0,100);
 
@@ -118,7 +115,7 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
             //the Vertex position has not been set yet(set in initial step)
             //so set Conversion Position
             eventInformation->SetConvPos((*fSecondary)[lp1]->GetPosition());
-          } else if(!(creatorName=="eIoni"||creatorName=="eBrem")) G4cout << " SteppingAction unknown creatorName " << creatorName << G4endl;
+          } //else if(!(creatorName=="eIoni"||creatorName=="eBrem")) G4cout << " SteppingAction unknown creatorName " << creatorName << G4endl;
         }
       }
     }
@@ -141,7 +138,7 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
       }
     }
   }
-
+  
   //Used to find othe non optical processes
   const G4VProcess * process = aTrack->GetCreatorProcess();
   
@@ -175,18 +172,17 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
     if(thePostPoint->GetProcessDefinedStep()->GetProcessName()=="OpAbsorption"){
       //eventInformation->IncAbsorption();
       trackInformation->AddTrackStatusFlag(absorbed);
-      //if the photon was absorbed in LAr ProcessHit
-      /*
-      ** if(thePrePV->GetName()=="phy_fillGas"){
-        G4SDManager* SDman = G4SDManager::GetSDMpointer();
+      //if the photon was absorbed in LAr ProcessHit with name defined in DetectorConstruction 
+      if(thePrePV->GetName()=="larPhysical"){
+        trackInformation->AddTrackStatusFlag(absorbedLAr);
+        /*G4SDManager* SDman = G4SDManager::GetSDMpointer();
         G4String sdName="ScintSD";
         LegendScintSD* ScintSD = (LegendScintSD*)SDman->FindSensitiveDetector(sdName);
         if(ScintSD){ 
           ScintSD->ProcessHits(step,NULL);
         }
-        trackInformation->AddTrackStatusFlag(absorbedLAr);
-      }
         */
+      }
     }
     
     boundaryStatus=boundary->GetStatus();
@@ -196,7 +192,7 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
     //Check to see if the partcile was actually at a boundary
     //Otherwise the boundary status may not be valid
     //Prior to Geant4.6.0-p1 this would not have been enough to check
-    /* enum G4OpBoundaryProcessStatus {  Undefined,
+    /* enum G4OpBoundaryProcessStatus   Undefined,
                                   Transmission, FresnelRefraction,
                                   FresnelReflection, TotalInternalReflection,
                                   LambertianReflection, LobeReflection,
@@ -217,6 +213,7 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
         }
       }
       fExpectedNextStatus=Undefined;
+      //G4cout<<"SteppingAction:: Process Name  "<<processName<<G4endl;
       switch(boundaryStatus){
         case Absorption:
           {
@@ -227,6 +224,7 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
           }
         case Detection:
           {
+            trackInformation->AddTrackStatusFlag(hitPMT);
             //Note, this assumes that the volume causing detection
             // is the photocathode because it is the only one with non-zero efficiency
             //Triger sensitive detector manually since photon is absorbed but status was Detection
@@ -237,31 +235,37 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
             else G4cout << "  Stepping action cannot find PhotoCathode " << G4endl;
             break;
           }
-
         case FresnelReflection:
         case TotalInternalReflection:
+            trackInformation->AddTrackStatusFlag(totalInternal);
         case LambertianReflection:
         case LobeReflection:
         case SpikeReflection:
         case BackScattering:
           trackInformation->IncReflections();
           fExpectedNextStatus=BackScattering;//: StepTooSmall;
+          trackInformation->AddTrackStatusFlag(backScatter);
           break;
           //added by Neil
         case NotAtBoundary:
+            trackInformation->AddTrackStatusFlag(notBoundary);
         default:
           break;
       }
+      // WLS is optical but doesnt seem to correspond to above boundary case 
+      if(processName == "OpWLS" ){ 
+        trackInformation->AddTrackStatusFlag(hitWLS);
+      } 
     }  //end of if(thePostPoint->GetStepStatus()==fGeomBoundary)
-    //end of if OpticalPhoton
   } else if(processName == "phot" ){ 
   } else if(processName == "eIoni"){
   } else if(processName == "compt"){
   } else if(processName == "eBrem"){
   } else if(processName == "conv"){
-  } else if(processName != ""){
-    G4cout<<"LegendSteppingAction:: Process Name that Neil could not find is ... "<<processName<<" !!!"<<G4endl;
-  }
+  } else if(processName == "Cerenkov"){
+  //} else {
+    //G4cout<<"SteppingAction:: Process Name that Neil could not find is ... "<<processName<<" !!!"<<G4endl;
+  } //is fGeomBoundary)
 }
 
 

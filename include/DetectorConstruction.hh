@@ -77,8 +77,10 @@ class DetectorConstruction : public G4VUserDetectorConstruction
     void SetOuterShield (G4bool);
 	  void SetOverlapsCheck(G4bool);
 		void SetShieldStyle(G4String);
-		void SetFillGas(G4String);
+		void SetFillMaterial(G4String);
 		void ConstructSDandField();
+    void PlacePMT(G4ThreeVector r,double top_or_bot,int num);
+    
     
     static const G4double LambdaE;
     G4double DetectorDimension[35][3] =
@@ -109,10 +111,9 @@ class DetectorConstruction : public G4VUserDetectorConstruction
     }
     
   private:
+    G4bool checkOverlaps;
     G4NistManager* nist; 
     DetectorMessenger* detectorMessenger;  // pointer to the Messenger
-    G4bool ShieldInner;
-    G4bool ShieldOuter;
     TDirectory* fDir;
     TGraph* fTPBspec;
     TH1F* hWLSPhotonE;
@@ -125,10 +126,17 @@ class DetectorConstruction : public G4VUserDetectorConstruction
     G4Box* solidWorld;
     G4VPhysicalVolume* physicalWorld;
     G4LogicalVolume* logicalWorld;
-  
+    G4LogicalVolume* larSourceLogical;
+
+    //PMT parameters
+    G4double grouprmax, groupzmax, WLSHalfThickness; 
+    G4LogicalVolume* logicalPmtHousing;  
+    G4LogicalVolume* logicalPmtGlass;  
+    G4LogicalVolume* logicalPMTWLS; 
+    G4VPhysicalVolume* larPhysical;
 
     //Materials...most are found in materials files
-    G4Material* mat_fillGas;
+    G4Material* mat_fill;
     G4Material*  fTPB;
     G4OpticalSurface* fPMTGlassOptSurface;
     G4MaterialPropertiesTable *tpbTable;
@@ -139,9 +147,8 @@ class DetectorConstruction : public G4VUserDetectorConstruction
     G4Material* mat_NLiq;
     G4Material* Det_mat;
  
-    //Surface Objects
-    G4LogicalVolume* logicalWLSDisk1;
-    G4LogicalVolume* logicalWLSDisk2;
+    // needed for SDandField
+    G4LogicalVolume* logicalWLSDisk;
 
      
 };

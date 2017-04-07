@@ -71,6 +71,7 @@ const G4double DetectorConstruction::LambdaE = 2.0*TMath::Pi()*1.973269602e-16 *
 DetectorConstruction::DetectorConstruction()
 : G4VUserDetectorConstruction()
 {
+  checkOverlaps = true;
   //***//
   //TPB//
   //***//    
@@ -117,28 +118,30 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 {
   // Get nist material manager
   nist = G4NistManager::Instance();
+  innerVessel_FillMaterial = "ArgonLiquid";//"NitrogenGas";
+  // used in this include 
 	#include "LegendDetectorMaterials.icc"
   ArgonOpticalProperties();
-  innerVessel_FillMaterial = "ArgonLiquid";//"NitrogenGas";
+  //mat_fill->GetMaterialPropertiesTable()->DumpTable();
+  
   WLSOpticalProperties();
   
   
   // Option to switch on/off checking of volumes overlaps
   //
-  G4bool checkOverlaps = true;
-  G4Material* world_mat = nist->FindOrBuildMaterial("G4_AIR");
-  G4Material* Det_mat = nist->FindOrBuildMaterial("G4_Ge");
+  G4Material* GeMaterial = nist->FindOrBuildMaterial("G4_Ge");
 
   ////////////////////////////////////////////////////////////////////////////////////////
 	//
   // World
   //
   ////////////////////////////////////////////////////////////////////////////////////////
-  solidWorld = new G4Box("sol_World",50*m,50*m,30*m);
+  solidWorld = new G4Box("sol_World",50*m,50*m,50*m);
   logicalWorld = new G4LogicalVolume(solidWorld,mat_air,"log_World");
 	logicalWorld->SetVisAttributes (G4VisAttributes::Invisible);
   physicalWorld = new G4PVPlacement(0,G4ThreeVector(),logicalWorld,"phy_World",0,false,0,checkOverlaps);
 
+  /*
 	G4Box* solid_Rock = new G4Box("sol_Rock",50*m,50*m,30*m);
 	G4Box* solid_Lab = new G4Box("sol_Lab",35*m,10*m,4*m);
 	G4SubtractionSolid *solid_Rock2 = new G4SubtractionSolid("sol_Rock2", solid_Rock, solid_Lab ,0 , G4ThreeVector(-25*m,0,10.5*m));
@@ -149,7 +152,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4LogicalVolume* logical_Rock = new G4LogicalVolume(solid_Rock3,mat_Rock,"log_Rock");
 	logical_Rock->SetVisAttributes ( new G4VisAttributes(G4Colour(0.1,0.1,0.7,0.5) ) );//(0.7, 0.7, 0.7, 0.5) )); //grey 50% transparent
   new G4PVPlacement(0,G4ThreeVector(),logical_Rock,"phy_Rock",logicalWorld,false,0,checkOverlaps);
-
+  */
 
   vector<string> Detectors;
   string input;
@@ -202,7 +205,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     G4String Detector_name_sol;
     G4String Detector_name_log;
     
-    G4cout << " i= " << i << " Detectors " << Detectors[i] << endl;
+    //G4cout << " i= " << i << " Detectors " << Detectors[i] << endl;
     j = 0;
     Detector_number = 0;
     Detector_r.clear();
@@ -227,7 +230,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
      else if (j==14) Detector_z.push_back((G4double) atof(s.c_str())*mm);
 
     }
-    G4cout << "\t " << i << " j=" << j << " number " << Detector_number << " position " << Detector_position << " slices " << Detector_slices << G4endl;         
+    //G4cout << "\t " << i << " j=" << j << " number " << Detector_number << " position " << Detector_position << " slices " << Detector_slices << G4endl;         
     Detector_name_sol = Detector_name + "_sol";
     Detector_name_log = Detector_name + "_log";
     if(Detector_slices==2){
@@ -310,27 +313,30 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   // inflate by 2%
   group2zmax *= 1.1;
   group2rmax *= 1.1;
+
+  // make both tubes the same
+  grouprmax = max(group1rmax,group2rmax);
+  groupzmax = max(group1zmax,group2zmax);
+
+
   G4double tubeWall = 1*mm;
 
   G4cout<< "\t *******************************************" <<G4endl;
-  G4cout<< "\t DetectorConstruction -- Construct finished" <<G4endl;
+  G4cout<< "\t DetectorConstruction -- placement info " <<G4endl;
   sprintf(mess,"\t position group 1  (%f,%f,%f) rmax %f  zmax %f\n",sum_x1,sum_y1,sum_z1,group1rmax,group1zmax); G4cout<< mess;
   sprintf(mess,"\t position group 2  (%f,%f,%f) rmax %f  zmax %f\n",sum_x2,sum_y2,sum_z2,group2rmax,group2zmax); G4cout<< mess;
-  sprintf(mess,"\t group 1 radius  %f  half z %f \n",group1rmax,group1zmax); G4cout<< mess;
-  sprintf(mess,"\t group 2 radius  %f  half z %f \n",group2rmax,group2zmax); G4cout<< mess;
+  sprintf(mess,"\t group radius  %f  half z %f \n",grouprmax,groupzmax); G4cout<< mess;
   G4cout<< "\t *******************************************" <<G4endl;
 
   
   /*
   // construct cylindrical tubes surrounding detectors
   // G4Tubs(Name,RMin,RMax,Half-z,SPhi,DPhi)
-  // could be simplified with 1 logical volume for both cylinders
   */
-  G4Tubs* group1Tube = new G4Tubs("group1Tube",0,group1rmax,group1rmax+tubeWall,group1zmax,twopi);
-  G4LogicalVolume* group1Logical = new G4LogicalVolume(group1Tube,fTPB,"group1Logical" );
+  G4Tubs* groupTube = new G4Tubs("groupTube",0,grouprmax,grouprmax+tubeWall,groupzmax,twopi);
+  G4LogicalVolume* group1Logical = new G4LogicalVolume(groupTube,fTPB,"group1Logical" );
+  G4LogicalVolume* group2Logical = new G4LogicalVolume(groupTube,fTPB,"group2Logical" );
 
-  G4Tubs* group2Tube = new G4Tubs("group1Tube",0,group2rmax,group2rmax+tubeWall,group2zmax,twopi);
-  G4LogicalVolume* group2Logical = new G4LogicalVolume(group2Tube,fTPB,"group2Logical" );
      
   
   // place detectors in tubes
@@ -339,45 +345,87 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     G4ThreeVector r=detRout[idet];
     G4ThreeVector z=detZhalf[idet];
     G4Polycone* Det_solid = new G4Polycone(detNamesPhys[idet],0,2*M_PI,3,&z[0],&r_i[0],&r[0]);
-    G4LogicalVolume* Det_logical = new G4LogicalVolume(Det_solid,Det_mat,detNamesLog[idet]);
+    G4LogicalVolume* Det_logical = new G4LogicalVolume(Det_solid,GeMaterial,detNamesLog[idet]);
     if(idet<detPositions.size()/2) 
-      new G4PVPlacement (0,detRelPositions[idet],Det_logical,detNames[idet],group1Logical,false,detNumbers[idet],0);
+      new G4PVPlacement (0,detRelPositions[idet],Det_logical,detNames[idet],group1Logical,false,detNumbers[idet],checkOverlaps);
      else 
-      new G4PVPlacement (0,detRelPositions[idet],Det_logical,detNames[idet],group2Logical,false,detNumbers[idet],0);     
+      new G4PVPlacement (0,detRelPositions[idet],Det_logical,detNames[idet],group2Logical,false,detNumbers[idet],checkOverlaps);     
   }
  
   /* add liquid argon sphere and place cylinders inside  */
-	G4Sphere* source_solid = new G4Sphere("source",100*cm,100.0001*cm,0,2*M_PI,0,2*M_PI);
-	G4LogicalVolume* source_logical = new G4LogicalVolume(source_solid,mat_ArLiq,"source_log");
-	source_logical->SetVisAttributes(new G4VisAttributes(G4Colour(0.1, 0.1, 0.9,0.9)));
+  G4int sourceRadius = 4*groupzmax;
+	G4Sphere* larSolid = new G4Sphere("source",0,sourceRadius,0,2*M_PI,0,2*M_PI);
+  //mat_fill defined in DetectorConstruction.icc from innerVessel_FillMaterial or command file
+	larSourceLogical = new G4LogicalVolume(larSolid,mat_fill,"source_log"); 
+	larSourceLogical->SetVisAttributes(new G4VisAttributes(G4Colour(0.1, 0.1, 0.9,0.5)));
   
-  G4VPhysicalVolume* group1Physical = new G4PVPlacement(0,group1pos,group1Logical,"group1Physical",source_logical,false,0,checkOverlaps);
-  G4VPhysicalVolume* group2Physical = new G4PVPlacement(0,group2pos,group2Logical,"group2Physical",source_logical,false,0,checkOverlaps);
+  G4VPhysicalVolume* group1Physical = new G4PVPlacement(0,group1pos,group1Logical,"group1Physical",larSourceLogical,false,0,checkOverlaps);
+  G4VPhysicalVolume* group2Physical = new G4PVPlacement(0,group2pos,group2Logical,"group2Physical",larSourceLogical,false,0,checkOverlaps);
 
-  /* add top and bottom disks to 1 */
-  G4Tubs* WLSDisk1 = new G4Tubs("WLSDisk1",0.,group1rmax+tubeWall,tubeWall,0,twopi);
-  logicalWLSDisk1 = new G4LogicalVolume(WLSDisk1,fTPB,"LogicalWLSDisk1");
-	logicalWLSDisk1->SetVisAttributes ( new G4VisAttributes(G4Colour(0.99, 0.3, 0.2,0.7) ));
-  G4ThreeVector WLSDisk1TopPos = group1pos+G4ThreeVector(0,0,group1zmax); 
-  G4PVPlacement* WLSDisk1Top = new G4PVPlacement(0,WLSDisk1TopPos,logicalWLSDisk1,"WLSDisk1Top",source_logical,false,0,checkOverlaps);
-  G4ThreeVector WLSDisk1BotPos = group1pos+G4ThreeVector(0,0,-group1zmax); 
-  G4PVPlacement* WLSDisk1Bot = new G4PVPlacement(0,WLSDisk1BotPos,logicalWLSDisk1,"WLSDisk1Bot",source_logical,false,0,checkOverlaps);
-
- /* add top and bottom disks to 2 */
-  G4Tubs* WLSDisk2 = new G4Tubs("WLSDisk1",0.,group2rmax+tubeWall,tubeWall,0,twopi);
-  logicalWLSDisk2 = new G4LogicalVolume(WLSDisk2,fTPB,"LogicalWLSDisk2");
-	logicalWLSDisk2->SetVisAttributes ( new G4VisAttributes(G4Colour(0.99, 0.3, 0.2,0.7) ));
-  G4ThreeVector WLSDisk2TopPos = group2pos+G4ThreeVector(0,0,group2zmax); 
-  G4PVPlacement* WLSDisk2Top = new G4PVPlacement(0,WLSDisk2TopPos,logicalWLSDisk2,"WLSDisk2Top",source_logical,false,0,checkOverlaps);
-  G4ThreeVector WLSDisk2BotPos = group2pos+G4ThreeVector(0,0,-group1zmax); 
-  G4PVPlacement* WLSDisk2Bot = new G4PVPlacement(0,WLSDisk2BotPos,logicalWLSDisk2,"WLSDisk2Bot",source_logical,false,0,checkOverlaps);
+  /////////////PMT coated in WLS/////////////
+  WLSHalfThickness = 0.05*mm;  // half thickness
+  G4double glassHalfThickness = 10*mm;  // half thickness
+  G4double housingHalfThickness = 10*mm;  // half thickness
+  G4Tubs* PMTDiskTubs = new G4Tubs("PMTDiskTubs",0.,grouprmax,housingHalfThickness,0,twopi);
   
-
-  /* put sphere inside world */
+  //Metal housing, Kovar is a Ni Co alloy
+  G4Material* materialPMTHousing = G4Material::GetMaterial("Kovar");
+  logicalPmtHousing = new G4LogicalVolume(PMTDiskTubs,materialPMTHousing,"logicalPmtHousing");  
+  //logicalPmtHousing->SetVisAttributes ( new G4VisAttributes(G4Colour(0.9,0.1,0.1) ) );
+  
+  G4Tubs* PMTGlassTubs = new G4Tubs("PMTGlassTubs",0,grouprmax,glassHalfThickness,0,twopi);
+  G4Material* materialPMTGlass = G4Material::GetMaterial("Quartz"); 
+  logicalPmtGlass = new G4LogicalVolume(PMTGlassTubs,materialPMTGlass,"logicalPmtGlass");            
+  //logicalPmtGlass->SetVisAttributes ( new G4VisAttributes(G4Colour(0.1,0.9,0.1) ) );
+  
+  G4Tubs* PMTWlsTubs = new G4Tubs("PMTWlsTubs",0,grouprmax,WLSHalfThickness,0,twopi);
+  
+  logicalPMTWLS = new G4LogicalVolume(PMTWlsTubs,fTPB,"logicalPmtGlassWLS");   
+  logicalPMTWLS->SetVisAttributes ( new G4VisAttributes(G4Colour(0.6,0.1,0.7) ) );
+  //fPMTGlassOptSurface defined in LegendDetectorMaterials.icc
+  new G4LogicalSkinSurface("PMTGlass_surf",logicalPmtGlass,fPMTGlassOptSurface);
+  
+   /* put sphere inside world before placing the PMTs */
   G4ThreeVector source_center(0,0,0);
-  G4VPhysicalVolume* source_phys = new G4PVPlacement (0,source_center,source_logical,"source_phys",logicalWorld,false,0,1);
+  larPhysical = new G4PVPlacement (0,source_center,larSourceLogical,"larPhysical",logicalWorld,false,0,checkOverlaps);
 
+  G4cout<< "\t *******************************************" <<G4endl;
+  // construcnt and put into larSourceLogical needs larPhysical for LogicalBorderSuface
+  G4double pmtZOffset = 2.2*(glassHalfThickness+WLSHalfThickness)+housingHalfThickness;
+  G4ThreeVector rPMT1top = group1pos + G4ThreeVector(0,0,groupzmax+pmtZOffset);
+  G4ThreeVector rPMT1bot = group1pos + G4ThreeVector(0,0,-groupzmax-pmtZOffset);
+  G4ThreeVector rPMT2top = group2pos + G4ThreeVector(0,0,groupzmax+pmtZOffset);
+  G4ThreeVector rPMT2bot = group2pos + G4ThreeVector(0,0,-groupzmax-pmtZOffset);
+  PlacePMT(rPMT1top,-1,0);
+  PlacePMT(rPMT1bot,1,1);
+  PlacePMT(rPMT2top,-1,2);
+  PlacePMT(rPMT2bot,1,3);
+
+  G4cout << " done constructing detector  " << G4endl;
   return physicalWorld;
+}
+
+
+void DetectorConstruction::PlacePMT(G4ThreeVector rhousing,double top_or_bot,int num)
+{
+  //PMT Housing 
+  new G4PVPlacement(0,rhousing,logicalPmtHousing,"phys_PMTHousing_"+std::to_string(num),larSourceLogical,false,num,checkOverlaps);
+  //PMT GLASS
+  G4double zhalf = dynamic_cast<G4Tubs*>(logicalPmtHousing->GetSolid())->GetZHalfLength() +  
+    dynamic_cast<G4Tubs*>(logicalPmtGlass->GetSolid())->GetZHalfLength();
+  zhalf *= top_or_bot;
+  G4ThreeVector rglass = rhousing + G4ThreeVector(0,0,zhalf);
+  new G4PVPlacement(0,rglass,logicalPmtGlass,"phys_PMTGlass_"+std::to_string(num),larSourceLogical,false,num,checkOverlaps);
+  //WLS PMT 
+  zhalf += top_or_bot*( dynamic_cast<G4Tubs*>(logicalPmtGlass->GetSolid())->GetZHalfLength()
+      +dynamic_cast<G4Tubs*>(logicalPMTWLS->GetSolid())->GetZHalfLength());
+  G4ThreeVector rwls = rhousing + G4ThreeVector(0,0,zhalf);
+  G4PVPlacement* phys_PMTWLS = new G4PVPlacement(0,rwls,logicalPMTWLS,"phys_WLSGlassPmt_"+std::to_string(num),larSourceLogical,false,num,checkOverlaps);
+  /* border between WLS and larPhysicsl crossing in both directions WLS is rough on both sides */
+  G4double roughness = 0.5;
+  G4OpticalSurface* WLSoptSurf = new G4OpticalSurface("WLS_rough_surf",glisur,ground,dielectric_dielectric,roughness);
+  new G4LogicalBorderSurface("Phys_PMT_WLS_"+ std::to_string(num),larPhysical,phys_PMTWLS,WLSoptSurf);
+  new G4LogicalBorderSurface("Phys_PMT_WLS_"+ std::to_string(num),phys_PMTWLS,larPhysical,WLSoptSurf);
 }
 
 //
@@ -450,12 +498,11 @@ void DetectorConstruction::ArgonOpticalProperties()
   LAr_mt->AddConstProperty("FASTTIMECONSTANT", 5.95*ns);//6.*ns);
   LAr_mt->AddConstProperty("SLOWTIMECONSTANT",922*ns);//1590.*ns);
   LAr_mt->AddConstProperty("YIELDRATIO",0.23);
-// G4cout<<LAr_SCIN<<G4endl;
+  // G4cout<<LAr_SCIN<<G4endl;
   G4double fano = 0.11;
   LAr_mt->AddConstProperty("RESOLUTIONSCALE",fano); 
   mat_ArLiq->SetMaterialPropertiesTable(LAr_mt); // G4Material defined in Detector_Materials.icc
   mat_ArLiq->GetIonisation()->SetBirksConstant(5.1748e-4*cm/MeV);//0.0144*mm/MeV);
- 
 }
 
 G4double DetectorConstruction::LArEpsilon(const G4double lambda)
@@ -503,10 +550,9 @@ G4double DetectorConstruction::LArRayLength(const G4double lambda,const
 void DetectorConstruction::ConstructSDandField()
 {
   G4SDManager* SDman   =  G4SDManager::GetSDMpointer();  
-  PMTSD* PMTSD1 = new PMTSD("PhotoCathode",1,"PhCathodeHC" );    
-  SDman->AddNewDetector(PMTSD1); 
-  logicalWLSDisk1->SetSensitiveDetector(PMTSD1);
-  logicalWLSDisk2->SetSensitiveDetector(PMTSD1); 
+  PMTSD* sd = new PMTSD("PhotoCathode",1,"PhCathodeHC" );    
+  SDman->AddNewDetector(sd); 
+  logicalPmtGlass->SetSensitiveDetector(sd);
 }
 
 void DetectorConstruction::UpdateGeometry()
@@ -519,7 +565,7 @@ void DetectorConstruction::SetOverlapsCheck(G4bool f_check)
 	//checkOverlaps = f_check;
 }
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-void DetectorConstruction::SetFillGas(G4String smaterial)
+void DetectorConstruction::SetFillMaterial(G4String smaterial)
 {
 	innerVessel_FillMaterial = smaterial;
 }

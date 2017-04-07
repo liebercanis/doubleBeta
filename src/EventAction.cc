@@ -3,6 +3,7 @@
 
 #include "EventAction.hh"
 #include "LegendAnalysis.hh"
+#include "LegendTrajectory.hh"
 #include "UserEventInformation.hh"
 #include "RunAction.hh"
 
@@ -63,10 +64,11 @@ void EventAction::EndOfEventAction(const G4Event* anEvent)
   G4int nOptical =0;
   if(G4VVisManager::GetConcreteInstance()) {
     for (G4int i=0; i<n_trajectories; i++) {
-      auto trj = ((*(anEvent->GetTrajectoryContainer()))[i]);
-      //if(i<5) trj->ShowTrajectory(); // print out to G4cout
+      LegendTrajectory *trj = dynamic_cast<LegendTrajectory*>((*(anEvent->GetTrajectoryContainer()))[i]);
+      if(i<5) trj->ShowTrajectory(); // print out to G4cout
       
       if(trj->GetParticleName()=="opticalphoton") {
+        trj->SetForceDrawTrajectory(true);
         ++nOptical;
       }
       trj->DrawTrajectory();

@@ -49,6 +49,7 @@ class TrackingAction : public G4UserTrackingAction {
     virtual void PostUserTrackingAction(const G4Track*);
     TDirectory *fDir;
     TH1F *hTrackPhotonE;
+    TH1F *hTrackScintE;
     TH1F *hAbsorbedPhotonE;
     TH1F *hWLSPhotonE;
     TH1F *hPMTPhotonE;

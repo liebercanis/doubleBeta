@@ -669,17 +669,17 @@
 //	G4Material* mat_Detector = enrGe;
 
 	//Vacuum ArgonLiquid ArgonGas NitrogenLiquid NitrogenGas
-	if (innerVessel_FillMaterial.contains("NitrogenGas")) mat_fillGas	= mat_NCold;
-	else if (innerVessel_FillMaterial.contains("NitrogenLiquid")) mat_fillGas	= mat_NLiq;
-	else if (innerVessel_FillMaterial.contains("ArgonGas")) mat_fillGas	= mat_ArCold;
-	else if (innerVessel_FillMaterial.contains("ArgonLiquid")) mat_fillGas	= mat_ArLiq;
-	else mat_fillGas = mat_vacuum;
+	if (innerVessel_FillMaterial.contains("NitrogenGas")) mat_fill	= mat_NCold;
+	else if (innerVessel_FillMaterial.contains("NitrogenLiquid")) mat_fill	= mat_NLiq;
+	else if (innerVessel_FillMaterial.contains("ArgonGas")) mat_fill	= mat_ArCold;
+	else if (innerVessel_FillMaterial.contains("ArgonLiquid")) mat_fill	= mat_ArLiq;
+	else mat_fill = mat_vacuum;
 
 	G4cout << "----------------------------" << G4endl;
-	G4cout << "Material in inner vessel is " << mat_fillGas->GetName() << G4endl;
-	G4cout << "Temperature: "                << mat_fillGas->GetTemperature() << G4endl;
-	G4cout << "State: "                      << mat_fillGas->GetState() << G4endl;
-	G4cout << "Density: "                    << mat_fillGas->GetDensity() / (g/cm3) << " g/cm3 " << G4endl;
+	G4cout << "Material in inner vessel is " << mat_fill->GetName() << G4endl;
+	G4cout << "Temperature: "                << mat_fill->GetTemperature() << G4endl;
+	G4cout << "State: "                      << mat_fill->GetState() << G4endl;
+	G4cout << "Density: "                    << mat_fill->GetDensity() / (g/cm3) << " g/cm3 " << G4endl;
 	G4cout << "----------------------------" << G4endl;
 
 

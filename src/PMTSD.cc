@@ -88,17 +88,20 @@ G4bool PMTSD::ProcessHits(G4Step* aStep, G4TouchableHistory*)
 
 G4bool PMTSD::ProcessHits_constStep(const G4Step* aStep, G4TouchableHistory* )
 {
-
+  if(aStep==NULL) {
+    //G4cout << " ProcessHits_constStep called with null step " << G4endl;
+    return false;
+  }
   G4ParticleDefinition* particleType = aStep->GetTrack()->GetDefinition();
   G4String particleName = particleType->GetParticleName();
   G4double edep = aStep->GetTotalEnergyDeposit();
-  //  G4double time = aStep->GetPostStepPoint()->GetGlobalTime();   //measured in nanoseconds;
-  //  G4double time = aStep->GetTrack()->GetGlobalTime();
-  //  G4cout << "testpoint " << time <<  "\n";
+  G4double gtime = aStep->GetPostStepPoint()->GetGlobalTime();   //measured in nanoseconds;
+  G4double time = aStep->GetTrack()->GetGlobalTime();
+  //G4cout << "testpoint time " << time << " global time   " << gtime << " edep " << edep << " particle name " << particleName << G4endl; 
 
-  if(edep<=0. || (particleName != "opticalphoton")) return false;
+  if((particleName != "opticalphoton")) return false;
 
-  const G4VPhysicalVolume* physVol = aStep->GetPostStepPoint()->GetPhysicalVolume();
+  //const G4VPhysicalVolume* physVol = aStep->GetPostStepPoint()->GetPhysicalVolume();
   hTime->Fill( aStep->GetTrack()->GetGlobalTime()/ns ); //convert to ns
   return true;
 }
