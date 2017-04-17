@@ -330,14 +330,24 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
   
   /*
-  // construct cylindrical tubes surrounding detectors
+  // construct cylindrical liquid argon tubes surrounding detectors
   // G4Tubs(Name,RMin,RMax,Half-z,SPhi,DPhi)
   */
-  G4Tubs* groupTube = new G4Tubs("groupTube",0,grouprmax,grouprmax+tubeWall,groupzmax,twopi);
-  G4LogicalVolume* group1Logical = new G4LogicalVolume(groupTube,fTPB,"group1Logical" );
-  G4LogicalVolume* group2Logical = new G4LogicalVolume(groupTube,fTPB,"group2Logical" );
+  G4Tubs* groupTube = new G4Tubs("groupTube",0,grouprmax,groupzmax,0,twopi);
+  G4LogicalVolume* group1Logical = new G4LogicalVolume(groupTube,mat_fill,"group1Logical" );
+  G4LogicalVolume* group2Logical = new G4LogicalVolume(groupTube,mat_fill,"group2Logical" );
+  group1Logical->SetVisAttributes(new G4VisAttributes(G4Colour(0.1,0.5,0.7)));
+  group2Logical->SetVisAttributes(new G4VisAttributes(G4Colour(0.1,0.5,0.7)));
 
-     
+  /* add TPB outside the tubes */
+  WLSHalfThickness = 0.05*mm;  // half thickness
+  G4Colour tpbColor=G4Colour::Cyan(); //(0.6,0.1,0.7);
+  G4Tubs* groupWls = new G4Tubs("groupTube",grouprmax+WLSHalfThickness,grouprmax+3*WLSHalfThickness,groupzmax,0,twopi);
+  G4LogicalVolume* outerTube1Logical = new G4LogicalVolume(groupWls,fTPB,"outerTube1Logical" );
+  outerTube1Logical->SetVisAttributes ( new G4VisAttributes(tpbColor ) );
+  G4LogicalVolume* outerTube2Logical = new G4LogicalVolume(groupWls,fTPB,"outerTube2Logical" );
+  outerTube2Logical->SetVisAttributes ( new G4VisAttributes(tpbColor ) );
+  
   
   // place detectors in tubes
   for(unsigned idet=0; idet < detPositions.size(); ++ idet) {
@@ -358,12 +368,15 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   //mat_fill defined in DetectorConstruction.icc from innerVessel_FillMaterial or command file
 	larSourceLogical = new G4LogicalVolume(larSolid,mat_fill,"source_log"); 
 	larSourceLogical->SetVisAttributes(new G4VisAttributes(G4Colour(0.1, 0.1, 0.9,0.5)));
-  
+ 
+  /* place tubes inside sphere */
   G4VPhysicalVolume* group1Physical = new G4PVPlacement(0,group1pos,group1Logical,"group1Physical",larSourceLogical,false,0,checkOverlaps);
   G4VPhysicalVolume* group2Physical = new G4PVPlacement(0,group2pos,group2Logical,"group2Physical",larSourceLogical,false,0,checkOverlaps);
+  G4VPhysicalVolume* outerTube1Physical = new G4PVPlacement(0,group1pos,outerTube1Logical,"outerTube1Physical",larSourceLogical,false,0,checkOverlaps);
+  G4VPhysicalVolume* outerTube2Physical = new G4PVPlacement(0,group2pos,outerTube2Logical,"outerTube2Physical",larSourceLogical,false,0,checkOverlaps);
+  
 
   /////////////PMT coated in WLS/////////////
-  WLSHalfThickness = 0.05*mm;  // half thickness
   G4double glassHalfThickness = 10*mm;  // half thickness
   G4double housingHalfThickness = 10*mm;  // half thickness
   G4Tubs* PMTDiskTubs = new G4Tubs("PMTDiskTubs",0.,grouprmax,housingHalfThickness,0,twopi);
@@ -376,12 +389,11 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4Tubs* PMTGlassTubs = new G4Tubs("PMTGlassTubs",0,grouprmax,glassHalfThickness,0,twopi);
   G4Material* materialPMTGlass = G4Material::GetMaterial("Quartz"); 
   logicalPmtGlass = new G4LogicalVolume(PMTGlassTubs,materialPMTGlass,"logicalPmtGlass");            
-  //logicalPmtGlass->SetVisAttributes ( new G4VisAttributes(G4Colour(0.1,0.9,0.1) ) );
+  logicalPmtGlass->SetVisAttributes ( new G4VisAttributes(G4Colour::Yellow() ) );
   
   G4Tubs* PMTWlsTubs = new G4Tubs("PMTWlsTubs",0,grouprmax,WLSHalfThickness,0,twopi);
-  
   logicalPMTWLS = new G4LogicalVolume(PMTWlsTubs,fTPB,"logicalPmtGlassWLS");   
-  logicalPMTWLS->SetVisAttributes ( new G4VisAttributes(G4Colour(0.6,0.1,0.7) ) );
+  logicalPMTWLS->SetVisAttributes ( new G4VisAttributes(tpbColor ) );
   //fPMTGlassOptSurface defined in LegendDetectorMaterials.icc
   new G4LogicalSkinSurface("PMTGlass_surf",logicalPmtGlass,fPMTGlassOptSurface);
   
@@ -391,7 +403,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
   G4cout<< "\t *******************************************" <<G4endl;
   // construcnt and put into larSourceLogical needs larPhysical for LogicalBorderSuface
-  G4double pmtZOffset = 2.2*(glassHalfThickness+WLSHalfThickness)+housingHalfThickness;
+  G4double pmtZOffset = 2*(glassHalfThickness+WLSHalfThickness)+housingHalfThickness;//+tubeWall;
   G4ThreeVector rPMT1top = group1pos + G4ThreeVector(0,0,groupzmax+pmtZOffset);
   G4ThreeVector rPMT1bot = group1pos + G4ThreeVector(0,0,-groupzmax-pmtZOffset);
   G4ThreeVector rPMT2top = group2pos + G4ThreeVector(0,0,groupzmax+pmtZOffset);

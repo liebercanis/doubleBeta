@@ -144,6 +144,7 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
   
   G4String processName;
   if(process) processName = process->GetProcessName();
+  G4cout<<"SteppingAction:: Process Name  "<<processName<<G4endl;
 
   G4ParticleDefinition* particleType = aTrack->GetDefinition();
 
@@ -213,7 +214,6 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
         }
       }
       fExpectedNextStatus=Undefined;
-      //G4cout<<"SteppingAction:: Process Name  "<<processName<<G4endl;
       switch(boundaryStatus){
         case Absorption:
           {

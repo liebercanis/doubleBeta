@@ -76,11 +76,6 @@ LegendTrajectory::LegendTrajectory(LegendTrajectory &right)
 
 LegendTrajectory::~LegendTrajectory() {}
 
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-void LegendTrajectory::AppendStep(const G4Step* aStep)
-{
-   positionRecord->push_back( new G4TrajectoryPoint(aStep->GetPostStepPoint()->GetPosition() ));
-}
 
 void LegendTrajectory::DrawTrajectory() const
 {
@@ -92,8 +87,12 @@ void LegendTrajectory::DrawTrajectory() const
   //Taken from G4VTrajectory and modified to select colours based on particle
   //type and to selectively eliminate drawing of certain trajectories.
 
+  //G4cout << " drawing force " << fForceDraw << " drawit "<< fDrawit  << "forcenodraw " << fForceNoDraw << G4endl;
   if(!fForceDraw && (!fDrawit || fForceNoDraw))
     return;
+
+  // not sure where ForceDraw, ForceNoDraw are being set
+  if(!fDrawit) return;
 
   // If i_mode>=0, draws a trajectory as a polyline and, if i_mode!=0,
   // adds markers - yellow circles for step points and magenta squares
@@ -140,14 +139,20 @@ void LegendTrajectory::DrawTrajectory() const
     G4Colour colour;
  
     if(fParticleDefinition==G4OpticalPhoton::OpticalPhotonDefinition()){
-      if(fWls) //WLS photons are red
-        colour = G4Colour(1.,0.,0.);
-      else{ //Scintillation and Cerenkov photons are green
-        colour = G4Colour(0.,1.,0.);
+      
+      if(fWls) {//WLS photons are red
+        G4cout << " LegendTrajectory optical photon WLS "  << G4endl;
+        colour = G4Colour::Red();
+      } else if(fHit) {
+        G4cout << " LegendTrajectory optical photon hit pmt "  << G4endl;
+        colour = G4Colour::Yellow();
+      } else {//Scintillation and Cerenkov photons are green
+        G4cout << " LegendTrajectory optical photon other " << fDrawit   << G4endl;
+        colour = G4Colour::Green();
       }
     }
     else //All other particles are blue
-      colour = G4Colour(0.,0.,1.);
+      colour = G4Colour::Blue();
  
     G4VisAttributes trajectoryLineAttribs(colour);
     trajectoryLine.SetVisAttributes(&trajectoryLineAttribs);

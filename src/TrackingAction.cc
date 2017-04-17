@@ -93,8 +93,8 @@ void TrackingAction::PostUserTrackingAction(const G4Track* aTrack){
     return;
   }
 
-  trajectory->SetForceDrawTrajectory(true);
-  trajectory->SetDrawTrajectory(true);
+  //trajectory->SetForceDrawTrajectory(true);
+  trajectory->SetDrawTrajectory(false);
   UserTrackInformation* trackInformation=(UserTrackInformation*) aTrack->GetUserInformation();
   
   //LegendAnalysis::Instance()->FillTrajectory(trajectory);
@@ -123,9 +123,13 @@ void TrackingAction::PostUserTrackingAction(const G4Track* aTrack){
     if(trackInformation->GetTrackStatus()&hitPMT) {
       hPMTPhotonE->Fill(totE);
       trajectory->SetDrawTrajectory(true);
+      trajectory->SetHit();
     } else if(trackInformation->GetTrackStatus()&hitWLS) {
       trajectory->SetDrawTrajectory(true);
+      trajectory->SetWLS();
       hWLSPhotonE->Fill(totE);
-    } //else G4cout << " UNKNOWN optical photon creator process " << creator->GetProcessName()<< " track definition is  " << aTrack->GetDefinition() << " ???? " << G4endl;
+    } //else trajectory->SetDrawTrajectory(false);
+      
+    //else G4cout << " UNKNOWN optical photon creator process " << creator->GetProcessName()<< " track definition is  " << aTrack->GetDefinition() << " ???? " << G4endl;
   }
 }

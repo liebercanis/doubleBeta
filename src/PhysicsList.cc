@@ -183,7 +183,7 @@ void PhysicsList::ConstructProcess()
 
   ConstructCerenkov();
 
-  ConstructHad();
+  //ConstructHad();
 
   ConstructGeneral();
 

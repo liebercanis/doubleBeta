@@ -65,13 +65,14 @@ void EventAction::EndOfEventAction(const G4Event* anEvent)
   if(G4VVisManager::GetConcreteInstance()) {
     for (G4int i=0; i<n_trajectories; i++) {
       LegendTrajectory *trj = dynamic_cast<LegendTrajectory*>((*(anEvent->GetTrajectoryContainer()))[i]);
-      if(i<5) trj->ShowTrajectory(); // print out to G4cout
+      
+      if(trj->IsWLS()) trj->ShowTrajectory(); // print out to G4cout
       
       if(trj->GetParticleName()=="opticalphoton") {
-        trj->SetForceDrawTrajectory(true);
+        //trj->SetForceDrawTrajectory(true);
         ++nOptical;
       }
-      trj->DrawTrajectory();
+      //trj->DrawTrajectory();
     }
   }
   G4cout << "\t number of optical  = "<< nOptical <<G4endl;

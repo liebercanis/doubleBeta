@@ -54,20 +54,24 @@ class LegendTrajectory : public G4Trajectory
     virtual ~LegendTrajectory();
  
     virtual void DrawTrajectory() const;
-    virtual void AppendStep(const G4Step* aStep);
  
     inline void* operator new(size_t);
     inline void  operator delete(void*);
 
     void SetDrawTrajectory(G4bool b){fDrawit=b;}
-    void WLS(){fWls=true;}
+    void SetWLS(){fWls=true;}
+    void SetHit(){fHit=true;}
     void SetForceDrawTrajectory(G4bool b){fForceDraw=b;}
     void SetForceNoDrawTrajectory(G4bool b){fForceNoDraw=b;}
+    bool IsWLS() { return fWls; }
+    bool IsHit() { return fHit; }
+    
 
   private:
 
     TrajectoryPointContainer *positionRecord;
     G4bool fWls;
+    G4bool fHit;
     G4bool fDrawit;
     G4bool fForceNoDraw;
     G4bool fForceDraw;

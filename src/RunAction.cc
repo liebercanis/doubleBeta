@@ -73,7 +73,7 @@ void RunAction::EndOfRunAction(const G4Run* aRun)
   if (nofEvents == 0) return;
 
   fRootFout->cd();
-  fRootTree->Print();
+  //fRootTree->Print();
   fRootTree->Write();
   fRootFout->Close();
 

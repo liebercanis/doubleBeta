@@ -50,7 +50,9 @@ PrimaryGeneratorAction::PrimaryGeneratorAction(){
   fParticleGun->SetParticleDefinition(particleTable->FindParticle(particleName="gamma"));
   //Default energy,position,momentum
   fParticleGun->SetParticleEnergy(pGun_nrg);//511.0*keV);
-  fParticleGun->SetParticlePosition(G4ThreeVector(0.0 ,0.,0.));// 0.0, -20.0*cm));
+  //position group 1  (-205.165517,2.829276,-55.000261) rmax 147.244883  zmax 142.671828
+	//position group 2  (206.799000,0.000000,-58.770646) rmax 143.629220  zmax 146.940251
+  fParticleGun->SetParticlePosition(G4ThreeVector(0,0,1));
   fParticleGun->SetParticleMomentumDirection(G4ThreeVector(0.,0.,1.));
 }
 
