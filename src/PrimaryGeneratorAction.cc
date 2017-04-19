@@ -42,63 +42,25 @@
 
 PrimaryGeneratorAction::PrimaryGeneratorAction(){
   G4int n_particle = 1;
-  fParticleGun = new G4ParticleGun(n_particle);
- 
-  G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
- 
-  G4String particleName;
-  fParticleGun->SetParticleDefinition(particleTable->FindParticle(particleName="e-"));
-  //Default energy,position,momentum
-  fParticleGun->SetParticleEnergy(pGun_nrg);//511.0*keV);
-  //position group 1  (-205.165517,2.829276,-55.000261) rmax 147.244883  zmax 142.671828
-	//position group 2  (206.799000,0.000000,-58.770646) rmax 143.629220  zmax 146.940251
-  fParticleGun->SetParticlePosition(G4ThreeVector(0,0,1));
-  fParticleGun->SetParticleMomentumDirection(G4ThreeVector(0.,0.,1.));
+  //fParticleSource = new G4ParticleGun(n_particle);
+  fParticleSource= new LegendParticleSource();
 
-  // Ar39 spectrum
-  G4String pathFile = "External_data/Ar39Theory.root";
-  TFile *ar39File = new TFile(pathFile.data());
-  if (!ar39File ) 
-    G4cout<<" PrimaryGeneratorActon ERROR:: file " << pathFile << " not found " << G4endl;
-  else
-    G4cout<<" PrimaryGeneratorAction INFO:: file " << pathFile << " opened " << G4endl;
-  hAr39Theory=NULL;
-  ar39File->GetObject("theory",hAr39Theory);
-  if (!hAr39Theory ) 
-    G4cout<<" PrimaryGeneratorAction ERROR:: no theory TH1F in file " << pathFile <<G4endl;
-  else 
-    G4cout<<" PrimaryGeneratorAction info hAr39Theory found " <<G4endl;
-  
-  // create directory 
-  fDir = LegendAnalysis::Instance()->topDir()->mkdir("generate");
-  fDir->cd();
-  G4cout<<" PrimaryGeneratorAction working root directory  is  " << fDir->GetName() << G4endl;  
-  gDirectory->pwd();
-  gDirectory->Append(hAr39Theory);
-  hAr39Test = (TH1D*) hAr39Theory->Clone("Ar39Test");
-  hAr39Test->Reset();
-  //for(int itry=0; itry<10000; ++itry) hAr39Test->Fill( getAr39Energy() );
-  
-    
+  G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
+  G4String particleName;
+  fParticleSource->SetParticleDefinition(particleTable->FindParticle(particleName="e-"));
+  fParticleSource->SetEnergyDisType("Ar39");
+  G4cout << " PrimaryGeneratorAction energy distribution type is " << fParticleSource->GetEnergyDisType() << G4endl;
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 PrimaryGeneratorAction::~PrimaryGeneratorAction(){
-    delete fParticleGun;
+    delete fParticleSource;
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent){
   // Ar39 event
-  G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
-  G4String particleName;
-  fParticleGun->SetParticleDefinition(particleTable->FindParticle(particleName="e-"));
-  G4double energy = getAr39Energy();
-  hAr39Test->Fill( energy );
-  fParticleGun->SetParticleEnergy( energy );
-  fParticleGun->SetParticlePosition(G4ThreeVector(7,7,0));
-  fParticleGun->SetParticleMomentumDirection(G4ThreeVector(0.,0.,1.));  
-  fParticleGun->GeneratePrimaryVertex(anEvent);
+  fParticleSource->GeneratePrimaryVertex(anEvent);
 }
