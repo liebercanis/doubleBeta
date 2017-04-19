@@ -12,6 +12,7 @@
 #include "TMath.h"
 #include "TFile.h"
 #include "TH1F.h"
+#include "TH1D.h"
 #include "TGraph.h"
 #include "LTEvent.hxx"
 // singleton class for root file handling
@@ -29,7 +30,9 @@ class LegendAnalysis
     // Disabled (not implemented) copy constructor and asignment.
     LegendAnalysis(const LegendAnalysis&);
     LegendAnalysis& operator=(const LegendAnalysis&);
-    TH1F *hWOptical;
+    TH1F *hOptical;
+    TH1F *hWls;
+    TH1F *hPmtHits;
     TH1F *hEElectron;
     TH1F *hEGamma;
   

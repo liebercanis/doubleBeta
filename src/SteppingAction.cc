@@ -96,6 +96,7 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
   //This is a primary track 
   // did we miss any secondaries from the primary track?
   if(aTrack->GetParentID()==0){
+    trackInformation->SetPrimary();
     //G4cout<<"SteppingAction::Primary Vertex found "<<G4endl;
     G4TrackVector* fSecondary = fpSteppingManager->GetfSecondary();
     G4int tN2ndariesTot = fpSteppingManager->GetfN2ndariesAtRestDoIt()
@@ -144,7 +145,7 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
   
   G4String processName;
   if(process) processName = process->GetProcessName();
-  G4cout<<"SteppingAction:: Process Name  "<<processName<<G4endl;
+  //G4cout<<"SteppingAction:: Process Name  "<<processName<<G4endl;
 
   G4ParticleDefinition* particleType = aTrack->GetDefinition();
 
@@ -220,10 +221,12 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
             //This all Transportation
             trackInformation->AddTrackStatusFlag(boundaryAbsorbed);
             eventInformation->IncBoundaryAbsorption();
+            aTrack->SetTrackStatus(fStopAndKill);
             break;
           }
         case Detection:
           {
+            aTrack->SetTrackStatus(fStopAndKill);
             trackInformation->AddTrackStatusFlag(hitPMT);
             //Note, this assumes that the volume causing detection
             // is the photocathode because it is the only one with non-zero efficiency
@@ -232,7 +235,7 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
             G4String sdName="PhotoCathode";//"/LegendDet/pmtSD";
             PMTSD* pmtSD = (PMTSD*)SDman->FindSensitiveDetector(sdName);
             if(pmtSD) pmtSD->ProcessHits_constStep(step,NULL);
-            else G4cout << "  Stepping action cannot find PhotoCathode " << G4endl;
+            else G4cout << " SteppingAction ERROR!!!!!   cannot find PhotoCathode " << G4endl;
             break;
           }
         case FresnelReflection:
@@ -255,6 +258,7 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
       // WLS is optical but doesnt seem to correspond to above boundary case 
       if(processName == "OpWLS" ){ 
         trackInformation->AddTrackStatusFlag(hitWLS);
+        aTrack->SetTrackStatus(fStopAndKill);
       } 
     }  //end of if(thePostPoint->GetStepStatus()==fGeomBoundary)
   } else if(processName == "phot" ){ 

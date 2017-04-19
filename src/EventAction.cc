@@ -60,23 +60,17 @@ void EventAction::EndOfEventAction(const G4Event* anEvent)
   G4int n_trajectories = 0;
   if(trajectoryContainer) n_trajectories = trajectoryContainer->entries();
   G4cout << "\t number of trajectories = "<< n_trajectories <<G4endl;
- // extract the trajectories and draw them
-  G4int nOptical =0;
-  if(G4VVisManager::GetConcreteInstance()) {
+  // extract the trajectories and draw them
+  /*if(G4VVisManager::GetConcreteInstance()) {
     for (G4int i=0; i<n_trajectories; i++) {
-      LegendTrajectory *trj = dynamic_cast<LegendTrajectory*>((*(anEvent->GetTrajectoryContainer()))[i]);
-      
-      if(trj->IsWLS()) trj->ShowTrajectory(); // print out to G4cout
-      
-      if(trj->GetParticleName()=="opticalphoton") {
-        //trj->SetForceDrawTrajectory(true);
-        ++nOptical;
+      LegendTrajectory *trajectory = dynamic_cast<LegendTrajectory*>((*(anEvent->GetTrajectoryContainer()))[i]);
+      //if(trajectory->IsWLS()) trajectory->ShowTrajectory(); // print out to G4cout
+      if(trajectory->GetParticleName()=="opticalphoton") {
+        //trajectory->SetForceDrawTrajectory(true);
       }
-      //trj->DrawTrajectory();
+      //trajectory->DrawTrajectory();
     }
-  }
-  G4cout << "\t number of optical  = "<< nOptical <<G4endl;
-  
+  }*/
   // fill the analysis tree
   LegendAnalysis::Instance()->anaEvent( anEvent );
   //anEvent->Print();

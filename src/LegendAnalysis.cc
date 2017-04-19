@@ -3,6 +3,9 @@
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 #include "LegendAnalysis.hh"
+#include "LegendTrajectory.hh"
+#include "UserTrackInformation.hh"
+#include "G4VProcess.hh"
 #include "G4UnitsTable.hh"
 #include "G4SystemOfUnits.hh"
 #include "G4PhysicalConstants.hh"
@@ -29,15 +32,25 @@ void LegendAnalysis::Initialize()
   G4cout << gmess << G4endl;
   G4cout<<" LegendAnalysis working root directory  is  " << G4endl;  
   topDir()->cd();
-  hWOptical = new TH1F("WOptical"," optical photons (nm) ",900,100,1000);
-  hWOptical->GetYaxis()->SetTitle(" photons/nm ");
-  hWOptical->GetXaxis()->SetTitle(" wavelength (nm) ");
+  hOptical = new TH1F("Optical"," optical photons (nm) ",900,100,1000);
+  hOptical->GetYaxis()->SetTitle(" photons/nm ");
+  hOptical->GetXaxis()->SetTitle(" wavelength (nm) ");
 
-  hEElectron = new TH1F("WElectron"," electrons ",1000,0,1000);
+  hWls = new TH1F("Wls"," Wls photons (nm) ",900,100,1000);
+  hWls->GetYaxis()->SetTitle(" photons/nm ");
+  hWls->GetXaxis()->SetTitle(" wavelength (nm) ");
+  
+
+  hPmtHits = new TH1F("PmtHits"," pmt photons (nm) ",900,100,1000);
+  hPmtHits->GetYaxis()->SetTitle(" photons/nm ");
+  hPmtHits->GetXaxis()->SetTitle(" wavelength (nm) ");
+  
+
+  hEElectron = new TH1F("EElectron"," electrons ",1000,0,1000);
   hEElectron->GetYaxis()->SetTitle(" electrons/KeV ");
   hEElectron->GetXaxis()->SetTitle(" energy (KeV) ");
   
-  hEGamma = new TH1F("WGamma"," gammas ",1000,0,1000);
+  hEGamma = new TH1F("EGamma"," gammas ",1000,0,1000);
   hEGamma->GetYaxis()->SetTitle(" gamma/KeV ");
   hEGamma->GetXaxis()->SetTitle(" energy (KeV) ");
   
@@ -56,13 +69,16 @@ void LegendAnalysis::Initialize()
     
 void  LegendAnalysis::anaEvent( const G4Event *anEvent)
 {
-  printf(" ++++++++++++++++++++++++++++++++++++++++++++++++ \n");
-  printf("      LegendAnalysis:anaEvent called \n");
-  printf(" ++++++++++++++++++++++++++++++++++++++++++++++++ \n");
+  //printf(" ++++++++++++++++++++++++++++++++++++++++++++++++ \n");
+  //printf("      LegendAnalysis:anaEvent called \n");
+  //printf(" ++++++++++++++++++++++++++++++++++++++++++++++++ \n");
+  if(!anEvent) {
+    G4cout << " LegendAnalysis called with NULL G4Event pointer!!! " << G4endl;
+    return;
+  }
   fEvent->clear();
   fEvent->evId = anEvent->GetEventID();
   fEvent->nPVert = anEvent->GetNumberOfPrimaryVertex();
-  printf("\t anaEvent with %i primary verticies %i \n",fEvent->nPVert);
   for(int iv=0; iv < fEvent->nPVert; ++iv) {
     G4PrimaryVertex* pvi = anEvent->GetPrimaryVertex(iv);
     LTPVertex lpv;
@@ -93,7 +109,7 @@ void  LegendAnalysis::anaEvent( const G4Event *anEvent)
   anaTrajectories( anEvent->GetTrajectoryContainer());
 
   // and end of analysis save this event
-  fEvent->print();
+  //fEvent->print();
   fTree->Fill();
   //printf(" +++++++++++++++++++ Leaving Legend Analysis +++++++++++++++++++++++++++++ \n");
 }
@@ -106,9 +122,27 @@ void  LegendAnalysis::anaTrajectories(G4TrajectoryContainer* trajectoryContainer
   }
   fEvent->nTraj = trajectoryContainer->entries();
   for(int ij=0; ij < fEvent->nTraj; ++ij) {
-    G4VTrajectory* gtrj =  (*trajectoryContainer)[ij];
+    LegendTrajectory *gtrj = dynamic_cast<LegendTrajectory*>((*(trajectoryContainer))[ij]);
+    const G4Track* aTrack= gtrj->GetTrack();
+
+     if(!aTrack) {
+      G4cout << " no track for this trajectory  " << ij << endl;
+      continue;
+    }
+
+    UserTrackInformation* trackInformation=(UserTrackInformation*) aTrack->GetUserInformation();
+    if(!trackInformation) {
+      continue;
+      G4cout << " track definition is  " << aTrack->GetDefinition()->GetParticleName()<< " no user info " << endl;
+    }
+    
+    // find creator process 
+    const G4VProcess* creator=aTrack->GetCreatorProcess();
+    if(!creator) 
+      G4cout << " track definition is  " << aTrack->GetDefinition()->GetParticleName()<< " no creator " << endl;
+
     LTTraject ltraj;
-    // fill from trajectory 
+   // fill from trajectory 
     ltraj.TrajId = gtrj->GetTrackID() ;  
     ltraj.ParentId = gtrj->GetParentID();        
     //PrimaryId = gtrj-> ;        
@@ -133,6 +167,19 @@ void  LegendAnalysis::anaTrajectories(G4TrajectoryContainer* trajectoryContainer
     ltraj.KE = p3.Mag();// don't have mass
     ltraj.Momentum.push_back(p3);
 
+    // set primary 
+    if(gtrj->IsPrimary()) {
+      ltraj.Type = LTTrajectType::PRI;
+      if(creator) 
+        G4cout << " LegendAnalysis primary creator process " << creator->GetProcessName() 
+        << " track status " << trackInformation->GetTrackStatus() <<  " PRIMARY TRACK track definition is  " << aTrack->GetDefinition()->GetParticleName()
+        << "  KE=" << ltraj.KE << G4endl;
+      else 
+       G4cout << " LegendAnalysis primary no creator process " 
+        << " track status " << trackInformation->GetTrackStatus() <<  " PRIMARY TRACK track definition is  " << aTrack->GetDefinition()->GetParticleName()
+        << "  KE=" << ltraj.KE << G4endl;
+    }
+
     //G4cout <<  " ANALYSIS id " <<   ltraj.TrajId  << " parent "  << ltraj.ParentId << " PDG "  <<  ltraj.PDG << " charge " <<
     //  ltraj.Charge << G4endl;
     if(ltraj.Charge==0) {
@@ -147,12 +194,26 @@ void  LegendAnalysis::anaTrajectories(G4TrajectoryContainer* trajectoryContainer
     
     ltraj.Name = TString(gtrj->GetParticleName().data());
     
-  
+    //enum LTTrajectType {UNK,PRI,SCI,WLS,HIT};
+    ltraj.Type = LTTrajectType::UNK;
     if(gtrj->GetParticleName()=="opticalphoton") {
       G4double waveLength =  h_Planck*c_light/ltraj.KE/nm;//700 nm
-      hWOptical->Fill(waveLength);
-      if(waveLength<200) ++fEvent->nArScint;
-      else  ++fEvent->nWlsScint;
+      if(gtrj->IsHit()) {
+        ++fEvent->nPmtHits;
+        hPmtHits->Fill(waveLength);
+        ltraj.Type = LTTrajectType::HIT;
+        G4cout << " LegendAnalysis hitPMT creator process " << creator->GetProcessName() 
+          << " track status " << trackInformation->GetTrackStatus() << " is hit  " 
+          << gtrj->IsHit() <<  " is wls " << gtrj->IsWLS() << "  KE=" << ltraj.KE  << G4endl;
+      } else if(gtrj->IsWLS()) {
+        ++fEvent->nWlsScint;
+        hWls->Fill(waveLength);
+        ltraj.Type = LTTrajectType::WLS;
+      } else {
+        ++fEvent->nArScint;
+        hOptical->Fill(waveLength);
+        ltraj.Type = LTTrajectType::SCI;
+      }
     } else if(ltraj.PDG==11) { // electron
       hEElectron->Fill(ltraj.KE/keV);
     } else if(ltraj.PDG==22) { // gamma 

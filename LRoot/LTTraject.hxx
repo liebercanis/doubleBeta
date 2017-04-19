@@ -15,6 +15,8 @@
 /// through the G4 simulation. It saves the parent trajectory that generated
 /// this particle, the initial momentum of the particle, and the path followed
 /// by the particle in the detector.  
+//
+enum LTTrajectType {UNK,PRI,SCI,WLS,HIT};
 class LTTraject: public TObject {
   public :
     LTTraject();
@@ -30,6 +32,7 @@ class LTTraject: public TObject {
     Float_t         Charge;   //[Trajectory_]
     Float_t         KE;
     TString         Name;
+    Int_t           Type;
     // each element in std::vector corresponds to a point on the particle path
     std::vector<TLorentzVector> Position;
     std::vector<TVector3> Momentum;

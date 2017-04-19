@@ -19,18 +19,18 @@ void LTTraject::clear()
   Mass=0;   
   Charge=0; 
   KE=0;
+  Type= LTTrajectType::UNK;
   Name.Clear();
   // each element in vector corresponds to a point on the particle path
   Position.clear();
   Momentum.clear();
   Region.clear();
   segments.clear();
-
 }
 
 void LTTraject::print(int itraj){
-  printf(" %i) LTTraject: id %i  parent %i  primary %i  PDG %i  mass %.3f  charge %i positions %i momenta %i regions %i \n ",itraj,
-      TrajId, ParentId, PrimaryId, PDG, Mass, Charge, (int) Position.size(), (int) Momentum.size(), (int) Region.size()  );
+  printf(" %i) LTTraject: id %i  parent %i  primary %i  PDG %i  mass %.3f  charge %i positions %i momenta %i type %i \n ",itraj,
+      TrajId, ParentId, PrimaryId, PDG, Mass, Charge, (int) Position.size(), (int) Momentum.size(), Type  );
   if(itraj==0) return;
   // detailed info 
   for(unsigned int ip=0; ip< Position.size(); ++ip)

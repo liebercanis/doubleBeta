@@ -133,10 +133,14 @@ class UserTrackInformation : public G4VUserTrackInformation
 
     inline virtual void Print() const{};
 
+    void SetPrimary() { fPrimary=true; }
+    G4bool IsPrimary() { return fPrimary;}
+
   private:
 
     int fStatus;
-    G4int fReflections;
+    G4bool fPrimary;
+    G4int  fReflections;
     G4bool fForcedraw;
 };
 

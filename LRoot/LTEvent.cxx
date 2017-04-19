@@ -17,7 +17,7 @@ void LTEvent::clear()
   nPVert=0; // number primary verticies
   pvertex.clear();
   nTraj=0;
-  traject.clear();
+  traject.clear(); // vector<LTTraject> trajec
 
   nPmtHits=0;
   nPmtPhotons=0;

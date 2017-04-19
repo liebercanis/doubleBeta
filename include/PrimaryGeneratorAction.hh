@@ -32,6 +32,7 @@
 #ifndef PrimaryGeneratorAction_h
 #define PrimaryGeneratorAction_h 1
 
+#include "LegendAnalysis.hh"
 #include "G4VUserPrimaryGeneratorAction.hh"
 #include "G4SystemOfUnits.hh"
 #include "globals.hh"
@@ -46,6 +47,7 @@ class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
     PrimaryGeneratorAction();
     virtual ~PrimaryGeneratorAction();
     G4double pGun_nrg = 511*keV;
+    G4double getAr39Energy() { return hAr39Theory->GetRandom(); } // unit is MeV
  
   public:
 
@@ -54,6 +56,9 @@ class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
   private:
 
     G4ParticleGun* fParticleGun;
+    TH1D *hAr39Theory;
+    TH1D *hAr39Test;
+    TDirectory *fDir;
 };
 
 #endif

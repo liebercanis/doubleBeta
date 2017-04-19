@@ -34,6 +34,7 @@
 #include "UserTrackInformation.hh"
 #include "DetectorConstruction.hh"
 #include "G4SystemOfUnits.hh"
+#include "G4PhysicalConstants.hh"
 #include "G4TrackingManager.hh"
 #include "G4Track.hh"
 #include "G4ParticleTypes.hh"
@@ -97,22 +98,27 @@ void TrackingAction::PostUserTrackingAction(const G4Track* aTrack){
   trajectory->SetDrawTrajectory(false);
   UserTrackInformation* trackInformation=(UserTrackInformation*) aTrack->GetUserInformation();
   
+  
   //LegendAnalysis::Instance()->FillTrajectory(trajectory);
   G4double totE = aTrack->GetTotalEnergy();//Returns energy in MeV
   //G4double KE = aTrack->GetKineticEnergy();//Returns energy in MeV
   
   const G4VProcess* creator=aTrack->GetCreatorProcess();
-  if(!creator) {
-    //G4cout << " WARNING TrackingAction called with NULL track G4VProcess!  energy = " << totE << G4endl;
+  if(!creator&&!trackInformation->IsPrimary()) {
+    G4cout << " WARNING TrackingAction called with NULL track G4VProcess!  totE= " << totE  << G4endl;
     hTrackStatus->Fill(isBad); 
     return;
   } 
-  //else 
-    //  G4cout<<" PostUser tracking action process is " << creator->GetProcessName() << " energy " << totE << G4endl;
+
+
+  if(trackInformation->IsPrimary()) { // THIS IS NOT SET RIGHT  
+    trajectory->SetDrawTrajectory(true);
+    trajectory->SetPrimary();
+    //G4cout << " TrackingAction PRIMARY TRACK track definition is  " << aTrack->GetDefinition()->GetParticleName() << " is prim? " << trajectory->IsPrimary() << G4endl;
+  }
 
   if(aTrack->GetDefinition() ==G4OpticalPhoton::OpticalPhotonDefinition()){
     hTrackStatus->Fill(trackInformation->GetTrackBit()); 
-    //G4cout << " optical photon creator process " << creator->GetProcessName() << " track status " << trackInformation->GetTrackStatus() << G4endl;
     
     hTrackPhotonE->Fill(totE);
     if(trackInformation->GetTrackStatus()&absorbed) hAbsorbedPhotonE->Fill(totE);
@@ -128,8 +134,7 @@ void TrackingAction::PostUserTrackingAction(const G4Track* aTrack){
       trajectory->SetDrawTrajectory(true);
       trajectory->SetWLS();
       hWLSPhotonE->Fill(totE);
-    } //else trajectory->SetDrawTrajectory(false);
-      
-    //else G4cout << " UNKNOWN optical photon creator process " << creator->GetProcessName()<< " track definition is  " << aTrack->GetDefinition() << " ???? " << G4endl;
+    } 
   }
+  
 }

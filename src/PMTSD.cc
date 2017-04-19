@@ -70,6 +70,11 @@ PMTSD::PMTSD(G4String name, G4int nCells, G4String colName)
   hTime = new TH1F("PMTHitsTime"," PMT hit time  ",2000,0,4000);
   hTime->GetYaxis()->SetTitle(" photons/(2ns)");
   hTime->GetXaxis()->SetTitle(" time (ns) ");
+
+  hWavelength = new TH1F("PMTWavelength"," absorbed photon wavelength ",900,100,1000);
+  hWavelength->GetYaxis()->SetTitle(" number of photons/(nm) ");
+  hWavelength->GetXaxis()->SetTitle(" wavelength (nm) ");
+  
 }
 
 PMTSD::~PMTSD()
@@ -89,7 +94,7 @@ G4bool PMTSD::ProcessHits(G4Step* aStep, G4TouchableHistory*)
 G4bool PMTSD::ProcessHits_constStep(const G4Step* aStep, G4TouchableHistory* )
 {
   if(aStep==NULL) {
-    //G4cout << " ProcessHits_constStep called with null step " << G4endl;
+    G4cout << " ProcessHits_constStep called with null step " << G4endl;
     return false;
   }
   G4ParticleDefinition* particleType = aStep->GetTrack()->GetDefinition();
@@ -98,11 +103,11 @@ G4bool PMTSD::ProcessHits_constStep(const G4Step* aStep, G4TouchableHistory* )
   G4double gtime = aStep->GetPostStepPoint()->GetGlobalTime();   //measured in nanoseconds;
   G4double time = aStep->GetTrack()->GetGlobalTime();
   //G4cout << "testpoint time " << time << " global time   " << gtime << " edep " << edep << " particle name " << particleName << G4endl; 
-
-  if((particleName != "opticalphoton")) return false;
-
+  //if((particleName != "opticalphoton")) return false;
   //const G4VPhysicalVolume* physVol = aStep->GetPostStepPoint()->GetPhysicalVolume();
   hTime->Fill( aStep->GetTrack()->GetGlobalTime()/ns ); //convert to ns
+  G4double wavelength =  CLHEP::h_Planck*CLHEP::c_light/edep/nm;//700 nm
+  hWavelength->Fill(wavelength);
   return true;
 }
 

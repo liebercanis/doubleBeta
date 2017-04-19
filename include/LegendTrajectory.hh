@@ -61,17 +61,21 @@ class LegendTrajectory : public G4Trajectory
     void SetDrawTrajectory(G4bool b){fDrawit=b;}
     void SetWLS(){fWls=true;}
     void SetHit(){fHit=true;}
+    void SetPrimary(){fPrimary=true;}
     void SetForceDrawTrajectory(G4bool b){fForceDraw=b;}
     void SetForceNoDrawTrajectory(G4bool b){fForceNoDraw=b;}
     bool IsWLS() { return fWls; }
     bool IsHit() { return fHit; }
-    
+    bool IsPrimary() { return fPrimary; }
+    const G4Track* GetTrack() { return fTrack;};
 
   private:
 
     TrajectoryPointContainer *positionRecord;
+    const G4Track* fTrack;
     G4bool fWls;
     G4bool fHit;
+    G4bool fPrimary;
     G4bool fDrawit;
     G4bool fForceNoDraw;
     G4bool fForceDraw;

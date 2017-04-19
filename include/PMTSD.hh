@@ -37,6 +37,7 @@
 #include "LegendAnalysis.hh"
 //#include "PMTSDHit.hh"
 #include "G4VSensitiveDetector.hh"
+#include "G4SystemOfUnits.hh"
 #include "G4Step.hh"
 
 class PMTSD : public G4VSensitiveDetector
@@ -61,6 +62,7 @@ private:
   G4int HCID;
   TDirectory *fDir;
   TH1F* hTime;
+  TH1F* hWavelength;
 
 };
 

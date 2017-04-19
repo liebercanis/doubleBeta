@@ -34,7 +34,7 @@
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 UserTrackInformation::UserTrackInformation()
-  : fStatus(active),fReflections(0),fForcedraw(false) {}
+  : fStatus(active),fReflections(0),fForcedraw(false),fPrimary(false) {}
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 

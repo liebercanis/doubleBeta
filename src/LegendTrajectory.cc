@@ -50,6 +50,10 @@ LegendTrajectory::LegendTrajectory()
   :G4Trajectory(),fWls(false),fDrawit(false),fForceNoDraw(false),fForceDraw(false)
 {
   fParticleDefinition=0;
+  fTrack=NULL;
+  fHit=false;
+  fWls= false;
+  fPrimary=false;
   positionRecord = new TrajectoryPointContainer();
   
 }
@@ -59,6 +63,10 @@ LegendTrajectory::LegendTrajectory()
 LegendTrajectory::LegendTrajectory(const G4Track* aTrack)
   :G4Trajectory(aTrack),fWls(false),fDrawit(false)
 {
+  fTrack=aTrack;
+  fHit=false;
+  fWls= false;
+  fPrimary=false;
   fParticleDefinition=aTrack->GetDefinition();
   positionRecord = new TrajectoryPointContainer();
 }
@@ -145,14 +153,14 @@ void LegendTrajectory::DrawTrajectory() const
         colour = G4Colour::Red();
       } else if(fHit) {
         G4cout << " LegendTrajectory optical photon hit pmt "  << G4endl;
-        colour = G4Colour::Yellow();
+        colour = G4Colour::Blue();
       } else {//Scintillation and Cerenkov photons are green
         G4cout << " LegendTrajectory optical photon other " << fDrawit   << G4endl;
         colour = G4Colour::Green();
       }
     }
-    else //All other particles are blue
-      colour = G4Colour::Blue();
+    else //All other particles 
+      colour = G4Colour::White();
  
     G4VisAttributes trajectoryLineAttribs(colour);
     trajectoryLine.SetVisAttributes(&trajectoryLineAttribs);
