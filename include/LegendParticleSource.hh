@@ -48,6 +48,7 @@
 #define LegendParticleSource_h 1
 
 #include "LegendAnalysis.hh"
+#include "G4VPhysicalVolume.hh"
 #include "G4VPrimaryGenerator.hh"
 #include "G4Navigator.hh"
 #include "G4ParticleMomentum.hh"
@@ -59,13 +60,15 @@
 class LegendParticleSource : public G4VPrimaryGenerator {
 
    public:
-     LegendParticleSource (); 
+     LegendParticleSource(G4String name = "" ); 
      ~LegendParticleSource ();
      void GeneratePrimaryVertex(G4Event *evt);
 
    public:
 
-     // position distribution  
+     // position distribution 
+     void SetPhysicalVolume( G4VPhysicalVolume* physVol) { thePhysicalVolume=physVol ; }
+     G4VPhysicalVolume* GetPhysicalVolume() { return thePhysicalVolume; }
      void SetPosDisType(G4String);
      void SetPosDisShape(G4String);
      void SetCentreCoords(G4ThreeVector);
@@ -74,7 +77,7 @@ class LegendParticleSource : public G4VPrimaryGenerator {
      void GeneratePointSource();
      void GeneratePointsInVolume();
      G4bool IsSourceConfined();
-     void ConfineSourceToVolume(G4String);
+     void ConfineSourceToVolume();
   
      // angular distribution
      void SetAngDistType(G4String);
@@ -102,13 +105,13 @@ class LegendParticleSource : public G4VPrimaryGenerator {
    private:
 
      // position distribution
+     G4String physVolumeName;
      G4String SourcePosType;
      G4String Shape;
      G4double halfz;
      G4double Radius;
      G4ThreeVector CentreCoords;
      G4bool Confine;
-     G4String VolName;
      G4String AngDistType;
      G4double MinTheta, MaxTheta, MinPhi, MaxPhi;
      G4double Phi;
@@ -127,9 +130,8 @@ class LegendParticleSource : public G4VPrimaryGenerator {
 
      // Verbose
      G4int verbosityLevel;
+     G4VPhysicalVolume* thePhysicalVolume;
 
-   private:
-  
      //LegendParticleSourceMessenger *theMessenger;
      G4Navigator *gNavigator;
      TH1D *hAr39Theory;

@@ -30,7 +30,6 @@
 //
 //
 #include "PrimaryGeneratorAction.hh"
-
 #include "G4Event.hh"
 #include "G4ParticleGun.hh"
 #include "G4ParticleTable.hh"
@@ -43,13 +42,6 @@
 PrimaryGeneratorAction::PrimaryGeneratorAction(){
   G4int n_particle = 1;
   //fParticleSource = new G4ParticleGun(n_particle);
-  fParticleSource= new LegendParticleSource();
-
-  G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
-  G4String particleName;
-  fParticleSource->SetParticleDefinition(particleTable->FindParticle(particleName="e-"));
-  fParticleSource->SetEnergyDisType("Ar39");
-  G4cout << " PrimaryGeneratorAction energy distribution type is " << fParticleSource->GetEnergyDisType() << G4endl;
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -63,4 +55,18 @@ PrimaryGeneratorAction::~PrimaryGeneratorAction(){
 void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent){
   // Ar39 event
   fParticleSource->GeneratePrimaryVertex(anEvent);
+}
+
+void PrimaryGeneratorAction::InitSource(G4String name) 
+{
+  fParticleSource= new LegendParticleSource(name);
+  G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
+  G4String particleName;
+  fParticleSource->SetParticleDefinition(particleTable->FindParticle(particleName="e-"));
+  fParticleSource->SetEnergyDisType("Ar39");
+
+  G4cout << " PrimaryGeneratorAction energy distribution type is " << fParticleSource->GetEnergyDisType() << G4endl;
+  G4VPhysicalVolume* pvol = fParticleSource->GetPhysicalVolume();
+  if(pvol)  G4cout << " PrimaryGeneratorAction source physical volume is " << pvol->GetName() << G4endl;
+  else  G4cout <<  " PrimaryGeneratorAction source physical volume doesnt exist !!" << G4endl;
 }

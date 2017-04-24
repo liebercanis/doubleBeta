@@ -117,7 +117,7 @@ void  LegendAnalysis::anaEvent( const G4Event *anEvent)
 void  LegendAnalysis::anaTrajectories(G4TrajectoryContainer* trajectoryContainer)
 {
   if(trajectoryContainer==NULL) {
-    G4cout << " anaTrajectories called with null container " << G4endl;
+    G4cout << " LegendAnalysis:: anaTrajectories called with null container " << G4endl;
     return;
   }
   fEvent->nTraj = trajectoryContainer->entries();
@@ -126,20 +126,20 @@ void  LegendAnalysis::anaTrajectories(G4TrajectoryContainer* trajectoryContainer
     const G4Track* aTrack= gtrj->GetTrack();
 
      if(!aTrack) {
-      G4cout << " no track for this trajectory  " << ij << endl;
+      G4cout << "  LegendAnalysis:: no track for this trajectory  " << ij << endl;
       continue;
     }
 
     UserTrackInformation* trackInformation=(UserTrackInformation*) aTrack->GetUserInformation();
     if(!trackInformation) {
       continue;
-      G4cout << " track definition is  " << aTrack->GetDefinition()->GetParticleName()<< " no user info " << endl;
+      G4cout << " LegendAnalysis:: track definition is  " << aTrack->GetDefinition()->GetParticleName()<< " no user info " << endl;
     }
     
     // find creator process 
     const G4VProcess* creator=aTrack->GetCreatorProcess();
     if(!creator) 
-      G4cout << " track definition is  " << aTrack->GetDefinition()->GetParticleName()<< " no creator " << endl;
+      G4cout << " LegendAnalysis:: track definition is  " << aTrack->GetDefinition()->GetParticleName()<< " no creator " << endl;
 
     LTTraject ltraj;
    // fill from trajectory 
@@ -170,11 +170,11 @@ void  LegendAnalysis::anaTrajectories(G4TrajectoryContainer* trajectoryContainer
     // set primary 
     if(gtrj->IsPrimary()) {
       ltraj.Type = LTTrajectType::PRI;
-      if(creator) 
-        G4cout << " LegendAnalysis primary creator process " << creator->GetProcessName() 
-        << " track status " << trackInformation->GetTrackStatus() <<  " PRIMARY TRACK track definition is  " << aTrack->GetDefinition()->GetParticleName()
-        << "  KE=" << ltraj.KE << G4endl;
-      else 
+      //if(creator) 
+        //G4cout << " LegendAnalysis primary creator process " << creator->GetProcessName() 
+        //<< " track status " << trackInformation->GetTrackStatus() <<  " PRIMARY TRACK track definition is  " << aTrack->GetDefinition()->GetParticleName()
+        //<< "  KE=" << ltraj.KE << G4endl;
+      if(!creator)  
        G4cout << " LegendAnalysis primary no creator process " 
         << " track status " << trackInformation->GetTrackStatus() <<  " PRIMARY TRACK track definition is  " << aTrack->GetDefinition()->GetParticleName()
         << "  KE=" << ltraj.KE << G4endl;

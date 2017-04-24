@@ -29,6 +29,7 @@
 /// \brief Implementation of the DetectorConstruction class
 
 #include "DetectorConstruction.hh"
+#include "G4PhysicalVolumeStore.hh"
 // use of stepping action to set the accounting volume
 #include "G4SDManager.hh"
 #include "G4RunManager.hh"
@@ -71,7 +72,13 @@ const G4double DetectorConstruction::LambdaE = 2.0*TMath::Pi()*1.973269602e-16 *
 DetectorConstruction::DetectorConstruction()
 : G4VUserDetectorConstruction()
 {
+  //Debug bools
   checkOverlaps = true;
+  GeDebug = false;//true;
+  TpbDebug = false;
+  LArDebug = false;
+  CuDebug = false;//true;
+  VM2000Debug = false;//true;
   //***//
   //TPB//
   //***//    
@@ -87,6 +94,37 @@ DetectorConstruction::DetectorConstruction()
     G4cout<<" DetectorConstruction ERROR:: not graph tpbBhemann in file " << pathFile <<G4endl;
   else 
     G4cout<<" DetectorConstruction info tpbBhemann graph found " <<G4endl;
+
+  //Germanium Reflectivity
+  pathFile = "External_data/Reflectivity_Ge.root";
+  TFile *GeReflectivityFile = new TFile(pathFile.data());
+  if(!GeReflectivityFile)
+    G4cout<<" DetctorConstruction ERROR:: File "<<pathFile<<" NOT found "<<G4endl;
+  else
+    G4cout<<" DetectorConstruction INFO:: file "<< pathFile <<" opened "<<G4endl;
+
+  fGeOpticalSpec=NULL;
+  
+  GeReflectivityFile->GetObject("Reflectivity_Ge",fGeOpticalSpec);//TODO Look at the name of the plot in the root file
+  if(!fGeOpticalSpec)
+    G4cout<<"DetectorConstruction ERROR:: no graph for GE"<<G4endl;
+  else
+    G4cout<<"DetectorConstruction INFO:: Germanim Reflections imported"<<G4endl;
+
+  //Copper Reflectivity
+   pathFile = "External_data/Reflectivity_Cu.root";
+  TFile *CuReflectivityFile = new TFile(pathFile.data());
+  if(!CuReflectivityFile)
+    G4cout<<" DetctorConstruction ERROR:: File "<<pathFile<<" NOT found "<<G4endl;
+  else
+    G4cout<<" DetectorConstruction INFO:: file "<< pathFile <<" opened " <<G4endl;
+  fCuOpticalSpec=NULL;
+  
+  CuReflectivityFile->GetObject("Reflectivity_Cu",fCuOpticalSpec);//TODO Look at the name of the plot in the root file
+  if(!fCuOpticalSpec)
+    G4cout<<"DetectorConstruction ERROR:: no graph for GE"<<G4endl;
+  else
+    G4cout<<"DetectorConstruction INFO:: Copper Reflections imported"<<G4endl;
     
   // create directory 
   fDir = LegendAnalysis::Instance()->topDir()->mkdir("detec");
@@ -126,11 +164,12 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   
   WLSOpticalProperties();
   
-  
-  // Option to switch on/off checking of volumes overlaps
-  //
-  G4Material* GeMaterial = nist->FindOrBuildMaterial("G4_Ge");
+  GeOpticalProperties();
 
+  CuOpticalProperties();
+  
+  //VM2000 defined in LegengDetectorMaterial.icc
+  VM2000OpticalProperties();
   ////////////////////////////////////////////////////////////////////////////////////////
 	//
   // World
@@ -145,6 +184,8 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 	G4Box* solid_Rock = new G4Box("sol_Rock",50*m,50*m,30*m);
 	G4Box* solid_Lab = new G4Box("sol_Lab",35*m,10*m,4*m);
 	G4SubtractionSolid *solid_Rock2 = new G4SubtractionSolid("sol_Rock2", solid_Rock, solid_Lab ,0 , G4ThreeVector(-25*m,0,10.5*m));
+	G4Tubs* solid_CutOut = new G4Tubs("sol_CutOut",0, 6.50001*m ,6.50001*m, 0, 2*M_PI);
+	G4Tubs* solid_CutOut = new G4Tubs("sol_CutOut",0, 6.50001*m ,6.50001*m, 0, 2*M_PI);
 	G4Tubs* solid_CutOut = new G4Tubs("sol_CutOut",0, 6.50001*m ,6.50001*m, 0, 2*M_PI);
 	G4SubtractionSolid *solid_Rock3 = new G4SubtractionSolid("sol_Rock2", solid_Rock2, solid_CutOut ,0 , G4ThreeVector(0,0,0));
 
@@ -319,35 +360,35 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   groupzmax = max(group1zmax,group2zmax);
 
 
-  G4double tubeWall = 1*mm;
 
   G4cout<< "\t *******************************************" <<G4endl;
   G4cout<< "\t DetectorConstruction -- placement info " <<G4endl;
+  //Units are in millimeters!
   sprintf(mess,"\t position group 1  (%f,%f,%f) rmax %f  zmax %f\n",sum_x1,sum_y1,sum_z1,group1rmax,group1zmax); G4cout<< mess;
   sprintf(mess,"\t position group 2  (%f,%f,%f) rmax %f  zmax %f\n",sum_x2,sum_y2,sum_z2,group2rmax,group2zmax); G4cout<< mess;
   sprintf(mess,"\t group radius  %f  half z %f \n",grouprmax,groupzmax); G4cout<< mess;
   G4cout<< "\t *******************************************" <<G4endl;
 
+  //First Place World volume of LAr...different than LAr cylinders
+  G4int sourceRadius = 4*groupzmax;
+  G4Sphere* larSolid = new G4Sphere("source",0,sourceRadius,0,2*M_PI,0,2*M_PI);
   
-  /*
-  // construct cylindrical liquid argon tubes surrounding detectors
-  // G4Tubs(Name,RMin,RMax,Half-z,SPhi,DPhi)
-  */
+  //mat_fill defined in DetectorConstruction.icc from innerVessel_FillMaterial or command file
+  larSourceLogical = new G4LogicalVolume(larSolid,mat_fill,"source_log"); 
+  larSourceLogical->SetVisAttributes(new G4VisAttributes(G4Colour(0.1, 0.1, 0.9,0.5)));
+  
+  G4ThreeVector source_center(0,0,0);
+  larPhysical = new G4PVPlacement (0,source_center,larSourceLogical,"larPhysical",logicalWorld,false,0,checkOverlaps);
+
+   
   G4Tubs* groupTube = new G4Tubs("groupTube",0,grouprmax,groupzmax,0,twopi);
+  
   G4LogicalVolume* group1Logical = new G4LogicalVolume(groupTube,mat_fill,"group1Logical" );
   G4LogicalVolume* group2Logical = new G4LogicalVolume(groupTube,mat_fill,"group2Logical" );
+
   group1Logical->SetVisAttributes(new G4VisAttributes(G4Colour(0.1,0.5,0.7)));
   group2Logical->SetVisAttributes(new G4VisAttributes(G4Colour(0.1,0.5,0.7)));
 
-  /* add TPB outside the tubes */
-  WLSHalfThickness = 0.05*mm;  // half thickness
-  G4Colour tpbColor=G4Colour::Cyan(); //(0.6,0.1,0.7);
-  G4Tubs* groupWls = new G4Tubs("groupTube",grouprmax+WLSHalfThickness,grouprmax+3*WLSHalfThickness,groupzmax,0,twopi);
-  G4LogicalVolume* outerTube1Logical = new G4LogicalVolume(groupWls,fTPB,"outerTube1Logical" );
-  outerTube1Logical->SetVisAttributes ( new G4VisAttributes(tpbColor ) );
-  G4LogicalVolume* outerTube2Logical = new G4LogicalVolume(groupWls,fTPB,"outerTube2Logical" );
-  outerTube2Logical->SetVisAttributes ( new G4VisAttributes(tpbColor ) );
-  
   
   // place detectors in tubes
   for(unsigned idet=0; idet < detPositions.size(); ++ idet) {
@@ -355,28 +396,42 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     G4ThreeVector r=detRout[idet];
     G4ThreeVector z=detZhalf[idet];
     G4Polycone* Det_solid = new G4Polycone(detNamesPhys[idet],0,2*M_PI,3,&z[0],&r_i[0],&r[0]);
-    G4LogicalVolume* Det_logical = new G4LogicalVolume(Det_solid,GeMaterial,detNamesLog[idet]);
+    G4LogicalVolume* Det_logical = new G4LogicalVolume(Det_solid,fGeMaterial,detNamesLog[idet]);
+    //Added from MaGe
+    new G4LogicalSkinSurface("Ge_Detector"+std::to_string(idet),Det_logical,fGeOpticalSurface);
+
     if(idet<detPositions.size()/2) 
       new G4PVPlacement (0,detRelPositions[idet],Det_logical,detNames[idet],group1Logical,false,detNumbers[idet],checkOverlaps);
      else 
       new G4PVPlacement (0,detRelPositions[idet],Det_logical,detNames[idet],group2Logical,false,detNumbers[idet],checkOverlaps);     
   }
- 
-  /* add liquid argon sphere and place cylinders inside  */
-  G4int sourceRadius = 4*groupzmax;
-	G4Sphere* larSolid = new G4Sphere("source",0,sourceRadius,0,2*M_PI,0,2*M_PI);
-  //mat_fill defined in DetectorConstruction.icc from innerVessel_FillMaterial or command file
-	larSourceLogical = new G4LogicalVolume(larSolid,mat_fill,"source_log"); 
-	larSourceLogical->SetVisAttributes(new G4VisAttributes(G4Colour(0.1, 0.1, 0.9,0.5)));
- 
-  /* place tubes inside sphere */
+    
   G4VPhysicalVolume* group1Physical = new G4PVPlacement(0,group1pos,group1Logical,"group1Physical",larSourceLogical,false,0,checkOverlaps);
-  G4VPhysicalVolume* group2Physical = new G4PVPlacement(0,group2pos,group2Logical,"group2Physical",larSourceLogical,false,0,checkOverlaps);
-  G4VPhysicalVolume* outerTube1Physical = new G4PVPlacement(0,group1pos,outerTube1Logical,"outerTube1Physical",larSourceLogical,false,0,checkOverlaps);
-  G4VPhysicalVolume* outerTube2Physical = new G4PVPlacement(0,group2pos,outerTube2Logical,"outerTube2Physical",larSourceLogical,false,0,checkOverlaps);
+  G4VPhysicalVolume* group2Physical = new G4PVPlacement(0,group2pos,group2Logical,"group2Physical",larSourceLogical,false,1,checkOverlaps);
+
+  /////////////WLS Cylinder around groupTubs, does not cover top or bottom, PMTs will do that below/////////////
+  WLSHalfThickness = 0.05*mm;  // half thickness
+  G4Tubs* WLSgroupTube = new G4Tubs("PMTgroupTube",grouprmax,grouprmax+WLSHalfThickness,groupzmax,0,twopi);
+  //I think we need only one logical volume and just place it twice. There might be a nuance to this when using Sensitive Detector
+  G4LogicalVolume* WLSgroupTubeLogical = new G4LogicalVolume(WLSgroupTube,fTPB,"WLSgroup1TubeLogical"); 
+  
+  WLSgroupTubeLogical->SetVisAttributes ( new G4VisAttributes(G4Colour(0.6,0.1,0.7) ) );
+  
+  //Create a physical placement to create rough surfaces for tpb/LAr interface
+  G4double roughness = 0.5;
+  G4OpticalSurface* WLSoptSurf = new G4OpticalSurface("WLS_rough_surf",glisur,ground,dielectric_dielectric,roughness);
+
+  G4PVPlacement* phys_PMTWLS =  new G4PVPlacement (0,group1pos,WLSgroupTubeLogical,"WLSgroup1TubeLogical", larSourceLogical,false,0,checkOverlaps);
+  new G4LogicalBorderSurface("Phys_PMT_WLS_cylinder_1",group1Physical,phys_PMTWLS,WLSoptSurf);
+  new G4LogicalBorderSurface("Phys_PMT_WLS_cylinder_1",phys_PMTWLS,group1Physical,WLSoptSurf);
+
+  phys_PMTWLS = new G4PVPlacement (0,group2pos,WLSgroupTubeLogical,"WLSgroup2TubeLogical", larSourceLogical,false,1,checkOverlaps);  
+  new G4LogicalBorderSurface("Phys_PMT_WLS_cylinder_2",group2Physical,phys_PMTWLS,WLSoptSurf);
+  new G4LogicalBorderSurface("Phys_PMT_WLS_cylinder_2",phys_PMTWLS,group2Physical,WLSoptSurf);
   
 
   /////////////PMT coated in WLS/////////////
+  //WLSHalfThickness defined above
   G4double glassHalfThickness = 10*mm;  // half thickness
   G4double housingHalfThickness = 10*mm;  // half thickness
   G4Tubs* PMTDiskTubs = new G4Tubs("PMTDiskTubs",0.,grouprmax,housingHalfThickness,0,twopi);
@@ -389,18 +444,15 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4Tubs* PMTGlassTubs = new G4Tubs("PMTGlassTubs",0,grouprmax,glassHalfThickness,0,twopi);
   G4Material* materialPMTGlass = G4Material::GetMaterial("Quartz"); 
   logicalPmtGlass = new G4LogicalVolume(PMTGlassTubs,materialPMTGlass,"logicalPmtGlass");            
-  logicalPmtGlass->SetVisAttributes ( new G4VisAttributes(G4Colour::Yellow() ) );
+  //logicalPmtGlass->SetVisAttributes ( new G4VisAttributes(G4Colour(0.1,0.9,0.1) ) );
   
   G4Tubs* PMTWlsTubs = new G4Tubs("PMTWlsTubs",0,grouprmax,WLSHalfThickness,0,twopi);
+  
   logicalPMTWLS = new G4LogicalVolume(PMTWlsTubs,fTPB,"logicalPmtGlassWLS");   
-  logicalPMTWLS->SetVisAttributes ( new G4VisAttributes(tpbColor ) );
+  logicalPMTWLS->SetVisAttributes ( new G4VisAttributes(G4Colour(0.6,0.1,0.7) ) );
   //fPMTGlassOptSurface defined in LegendDetectorMaterials.icc
   new G4LogicalSkinSurface("PMTGlass_surf",logicalPmtGlass,fPMTGlassOptSurface);
   
-   /* put sphere inside world before placing the PMTs */
-  G4ThreeVector source_center(0,0,0);
-  larPhysical = new G4PVPlacement (0,source_center,larSourceLogical,"larPhysical",logicalWorld,false,0,checkOverlaps);
-
   G4cout<< "\t *******************************************" <<G4endl;
   // construcnt and put into larSourceLogical needs larPhysical for LogicalBorderSuface
   G4double pmtZOffset = 2*(glassHalfThickness+WLSHalfThickness)+housingHalfThickness;//+tubeWall;
@@ -412,8 +464,45 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   PlacePMT(rPMT1bot,1,1);
   PlacePMT(rPMT2top,-1,2);
   PlacePMT(rPMT2bot,1,3);
+  
 
-  G4cout << " done constructing detector  " << G4endl;
+  G4double VM2000Thickness =0.001*mm;
+  
+  G4Tubs* VM2000Tubs = new G4Tubs("VM2000Tubs",grouprmax+WLSHalfThickness,
+      grouprmax+WLSHalfThickness+VM2000Thickness,
+      groupzmax+pmtZOffset+housingHalfThickness,
+      0,twopi);
+
+  logicalVM2000 = new G4LogicalVolume(VM2000Tubs,fVM2000,"logicalVM2000");
+  logicalVM2000->SetVisAttributes(new G4VisAttributes(G4Colour(1.,0.6,1.)) );
+
+  new G4LogicalSkinSurface("VM200Skin",logicalVM2000,fVM2000OptSurface);
+
+  new G4PVPlacement(0,group1pos,logicalVM2000,"PhysicalVM2000_1",larSourceLogical,false,0,checkOverlaps);
+  new G4PVPlacement(0,group2pos,logicalVM2000,"PhysicalVM2000_2",larSourceLogical,false,0,checkOverlaps);
+
+  G4double CryoThickness = 10.0*mm;
+  
+  G4Tubs* CryoTubs = new G4Tubs("CryoTubs",grouprmax+WLSHalfThickness+VM2000Thickness,
+      grouprmax+WLSHalfThickness+VM2000Thickness+CryoThickness,
+      groupzmax+pmtZOffset+housingHalfThickness,
+      0,twopi); 
+  logicalCryo = new G4LogicalVolume(CryoTubs,fCuMaterial,"logicalCryo");
+  logicalCryo->SetVisAttributes(new G4VisAttributes(G4Colour(1.,1.,0.) ) );
+  
+  new G4LogicalSkinSurface("CryoSkin",logicalCryo,fCuOptSurface);
+  
+  G4VPhysicalVolume*  PhysCryo1 = new G4PVPlacement(0,group1pos,logicalCryo,"PhysCryo1",larSourceLogical,false,0,checkOverlaps);
+  G4VPhysicalVolume*  PhysCryo2 =new G4PVPlacement(0,group2pos,logicalCryo,"PhysCryo2",larSourceLogical,false,0,checkOverlaps);
+  G4PhysicalVolumeStore* theStore = G4PhysicalVolumeStore::GetInstance();
+
+  G4cout << "\t DetectorConstruction done constructing detector  " << G4endl;
+  G4cout<<  "\t DetectorConstruction size of store " << theStore->size() << G4endl;
+  for(G4int istore = 0; istore< theStore->size() ; ++istore ){
+    G4VPhysicalVolume *pvol = theStore->at(istore);
+    G4cout << " stored vol  " << istore << " = " << pvol->GetName() << G4endl; 
+  }
+  
   return physicalWorld;
 }
 
@@ -438,6 +527,16 @@ void DetectorConstruction::PlacePMT(G4ThreeVector rhousing,double top_or_bot,int
   G4OpticalSurface* WLSoptSurf = new G4OpticalSurface("WLS_rough_surf",glisur,ground,dielectric_dielectric,roughness);
   new G4LogicalBorderSurface("Phys_PMT_WLS_"+ std::to_string(num),larPhysical,phys_PMTWLS,WLSoptSurf);
   new G4LogicalBorderSurface("Phys_PMT_WLS_"+ std::to_string(num),phys_PMTWLS,larPhysical,WLSoptSurf);
+}
+///////////////////////////////////////////////
+////////////////SD Manager/////////////////////
+///////////////////////////////////////////////
+void DetectorConstruction::ConstructSDandField()
+{
+  G4SDManager* SDman   =  G4SDManager::GetSDMpointer();  
+  PMTSD* sd = new PMTSD("PhotoCathode",1,"PhCathodeHC" );    
+  SDman->AddNewDetector(sd); 
+  logicalPmtGlass->SetSensitiveDetector(sd);
 }
 
 //
@@ -491,6 +590,10 @@ void DetectorConstruction::ArgonOpticalProperties()
     // plot spectrum
     hArPhotonE->SetBinContent(  hArPhotonE->FindBin(ee), LAr_SCIN[ji]);
     hArPhotonWavelength->SetBinContent(hArPhotonWavelength->FindBin(LambdaE/ee) ,LAr_SCIN[ji]);
+    if(LArDebug){
+      G4cout<<"DetectorConstruction::ArgonOpticalProperties()...LAr Energy Spec = "<<LAr_SCPP[ji]<<G4endl;
+      G4cout<<"DetectorConstruction::ArgonOpticalProperties()...LAr Scint Spec = "<<LAr_SCIN[ji] <<G4endl;
+    }
   }
 
 
@@ -537,7 +640,7 @@ G4double DetectorConstruction::LArEpsilon(const G4double lambda)
 
 G4double DetectorConstruction::LArRefIndex(const G4double lambda)
 {
-// G4cout<< ( sqrt(LArEpsilon(lambda)))<<G4endl;
+ //G4cout<< ( sqrt(LArEpsilon(lambda)))<<G4endl;
  return ( sqrt(LArEpsilon(lambda)) ); // square root of dielectric constant
 }
 G4double DetectorConstruction::LArRayLength(const G4double lambda,const
@@ -558,35 +661,17 @@ G4double DetectorConstruction::LArRayLength(const G4double lambda,const
   if ( h > (1.0 / (0.1 * nanometer)) ) h = 1.0 / (0.1 * nanometer); // just a precaution
   return ( 1.0 / h );
 }
-
-void DetectorConstruction::ConstructSDandField()
+// arg is energy , returns probability 
+//  FWHM at 80K from J Chem Phys vol 91 (1989) 1469 E Morikawa et al
+G4double DetectorConstruction::ArScintillationSpectrum(const G4double ee)
 {
-  G4SDManager* SDman   =  G4SDManager::GetSDMpointer();  
-  PMTSD* sd = new PMTSD("PhotoCathode",1,"PhCathodeHC" );    
-  SDman->AddNewDetector(sd); 
-  logicalPmtGlass->SetSensitiveDetector(sd);
+  G4double meanWave = 128.0*nm; //nm
+  G4double meanE = LambdaE/meanWave;
+  G4double sigmaE =  (0.56/2.355)*eV;  // sigma(ruler) from FWHM and convert ruler to electron volts
+  G4double x = (ee-meanE)/sigmaE;
+  G4double emit = exp(-0.5*x*x);
+  return emit;
 }
-
-void DetectorConstruction::UpdateGeometry()
-{
-  G4RunManager::GetRunManager()->DefineWorldVolume(Construct());
-}
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-void DetectorConstruction::SetOverlapsCheck(G4bool f_check)
-{
-	//checkOverlaps = f_check;
-}
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-void DetectorConstruction::SetFillMaterial(G4String smaterial)
-{
-	innerVessel_FillMaterial = smaterial;
-}
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-void DetectorConstruction::SetShieldStyle(G4String f_type)
-{
-	//detector_type = f_type;
-}
-
 
 void DetectorConstruction::WLSOpticalProperties()
 {
@@ -632,11 +717,12 @@ void DetectorConstruction::WLSOpticalProperties()
      WLS_emission[ji] = TPBEmissionSpectrum(LAr_SCPPTPB[ji]);
      hWLSPhotonE->SetBinContent(ji,WLS_emission[ji]);
      hWLSPhotonWavelength->SetBinContent(numTPB-1-ji,WLS_emission[ji]);
-     //G4cout<<" WLS Emmsion "<<WLS_emission[ji]<<" LAr Energy "<<LAr_SCPPTPB[ji]<<G4endl;
-     //G4cout<<" WLS Absorption Length "<<WLS_absorption[ji]<<" LAr Energy "<<LAr_SCPPTPB[ji]<<G4endl;
+     if(TpbDebug){
+      G4cout<<" WLS Emmsion "<<WLS_emission[ji]<<" LAr Energy "<<LAr_SCPPTPB[ji]<<G4endl;
+      G4cout<<" WLS Absorption Length "<<WLS_absorption[ji]<<" LAr Energy "<<LAr_SCPPTPB[ji]<<G4endl;
+     }
    }
 
-   G4cout << " to here " << G4endl;
    tpbTable->AddProperty("RINDEX",LAr_SCPPTPB,Refraction,numTPB);
    tpbTable->AddProperty("WLSABSLENGTH",LAr_SCPPTPB,WLS_absorption,numTPB);
    tpbTable->AddProperty("WLSCOMPONENT",LAr_SCPPTPB,WLS_emission,numTPB);
@@ -647,15 +733,131 @@ void DetectorConstruction::WLSOpticalProperties()
    fTPB->SetMaterialPropertiesTable(tpbTable);
 }
 
-// arg is energy , returns probability 
-//  FWHM at 80K from J Chem Phys vol 91 (1989) 1469 E Morikawa et al
-G4double DetectorConstruction::ArScintillationSpectrum(const G4double ee)
+void DetectorConstruction::GeOpticalProperties()
 {
-  G4double meanWave = 128.0*nm; //nm
-  G4double meanE = LambdaE/meanWave;
-  G4double sigmaE =  (0.56/2.355)*eV;  // sigma(ruler) from FWHM and convert ruler to electron volts
-  G4double x = (ee-meanE)/sigmaE;
-  G4double emit = exp(-0.5*x*x);
-  return emit;
+  nist = G4NistManager::Instance();
+  fGeMaterial = nist->FindOrBuildMaterial("G4_Ge");
+  GeMaterialTable = new G4MaterialPropertiesTable();
+  
+  const G4int numGe = 100;
+  //Ge_Reflectivity TGraph range is 111-657 nm
+  G4double HighEGe = LambdaE /(115*nanometer);
+  G4double LowEGe = LambdaE /(650*nanometer);//(650*nanometer); //598
+  G4double deeGe = ((HighEGe - LowEGe) / ((G4double)(numGe-1)));
+  
+  G4double NRGSpec[numGe];//if we are going to use the dumb names from MaGe then I get to use my dumb names too!
+  G4double ReflectionSpec[numGe];
+
+  for(G4int i = 0; i < numGe ; i++) {
+    NRGSpec[i] = LowEGe +( (G4double) i*deeGe );
+    ReflectionSpec[i] = GeReflectionSpectrum( (LambdaE /NRGSpec[i])/nm );//in nm
+    if(GeDebug){
+      G4cout<<"DetectorConstruction::GeOpticalProperties()...Energy Spec = "<<NRGSpec[i]/eV<<G4endl;
+      G4cout<<"DetectorConstruction::GeOpticalProperties()...Wavelength Spec = "<<(LambdaE /NRGSpec[i])/nm<<G4endl;
+      G4cout<<"DetectorConstruction::GeOpticalProperties()...Reflection Spec = "<<ReflectionSpec[i]<<G4endl;
+    }
+  }
+  GeMaterialTable->AddProperty("REFLECTION",NRGSpec,ReflectionSpec,numGe);
+  
+  fGeOpticalSurface = new G4OpticalSurface("Germanium surface");
+  
+  fGeOpticalSurface->SetType(dielectric_metal);
+  fGeOpticalSurface->SetFinish(groundfrontpainted);
+  fGeOpticalSurface->SetPolish(0.5);
+
+  fGeOpticalSurface->SetMaterialPropertiesTable(GeMaterialTable);
+  
+  fGeMaterial->SetMaterialPropertiesTable(GeMaterialTable);
 }
 
+void DetectorConstruction::CuOpticalProperties()
+{
+  nist = G4NistManager::Instance();
+  fCuMaterial = nist->FindOrBuildMaterial("G4_Cu");
+  if(!fCuMaterial) G4cout<<"DetectorConstruction::CuOpticalProperties()...Copper Material not found in Nist Manager!"<<G4endl;
+  CuMaterialTable = new G4MaterialPropertiesTable();
+  
+  const G4int numCu = 100;
+  //Ge_Reflectivity TGraph range is 112.74165-654.16459 nm
+  G4double HighEGe = LambdaE /(115*nanometer);
+  G4double LowEGe = LambdaE /(650*nanometer);//(650*nanometer); //598
+  G4double deeGe = ((HighEGe - LowEGe) / ((G4double)(numCu-1)));
+  G4double NRGSpec[numCu];//if we are going to use the dumb names from MaGe then I get to use my dumb names too!
+  G4double ReflectionSpec[numCu];
+  for(G4int i = 0; i < numCu ; i++) {
+    NRGSpec[i] = LowEGe +( (G4double) i*deeGe );
+    ReflectionSpec[i] = GeReflectionSpectrum( (LambdaE /NRGSpec[i])/nm );//in nm
+    G4cout<<"DetectorConstruction::CuOpticalProperties()...Energy Spec = "<<NRGSpec[i]/eV<<G4endl;
+    G4cout<<"DetectorConstruction::CuOpticalProperties()...Wavelength Spec = "<<(LambdaE /NRGSpec[i])/nm<<G4endl;
+    G4cout<<"DetectorConstruction::CuOpticalProperties()...Reflection Spec = "<<ReflectionSpec[i]<<G4endl;
+  }
+  
+  CuMaterialTable->AddProperty("REFLECTION",NRGSpec,ReflectionSpec,numCu);
+  
+  fCuOptSurface = new G4OpticalSurface("Cu surface");
+  fCuOptSurface->SetType(dielectric_metal);
+  fCuOptSurface->SetFinish(ground);
+  fCuOptSurface->SetPolish(0.5);
+  fCuOptSurface->SetMaterialPropertiesTable(CuMaterialTable);
+  
+  fCuMaterial->SetMaterialPropertiesTable(CuMaterialTable);
+}
+
+void DetectorConstruction::VM2000OpticalProperties()
+{
+  VM2000MaterialTable = new G4MaterialPropertiesTable();
+  
+  const G4int numVM2000 = 100;
+  //Ge_Reflectivity TGraph range is 112.74165-654.16459 nm
+  G4double HighEGe = LambdaE /(115*nanometer);
+  G4double LowEGe = LambdaE /(650*nanometer);//(650*nanometer); //598
+  G4double deeGe = ((HighEGe - LowEGe) / ((G4double)(numVM2000-1)));
+  
+  G4double NRGSpec[numVM2000];//if we are going to use the dumb names from MaGe then I get to use my dumb names too!
+  G4double ReflectionSpec[numVM2000];
+  
+  for (G4int i = 0; i < numVM2000 ; i++) { 
+    NRGSpec[i] = LowEGe +( (G4double) i*deeGe );
+    if (NRGSpec[i] < (LambdaE/(370*nanometer)))
+      ReflectionSpec[i] = 0.98; //visable
+    else
+      ReflectionSpec[i] = 0.15; //UV
+    
+    if(VM2000Debug){
+      G4cout<<"DetectorConstruction::VM2000OpticalProperties()...Energy Spec = "<<NRGSpec[i]/eV<<G4endl;
+      G4cout<<"DetectorConstruction::VM2000OpticalProperties()...Wavelength Spec = "<<(LambdaE /NRGSpec[i])/nm<<G4endl;
+      G4cout<<"DetectorConstruction::VM2000OpticalProperties()...Reflection Spec = "<<ReflectionSpec[i]<<G4endl;
+    }
+  }
+G4cout<<"1"<<G4endl;
+  VM2000MaterialTable->AddProperty("REFLECTION",NRGSpec,ReflectionSpec,numVM2000);
+  G4cout<<"2"<<G4endl;
+  fVM2000OptSurface = new G4OpticalSurface("VM_surface");
+            G4cout<<"1"<<G4endl;                                             
+  fVM2000OptSurface->SetType(dielectric_dielectric);
+  fVM2000OptSurface->SetFinish(polishedfrontpainted);
+  fVM2000OptSurface->SetMaterialPropertiesTable(VM2000MaterialTable);
+  G4cout<<"3"<<G4endl;
+  fVM2000->SetMaterialPropertiesTable(VM2000MaterialTable);
+  G4cout<<"1"<<G4endl;
+}
+
+void DetectorConstruction::UpdateGeometry()
+{
+  G4RunManager::GetRunManager()->DefineWorldVolume(Construct());
+}
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+void DetectorConstruction::SetOverlapsCheck(G4bool f_check)
+{
+	//checkOverlaps = f_check;
+}
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+void DetectorConstruction::SetFillMaterial(G4String smaterial)
+{
+	innerVessel_FillMaterial = smaterial;
+}
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+void DetectorConstruction::SetShieldStyle(G4String f_type)
+{
+	//detector_type = f_type;
+}

@@ -103,6 +103,8 @@ int main(int argc,char** argv)
   //
   runManager->Initialize();
 
+  gen_action->InitSource("group1Physical");
+
 #ifdef G4VIS_USE
   // Initialize visualization
   G4VisManager* visManager = new G4VisExecutive;

@@ -83,7 +83,7 @@ PMTSD::~PMTSD()
 
 void PMTSD::Initialize(G4HCofThisEvent* /*HCE*/)
 {
-  G4cout <<  "\tPMTSD Initialized   " <<  G4endl;
+  //G4cout <<  "\tPMTSD Initialized   " <<  G4endl;
 }
 
 G4bool PMTSD::ProcessHits(G4Step* aStep, G4TouchableHistory*)

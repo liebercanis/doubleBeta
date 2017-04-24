@@ -80,6 +80,9 @@ class DetectorConstruction : public G4VUserDetectorConstruction
 		void SetFillMaterial(G4String);
 		void ConstructSDandField();
     void PlacePMT(G4ThreeVector r,double top_or_bot,int num);
+    void GeOpticalProperties();
+    void CuOpticalProperties();
+    void VM2000OpticalProperties();
     
     
     static const G4double LambdaE;
@@ -109,13 +112,33 @@ class DetectorConstruction : public G4VUserDetectorConstruction
       if(wavelength>350.0 && wavelength < 650.0) eff =fTPBspec->Eval(wavelength);
       return eff;
     }
+    //Ge Reflection Spec from TGraph
+    G4double GeReflectionSpectrum(G4double wavelength){
+      return fGeOpticalSpec->Eval(wavelength);
+    }
+    //Cu Reflection Spec from TGraph
+    G4double CuReflectionSpectrum(G4double wavelength){
+      return fCuOpticalSpec->Eval(wavelength);
+    }
+
     
   private:
+    //G4Bool Flags for debuging
     G4bool checkOverlaps;
+    G4bool GeDebug;
+    G4bool TpbDebug;
+    G4bool LArDebug;
+    G4bool CuDebug;
+    G4bool VM2000Debug;
+
     G4NistManager* nist; 
     DetectorMessenger* detectorMessenger;  // pointer to the Messenger
     TDirectory* fDir;
+    
     TGraph* fTPBspec;
+    TGraph* fGeOpticalSpec;
+    TGraph* fCuOpticalSpec;
+
     TH1F* hWLSPhotonE;
     TH1F* hWLSPhotonWavelength;
     TH1F* hArPhotonE;
@@ -127,6 +150,8 @@ class DetectorConstruction : public G4VUserDetectorConstruction
     G4VPhysicalVolume* physicalWorld;
     G4LogicalVolume* logicalWorld;
     G4LogicalVolume* larSourceLogical;
+    G4LogicalVolume* logicalCryo;
+    G4LogicalVolume* logicalVM2000;
 
     //PMT parameters
     G4double grouprmax, groupzmax, WLSHalfThickness; 
@@ -139,13 +164,23 @@ class DetectorConstruction : public G4VUserDetectorConstruction
     G4Material* mat_fill;
     G4Material*  fTPB;
     G4OpticalSurface* fPMTGlassOptSurface;
+    G4OpticalSurface* fGeOpticalSurface;
+    G4OpticalSurface* fCuOptSurface;
+    G4OpticalSurface* fVM2000OptSurface;
+
     G4MaterialPropertiesTable *tpbTable;
     G4MaterialPropertiesTable *fPMTGlassOptTable;
+    G4MaterialPropertiesTable *GeMaterialTable;
+    G4MaterialPropertiesTable *CuMaterialTable;
+    G4MaterialPropertiesTable *VM2000MaterialTable;
     G4Material* mat_ArLiq;
     G4Material* mat_ArCold;
     G4Material* mat_NCold;
     G4Material* mat_NLiq;
     G4Material* Det_mat;
+    G4Material* fGeMaterial;
+    G4Material* fCuMaterial;
+    G4Material* fVM2000;
  
     // needed for SDandField
     G4LogicalVolume* logicalWLSDisk;

@@ -65,27 +65,37 @@
 #include "G4Track.hh"
 
 
-LegendParticleSource::LegendParticleSource() {
+LegendParticleSource::LegendParticleSource(G4String source_name ) 
+  :physVolumeName(source_name)
+{
+
+  thePhysicalVolume = G4PhysicalVolumeStore::GetInstance()->GetVolume(physVolumeName);
+  G4cout << " LegendParticleSource physical volume is " << thePhysicalVolume->GetName() << G4endl;
+  
+  
+  G4VPhysicalVolume *larPhys = G4PhysicalVolumeStore::GetInstance()->GetVolume("larPhysical");
+  CentreCoords = larPhys->GetTranslation();
+
 
 
   // Ar39 spectrum
   G4String pathFile = "External_data/Ar39Theory.root";
   TFile *ar39File = new TFile(pathFile.data());
   if (!ar39File ) 
-    G4cout<<" PrimaryGeneratorActon ERROR:: file " << pathFile << " not found " << G4endl;
+    G4cout<<" LegendParticleSource ERROR:: file " << pathFile << " not found " << G4endl;
   else
-    G4cout<<" PrimaryGeneratorAction INFO:: file " << pathFile << " opened " << G4endl;
+    G4cout<<" LegendParticleSource INFO:: file " << pathFile << " opened " << G4endl;
   hAr39Theory=NULL;
   ar39File->GetObject("theory",hAr39Theory);
   if (!hAr39Theory ) 
-    G4cout<<" PrimaryGeneratorAction ERROR:: no theory TH1F in file " << pathFile <<G4endl;
+    G4cout<<" LegendParticleSource ERROR:: no theory TH1F in file " << pathFile <<G4endl;
   else 
-    G4cout<<" PrimaryGeneratorAction info hAr39Theory found " <<G4endl;
+    G4cout<<" LegendParticleSource info hAr39Theory found " <<G4endl;
   
   // create directory 
   fDir = LegendAnalysis::Instance()->topDir()->mkdir("particleSource");
   fDir->cd();
-  G4cout<<" PrimaryGeneratorAction working root directory  is  " << fDir->GetName() << G4endl;  
+  G4cout<<" LegendParticleSource working root directory  is  " << fDir->GetName() << G4endl;  
   gDirectory->pwd();
   gDirectory->Append(hAr39Theory);
   hAr39Gen = (TH1D*) hAr39Theory->Clone("Ar39Gen");
@@ -103,13 +113,8 @@ LegendParticleSource::LegendParticleSource() {
   particle_charge = 0.0;
 
   SourcePosType = "Volume";
-  Shape = "NULL";
-  halfz = 0.;
-  Radius = 0.;
-  CentreCoords = zero;
-  Confine = false;
-  VolName = "NULL";
-
+  Confine = true;
+ 
   AngDistType = "iso"; 
   MinTheta = 0.;
   MaxTheta = pi;
@@ -155,46 +160,11 @@ void LegendParticleSource::SetRadius(G4double radius)
   Radius = radius;
 }
 
-void LegendParticleSource::ConfineSourceToVolume(G4String Vname)
+void LegendParticleSource::ConfineSourceToVolume()
 {
-  VolName = Vname;
-  if(verbosityLevel == 2) G4cout << VolName << G4endl;
-
-  // checks if selected volume exists
-  G4VPhysicalVolume *tempPV      = NULL;
-  G4PhysicalVolumeStore *PVStore = 0;
-  G4String theRequiredVolumeName = VolName;
-  PVStore = G4PhysicalVolumeStore::GetInstance();
-  G4int i = 0;
-  G4bool found = false;
-  if(verbosityLevel == 2) G4cout << PVStore->size() << G4endl;
-
-  // recasting required since PVStore->size() is actually a signed int...
-  while (!found && i<(G4int)PVStore->size())
-    {
-      tempPV = (*PVStore)[i];
-      found  = tempPV->GetName() == theRequiredVolumeName;
-      if(verbosityLevel == 2)
-	G4cout << i << " " << " " << tempPV->GetName() 
-	       << " " << theRequiredVolumeName << " " << found << G4endl;
-      if (!found)
-	{i++;}
-    }
-
-  // found = true then the volume exists else it doesnt.
-  if(found == true) {
-    if(verbosityLevel >= 1)
-      G4cout << "Volume " << VolName << " exists" << G4endl;
-    Confine = true;
-  }
-  else if(VolName=="NULL")
-    Confine = false;
-  else {
-    G4cout << " **** Error: Volume does not exist **** " << G4endl;
-    G4cout << " Ignoring confine condition" << G4endl;
-    VolName = "NULL";
-    Confine = false;
-  }
+  if(verbosityLevel == 2) G4cout << physVolumeName << G4endl;
+  Confine=false;
+  if(thePhysicalVolume) Confine=true;
 
 }
 
@@ -212,74 +182,48 @@ void LegendParticleSource::GeneratePointSource()
     particle_position = CentreCoords;
   else
     if(verbosityLevel >= 1)
-      G4cout << "Error SourcePosType is not set to Point" << G4endl;
+      G4cout << " LegendParticleSource **** Error SourcePosType is not set to Point" << G4endl;
 }
 
 
 void LegendParticleSource::GeneratePointsInVolume()
 {
-  G4ThreeVector RandPos;
-  G4double x=0., y=0., z=0.;
-  
-  if(SourcePosType != "Volume" && verbosityLevel >= 1)
-    G4cout << "Error SourcePosType not Volume" << G4endl;
-  
-  if(Shape == "Sphere") {
-    x = Radius*2.;
-    y = Radius*2.;
-    z = Radius*2.;
-    while(((x*x)+(y*y)+(z*z)) > (Radius*Radius)) {
-      x = G4UniformRand();
-      y = G4UniformRand();
-      z = G4UniformRand();
-      
-      x = (x*2.*Radius) - Radius;
-      y = (y*2.*Radius) - Radius;
-      z = (z*2.*Radius) - Radius;
-    }
+  G4VSolid *solid = thePhysicalVolume->GetLogicalVolume()->GetSolid();
+  G4ThreeVector rmin;
+  G4ThreeVector rmax;
+  solid->Extent(rmin,rmax);
+  G4ThreeVector rpoint;
+  CentreCoords = thePhysicalVolume->GetTranslation();
+
+  bool isInside=false;
+  while(!isInside){
+    G4double rx = ( rmax.x() - rmin.x() )*G4UniformRand();
+    G4double ry = ( rmax.y() - rmin.y() )*G4UniformRand();
+    G4double rz = ( rmax.z() - rmin.z() )*G4UniformRand();
+    rpoint.set(rx,ry,rz);
+    isInside = solid->Inside(rpoint)== EInside::kInside;
   }
-
-  else if(Shape == "Cylinder") {
-    x = Radius*2.;
-    y = Radius*2.;
-    while(((x*x)+(y*y)) > (Radius*Radius)) {
-      x = G4UniformRand();
-      y = G4UniformRand();
-      z = G4UniformRand();
-      x = (x*2.*Radius) - Radius;
-      y = (y*2.*Radius) - Radius;
-      z = (z*2.*halfz) - halfz;
-    }
-  }
-  
-  else
-    G4cout << "Error: Volume Shape Does Not Exist" << G4endl;
-
-  RandPos.setX(x);
-  RandPos.setY(y);
-  RandPos.setZ(z);
-  particle_position = CentreCoords + RandPos;
-
+  particle_position = rpoint +  CentreCoords ;
 }
-
 
 G4bool LegendParticleSource::IsSourceConfined()
 {
 
   // Method to check point is within the volume specified
-  if(Confine == false)
+  if(Confine == false) {
     G4cout << "Error: Confine is false" << G4endl;
+    return false;
+  }
   G4ThreeVector null(0.,0.,0.);
-  G4ThreeVector *ptr;
-  ptr = &null;
+  G4ThreeVector *ptr = &null;
 
   // Check particle_position is within VolName
-  G4VPhysicalVolume *theVolume;
-  theVolume=gNavigator->LocateGlobalPointAndSetup(particle_position,ptr,true);
-  G4String theVolName = theVolume->GetName();
-  if(theVolName == VolName) {
+  G4VPhysicalVolume *theVolume =gNavigator->LocateGlobalPointAndSetup(particle_position,ptr,true);
+  //G4cout << " LegendParticleSource **** Particle is in volume " << physVolumeName << " " << theVolume->GetName() << G4endl;
+  if( theVolume->GetName() == physVolumeName) {
     if(verbosityLevel >= 1)
-      G4cout << "Particle is in volume " << VolName << G4endl;
+    //if( 1)
+      G4cout << " LegendParticleSource **** Particle is in volume " << physVolumeName << G4endl;
     return(true);
   }
   else
@@ -348,7 +292,7 @@ void LegendParticleSource::GenerateMonoEnergetic()
 void LegendParticleSource::SetVerbosity(int vL)
 {
   verbosityLevel = vL;
-  G4cout << "Verbosity Set to: " << verbosityLevel << G4endl;
+  G4cout << " LegendParticleSource **** Verbosity Set to: " << verbosityLevel << G4endl;
 }
 
 void LegendParticleSource::SetParticleDefinition
@@ -363,7 +307,7 @@ void LegendParticleSource::GeneratePrimaryVertex(G4Event *evt)
 {
 
   if(particle_definition==NULL) {
-    G4cout << "No particle has been defined!" << G4endl;
+    G4cout << " LegendParticleSource **** No particle has been defined!" << G4endl;
     return;
   }
   
@@ -377,7 +321,7 @@ void LegendParticleSource::GeneratePrimaryVertex(G4Event *evt)
     else if(SourcePosType == "Volume")
       GeneratePointsInVolume();
     else {
-      G4cout << "Error: SourcePosType undefined" << G4endl;
+      G4cout << " LegendParticleSource **** Error: SourcePosType undefined" << G4endl;
       G4cout << "Generating point source" << G4endl;
       GeneratePointSource();
     }
@@ -391,7 +335,7 @@ void LegendParticleSource::GeneratePrimaryVertex(G4Event *evt)
     
     LoopCount++;
     if(LoopCount == 100000) {
-      G4cout << "*************************************" << G4endl;
+      G4cout << " LegendParticleSource *************************************" << G4endl;
         G4cout << "LoopCount = 100000" << G4endl;
         G4cout << "Either the source distribution >> confinement" << G4endl;
         G4cout << "or any confining volume may not overlap with" << G4endl;
@@ -410,22 +354,22 @@ void LegendParticleSource::GeneratePrimaryVertex(G4Event *evt)
   else if(AngDistType == "direction")
     SetParticleMomentumDirection(particle_momentum_direction);
   else
-    G4cout << "Error: AngDistType has unusual value" << G4endl;
+    G4cout << " LegendParticleSource **** Error: AngDistType has unusual value" << G4endl;
   // Energy stuff
   if(EnergyDisType == "Mono")
     GenerateMonoEnergetic();
-  else if(EnergyDisType == "A439") {
+  else if(EnergyDisType == "Ar39") {
     GenAr39Energy();
     hAr39Gen->Fill( GetParticleEnergy());
   } else 
-    G4cout << "Error: EnergyDisType has unusual value" << G4endl;
+    G4cout << " LegendParticleSource **** Error: EnergyDisType has unknown value = " << EnergyDisType << G4endl;
   
   // create a new vertex
   G4PrimaryVertex* vertex = 
     new G4PrimaryVertex(particle_position,particle_time);
 
   if(verbosityLevel >= 2)
-    G4cout << "Creating primaries and assigning to vertex" << G4endl;
+    G4cout << " LegendParticleSource **** Creating primaries and assigning to vertex" << G4endl;
   // create new primaries and set them to the vertex
   G4double mass =  particle_definition->GetPDGMass();
   G4double energy = particle_energy + mass;
@@ -435,7 +379,7 @@ void LegendParticleSource::GeneratePrimaryVertex(G4Event *evt)
   G4double pz = pmom*particle_momentum_direction.z();
   
   if(verbosityLevel >= 1){
-    G4cout << "Particle name: " 
+    G4cout << " LegendParticleSource **** Particle name: " 
 	   << particle_definition->GetParticleName() << G4endl; 
     G4cout << "       Energy: "<<particle_energy << G4endl;
     G4cout << "     Position: "<<particle_position<< G4endl; 
@@ -457,7 +401,7 @@ void LegendParticleSource::GeneratePrimaryVertex(G4Event *evt)
   }
   evt->AddPrimaryVertex( vertex );
   if(verbosityLevel > 1)
-    G4cout << " Primary Vetex generated "<< G4endl;   
+    G4cout << " LegendParticleSource ****  Primary Vetex generated "<< G4endl;   
 }
 
 
