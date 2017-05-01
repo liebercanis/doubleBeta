@@ -68,10 +68,13 @@ class LegendTrajectory : public G4Trajectory
     bool IsHit() { return fHit; }
     bool IsPrimary() { return fPrimary; }
     const G4Track* GetTrack() { return fTrack;};
+    void SetParentId( G4int id) { fParentId = id;}
+    G4int GetParentId() { return fParentId;}
 
   private:
 
     TrajectoryPointContainer *positionRecord;
+    G4int fParentId;
     const G4Track* fTrack;
     G4bool fWls;
     G4bool fHit;

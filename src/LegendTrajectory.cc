@@ -87,33 +87,25 @@ LegendTrajectory::~LegendTrajectory() {}
 
 void LegendTrajectory::DrawTrajectory() const
 {
-  // i_mode is no longer available as an argument of G4VTrajectory.
-  // In this exampple it was always called with an argument of 50.
-  const G4int i_mode = 50;
   // Consider using commands /vis/modeling/trajectories.
   
   //Taken from G4VTrajectory and modified to select colours based on particle
   //type and to selectively eliminate drawing of certain trajectories.
 
   //G4cout << " drawing force " << fForceDraw << " drawit "<< fDrawit  << "forcenodraw " << fForceNoDraw << G4endl;
-  if(!fForceDraw && (!fDrawit || fForceNoDraw))
-    return;
+  //if(!fForceDraw && (!fDrawit || fForceNoDraw))
+  //  return;
 
   // not sure where ForceDraw, ForceNoDraw are being set
   if(!fDrawit) return;
 
-  // If i_mode>=0, draws a trajectory as a polyline and, if i_mode!=0,
-  // adds markers - yellow circles for step points and magenta squares
-  // for auxiliary points, if any - whose screen size in pixels is
-  // given by std::abs(i_mode)/1000.  E.g: i_mode = 5000 gives easily
-  // visible markers.
  
   G4VVisManager* pVVisManager = G4VVisManager::GetConcreteInstance();
   if (!pVVisManager) return;
  
-  const G4double markerSize = std::abs(i_mode)/1000;
-  G4bool lineRequired (i_mode >= 0);
-  G4bool markersRequired (markerSize > 0.);
+  G4double markerSize = 0.05; // std::abs(i_mode)/1000;  // 50/1000 = 0.05
+  G4bool lineRequired (true);
+  G4bool markersRequired (true);
  
   G4Polyline trajectoryLine;
   G4Polymarker stepPoints;
@@ -146,6 +138,13 @@ void LegendTrajectory::DrawTrajectory() const
   if (lineRequired) {
     G4Colour colour;
  
+    if(fPrimary) {//primary
+        G4cout << " LegendTrajectory Primary  "  << G4endl;
+        colour = G4Colour::Red();
+        //ShowTrajectory(); 
+        markerSize = 3.0; 
+    }
+    
     if(fParticleDefinition==G4OpticalPhoton::OpticalPhotonDefinition()){
       
       if(fWls) {//WLS photons are red
@@ -170,14 +169,14 @@ void LegendTrajectory::DrawTrajectory() const
     auxiliaryPoints.SetMarkerType(G4Polymarker::squares);
     auxiliaryPoints.SetScreenSize(markerSize);
     auxiliaryPoints.SetFillStyle(G4VMarker::filled);
-    G4VisAttributes auxiliaryPointsAttribs(G4Colour(0.,1.,1.));  // Magenta
+    G4VisAttributes auxiliaryPointsAttribs(G4Colour::Yellow()); 
     auxiliaryPoints.SetVisAttributes(&auxiliaryPointsAttribs);
     pVVisManager->Draw(auxiliaryPoints);
 
     stepPoints.SetMarkerType(G4Polymarker::circles);
     stepPoints.SetScreenSize(markerSize);
     stepPoints.SetFillStyle(G4VMarker::filled);
-    G4VisAttributes stepPointsAttribs(G4Colour(1.,1.,0.));  // Yellow
+    G4VisAttributes stepPointsAttribs(G4Colour::Magenta());
     stepPoints.SetVisAttributes(&stepPointsAttribs);
     pVVisManager->Draw(stepPoints);
   }

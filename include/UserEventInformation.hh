@@ -29,6 +29,7 @@
 /// \brief Definition of the UserEventInformation class
 //
 #include "G4VUserEventInformation.hh"
+#include "G4VPhysicalVolume.hh"
 #include "G4ThreeVector.hh"
 #include "globals.hh"
 #include "LegendAnalysis.hh"
@@ -73,6 +74,9 @@ class UserEventInformation : public G4VUserEventInformation
     G4double GetEDepMax(){return fEdepMax;}
     G4double IsConvPosSet(){return fConvPosSet;}
 
+    void SetPrimaryPhysicalVolume(G4VPhysicalVolume *pv) { primaryPhysicalVolume=pv;}
+    G4VPhysicalVolume* GetPrimaryPhysicalVolume() { return primaryPhysicalVolume;}
+
     //Gets the total photon count produced
     G4int GetPhotonCount(){return fPhotonCount_Scint+fPhotonCount_Ceren;}
 
@@ -81,6 +85,7 @@ class UserEventInformation : public G4VUserEventInformation
 
   private:
 
+    G4VPhysicalVolume* primaryPhysicalVolume;
     G4int fHitCount;
     G4int fPhotonCount_Scint;
     G4int fPhotonCount_Ceren;

@@ -60,7 +60,7 @@
 class LegendParticleSource : public G4VPrimaryGenerator {
 
    public:
-     LegendParticleSource(G4String name = "" ); 
+     LegendParticleSource(G4String physical_name = "" ); 
      ~LegendParticleSource ();
      void GeneratePrimaryVertex(G4Event *evt);
 
@@ -71,12 +71,13 @@ class LegendParticleSource : public G4VPrimaryGenerator {
      G4VPhysicalVolume* GetPhysicalVolume() { return thePhysicalVolume; }
      void SetPosDisType(G4String);
      void SetPosDisShape(G4String);
-     void SetCentreCoords(G4ThreeVector);
+     void SetCenterVector(G4ThreeVector);
      void SetHalfZ(G4double);
      void SetRadius(G4double);
      void GeneratePointSource();
      void GeneratePointsInVolume();
      G4bool IsSourceConfined();
+     G4bool IsInArgon(G4ThreeVector rp);
      void ConfineSourceToVolume();
   
      // angular distribution
@@ -110,7 +111,7 @@ class LegendParticleSource : public G4VPrimaryGenerator {
      G4String Shape;
      G4double halfz;
      G4double Radius;
-     G4ThreeVector CentreCoords;
+     G4ThreeVector centerVector;
      G4bool Confine;
      G4String AngDistType;
      G4double MinTheta, MaxTheta, MinPhi, MaxPhi;

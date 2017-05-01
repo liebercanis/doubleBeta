@@ -50,6 +50,7 @@ class LegendAnalysis
     TTree *getTree() { return fTree; }
     void anaEvent(const G4Event* anEvent);
     void anaTrajectories(G4TrajectoryContainer* trajectoryContainer);
+    LTEvent* getEvent() { return fEvent;}
 }
       
     

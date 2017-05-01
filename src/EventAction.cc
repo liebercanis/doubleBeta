@@ -18,7 +18,7 @@
 
 EventAction::EventAction(RunAction* run)
 : runAct(run),
-  fPrintModulo(100000)
+  fPrintModulo(100)
 {
 }
 
@@ -54,12 +54,21 @@ void EventAction::BeginOfEventAction(const G4Event* event)
 
 void EventAction::EndOfEventAction(const G4Event* anEvent)
 {
-  G4cout << " **********  end of event action ********** " << anEvent->GetEventID() << G4endl;
-  G4cout << "\t number of primary verticies = "<< anEvent->GetNumberOfPrimaryVertex() <<G4endl;
-  G4TrajectoryContainer* trajectoryContainer = anEvent->GetTrajectoryContainer();
-  G4int n_trajectories = 0;
-  if(trajectoryContainer) n_trajectories = trajectoryContainer->entries();
-  G4cout << "\t number of trajectories = "<< n_trajectories <<G4endl;
+  //G4EventManager::GetEventManager()->KeepTheCurrentEvent();
+  // fill the analysis tree
+  LegendAnalysis::Instance()->anaEvent( anEvent );
+  
+  G4int nEntries = LegendAnalysis::Instance()->getTree()->GetEntries();
+  G4int eventNb = anEvent->GetEventID();
+  if (eventNb%fPrintModulo == 0) {
+    G4cout << " **********  EndOfEventAction ********** event " << anEvent->GetEventID() << " **** size of tree *** " << nEntries << G4endl;
+    G4TrajectoryContainer* trajectoryContainer = anEvent->GetTrajectoryContainer();
+    G4int n_trajectories = 0;
+    if(trajectoryContainer) n_trajectories = trajectoryContainer->entries();
+    G4cout << "\t number of primary verticies = "<< anEvent->GetNumberOfPrimaryVertex() 
+      << " number of trajectories = "<< n_trajectories <<G4endl;
+    LegendAnalysis::Instance()->getEvent()->print();
+  }
   // extract the trajectories and draw them
   /*if(G4VVisManager::GetConcreteInstance()) {
     for (G4int i=0; i<n_trajectories; i++) {
@@ -71,9 +80,6 @@ void EventAction::EndOfEventAction(const G4Event* anEvent)
       //trajectory->DrawTrajectory();
     }
   }*/
-  // fill the analysis tree
-  LegendAnalysis::Instance()->anaEvent( anEvent );
-  //anEvent->Print();
 }
 
 

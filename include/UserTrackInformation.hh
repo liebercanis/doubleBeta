@@ -135,10 +135,13 @@ class UserTrackInformation : public G4VUserTrackInformation
 
     void SetPrimary() { fPrimary=true; }
     G4bool IsPrimary() { return fPrimary;}
+    void SetParentId( G4int id) { fParentId = id;}
+    G4int GetParentId() { return fParentId;}
 
   private:
 
-    int fStatus;
+    G4int fStatus;
+    G4int fParentId;
     G4bool fPrimary;
     G4int  fReflections;
     G4bool fForcedraw;

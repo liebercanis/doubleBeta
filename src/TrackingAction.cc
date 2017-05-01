@@ -103,15 +103,15 @@ void TrackingAction::PostUserTrackingAction(const G4Track* aTrack){
   G4double totE = aTrack->GetTotalEnergy();//Returns energy in MeV
   //G4double KE = aTrack->GetKineticEnergy();//Returns energy in MeV
   
+  trajectory->SetParentId(trackInformation->GetParentId());
   const G4VProcess* creator=aTrack->GetCreatorProcess();
-  if(!creator&&!trackInformation->IsPrimary()) {
-    G4cout << " WARNING TrackingAction called with NULL track G4VProcess!  totE= " << totE  << G4endl;
+  if(!creator&&trackInformation->GetParentId()!=0) {
+    G4cout << " WARNING TrackingAction called with NULL track G4VProcess!  parent id " << trackInformation->GetParentId()   << G4endl;
     hTrackStatus->Fill(isBad); 
     return;
   } 
 
-
-  if(trackInformation->IsPrimary()) { // THIS IS NOT SET RIGHT  
+  if(trackInformation->IsPrimary()) {  
     trajectory->SetDrawTrajectory(true);
     trajectory->SetPrimary();
     //G4cout << " TrackingAction PRIMARY TRACK track definition is  " << aTrack->GetDefinition()->GetParticleName() << " is prim? " << trajectory->IsPrimary() << G4endl;
@@ -128,10 +128,10 @@ void TrackingAction::PostUserTrackingAction(const G4Track* aTrack){
     // use track status set in SteppingAction
     if(trackInformation->GetTrackStatus()&hitPMT) {
       hPMTPhotonE->Fill(totE);
-      trajectory->SetDrawTrajectory(true);
+      trajectory->SetDrawTrajectory(false);
       trajectory->SetHit();
     } else if(trackInformation->GetTrackStatus()&hitWLS) {
-      trajectory->SetDrawTrajectory(true);
+      trajectory->SetDrawTrajectory(false);
       trajectory->SetWLS();
       hWLSPhotonE->Fill(totE);
     } 

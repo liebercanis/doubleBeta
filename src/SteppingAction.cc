@@ -95,9 +95,11 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
 
   //This is a primary track 
   // did we miss any secondaries from the primary track?
+  trackInformation->SetParentId(aTrack->GetParentID());
   if(aTrack->GetParentID()==0){
-    trackInformation->SetPrimary();
     //G4cout<<"SteppingAction::Primary Vertex found "<<G4endl;
+    trackInformation->SetPrimary();
+    eventInformation->SetPrimaryPhysicalVolume(thePostPV);
     G4TrackVector* fSecondary = fpSteppingManager->GetfSecondary();
     G4int tN2ndariesTot = fpSteppingManager->GetfN2ndariesAtRestDoIt()
       + fpSteppingManager->GetfN2ndariesAlongStepDoIt()

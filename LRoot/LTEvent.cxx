@@ -20,7 +20,7 @@ void LTEvent::clear()
   traject.clear(); // vector<LTTraject> trajec
 
   nPmtHits=0;
-  nPmtPhotons=0;
+  nOptPhotons=0;
   nArScint=0;
   nWlsScint=0;
   nCherenkov=0;
@@ -49,6 +49,6 @@ void LTEvent::print(){
   if(nPVert>0) printf("\tPrimary vertex at position,t (%f,%f,%f,%f) num part %i \n",
       pvertex[0].Position.X(),pvertex[0].Position.Y(),pvertex[0].Position.Z(),pvertex[0].Position.T(),pvertex[0].nParticles);
   else  printf("\tNO primary vertex \n");
-  printf(" \tPMT hit %i PMT photons %i PhotonCount_Scint %i AbsorptionCount %i  \n",nPmtHits,nPmtPhotons,nArScint,nAbsorbed);
+  printf(" \tOptical %i Ar scint %i WLS scint %i PMT hits %i  \n",nOptPhotons,nArScint,nWlsScint,nPmtHits);
   printf(" *************************************************** \n");
 }

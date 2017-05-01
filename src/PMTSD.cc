@@ -94,7 +94,7 @@ G4bool PMTSD::ProcessHits(G4Step* aStep, G4TouchableHistory*)
 G4bool PMTSD::ProcessHits_constStep(const G4Step* aStep, G4TouchableHistory* )
 {
   if(aStep==NULL) {
-    G4cout << " ProcessHits_constStep called with null step " << G4endl;
+    //G4cout << " ProcessHits_constStep called with null step " << G4endl;
     return false;
   }
   G4ParticleDefinition* particleType = aStep->GetTrack()->GetDefinition();

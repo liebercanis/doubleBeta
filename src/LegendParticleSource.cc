@@ -44,11 +44,14 @@
 // C Ferguson, F Lei & P Truscott (University of Southampton / DERA), with
 // some minor modifications.
 //////////////////////////////////////////////////////////////////////////////
+//  This version modifed by M. Gold, April 2017 
+//  allows generating events inside physical volume
+//
 
 #include <cmath>
 
 #include "LegendParticleSource.hh"
-
+#include "G4PhysicalVolumeStore.hh"
 #include "G4PhysicalConstants.hh"
 #include "G4SystemOfUnits.hh"
 #include "G4PrimaryParticle.hh"
@@ -65,8 +68,8 @@
 #include "G4Track.hh"
 
 
-LegendParticleSource::LegendParticleSource(G4String source_name ) 
-  :physVolumeName(source_name)
+LegendParticleSource::LegendParticleSource(G4String physical_name ) 
+  :physVolumeName(physical_name)
 {
 
   thePhysicalVolume = G4PhysicalVolumeStore::GetInstance()->GetVolume(physVolumeName);
@@ -74,7 +77,7 @@ LegendParticleSource::LegendParticleSource(G4String source_name )
   
   
   G4VPhysicalVolume *larPhys = G4PhysicalVolumeStore::GetInstance()->GetVolume("larPhysical");
-  CentreCoords = larPhys->GetTranslation();
+  centerVector = larPhys->GetTranslation();
 
 
 
@@ -145,9 +148,9 @@ void LegendParticleSource::SetPosDisShape(G4String shapeType)
   Shape = shapeType;
 }
 
-void LegendParticleSource::SetCentreCoords(G4ThreeVector coordsOfCentre)
+void LegendParticleSource::SetCenterVector(G4ThreeVector coordsOfCentre)
 {
-  CentreCoords = coordsOfCentre;
+  centerVector = coordsOfCentre;
 }
 
 void LegendParticleSource::SetHalfZ(G4double zhalf)
@@ -179,7 +182,7 @@ void LegendParticleSource::GeneratePointSource()
 {
   // Generates Points given the point source.
   if(SourcePosType == "Point")
-    particle_position = CentreCoords;
+    particle_position = centerVector;
   else
     if(verbosityLevel >= 1)
       G4cout << " LegendParticleSource **** Error SourcePosType is not set to Point" << G4endl;
@@ -193,17 +196,44 @@ void LegendParticleSource::GeneratePointsInVolume()
   G4ThreeVector rmax;
   solid->Extent(rmin,rmax);
   G4ThreeVector rpoint;
-  CentreCoords = thePhysicalVolume->GetTranslation();
+  centerVector = thePhysicalVolume->GetTranslation(); // absolute position of the center of this phyisical volume
 
   bool isInside=false;
   while(!isInside){
-    G4double rx = ( rmax.x() - rmin.x() )*G4UniformRand();
-    G4double ry = ( rmax.y() - rmin.y() )*G4UniformRand();
-    G4double rz = ( rmax.z() - rmin.z() )*G4UniformRand();
-    rpoint.set(rx,ry,rz);
-    isInside = solid->Inside(rpoint)== EInside::kInside;
+    G4double rx = ( rmax.x() - rmin.x() )*(2.*G4UniformRand()-1.);
+    G4double ry = ( rmax.y() - rmin.y() )*(2.*G4UniformRand()-1.);
+    G4double rz = ( rmax.z() - rmin.z() )*(2.*G4UniformRand()-1.);
+    rpoint.set(rx,ry,rz);                         // relative position 
+    particle_position = rpoint +  centerVector ; // absolute position
+    isInside = solid->Inside(rpoint)== EInside::kInside && IsInArgon(particle_position) ;
   }
-  particle_position = rpoint +  CentreCoords ;
+}
+
+G4bool LegendParticleSource::IsInArgon(G4ThreeVector rp) 
+{
+  bool isit = true;
+  // list of all volumes
+  G4PhysicalVolumeStore* theStore = G4PhysicalVolumeStore::GetInstance();
+  for(G4int istore = 0; istore< theStore->size() ; ++istore ){
+    G4VPhysicalVolume *pvol = theStore->at(istore);
+    G4String sname = pvol->GetName();
+
+    // if this is a volume to reject, see if it is inside
+    if (  (sname.find("B8") != string::npos)
+       ||(sname.find("P4") != string::npos )
+       ||(sname.find("WLS") != string::npos )
+       ||(sname.find("Housing") != string::npos )
+       ||(sname.find("Glass") != string::npos )
+       ||(sname.find("VM2000") != string::npos )
+       ||(sname.find("Cryo") != string::npos )) { 
+      G4VSolid *solid = pvol->GetLogicalVolume()->GetSolid();
+      G4ThreeVector rtran  = pvol->GetTranslation();
+      G4ThreeVector rel = rp - rtran; // point relative to center of solid
+      if(solid->Inside(rel)== EInside::kInside) isit = false;
+      //G4cout << " vol " << sname << " isit? " << isit << endl;
+    }
+  }
+  return isit; 
 }
 
 G4bool LegendParticleSource::IsSourceConfined()

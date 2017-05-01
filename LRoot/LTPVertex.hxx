@@ -17,7 +17,9 @@ class LTPVertex: public TObject {
     void print(int i);
 
     Int_t VertexId;
+    TString physVolumeName;
     TLorentzVector Position;
+    TLorentzVector RelPosition;
     Int_t nParticles;
     std::vector<LTParticle> particle;
     

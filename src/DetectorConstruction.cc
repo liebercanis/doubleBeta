@@ -375,7 +375,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   
   //mat_fill defined in DetectorConstruction.icc from innerVessel_FillMaterial or command file
   larSourceLogical = new G4LogicalVolume(larSolid,mat_fill,"source_log"); 
-  larSourceLogical->SetVisAttributes(new G4VisAttributes(G4Colour(0.1, 0.1, 0.9,0.5)));
+  //larSourceLogical->SetVisAttributes(new G4VisAttributes(G4Colour(0.1, 0.1, 0.9,0.5)));
   
   G4ThreeVector source_center(0,0,0);
   larPhysical = new G4PVPlacement (0,source_center,larSourceLogical,"larPhysical",logicalWorld,false,0,checkOverlaps);
@@ -386,8 +386,8 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4LogicalVolume* group1Logical = new G4LogicalVolume(groupTube,mat_fill,"group1Logical" );
   G4LogicalVolume* group2Logical = new G4LogicalVolume(groupTube,mat_fill,"group2Logical" );
 
-  group1Logical->SetVisAttributes(new G4VisAttributes(G4Colour(0.1,0.5,0.7)));
-  group2Logical->SetVisAttributes(new G4VisAttributes(G4Colour(0.1,0.5,0.7)));
+  //group1Logical->SetVisAttributes(new G4VisAttributes(G4Colour(0.1,0.5,0.7)));
+  //group2Logical->SetVisAttributes(new G4VisAttributes(G4Colour(0.1,0.5,0.7)));
 
   
   // place detectors in tubes
@@ -414,8 +414,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4Tubs* WLSgroupTube = new G4Tubs("PMTgroupTube",grouprmax,grouprmax+WLSHalfThickness,groupzmax,0,twopi);
   //I think we need only one logical volume and just place it twice. There might be a nuance to this when using Sensitive Detector
   G4LogicalVolume* WLSgroupTubeLogical = new G4LogicalVolume(WLSgroupTube,fTPB,"WLSgroup1TubeLogical"); 
-  
-  WLSgroupTubeLogical->SetVisAttributes ( new G4VisAttributes(G4Colour(0.6,0.1,0.7) ) );
+  //WLSgroupTubeLogical->SetVisAttributes ( new G4VisAttributes(G4Colour(0.6,0.1,0.7) ) );
   
   //Create a physical placement to create rough surfaces for tpb/LAr interface
   G4double roughness = 0.5;
@@ -439,15 +438,14 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   //Metal housing, Kovar is a Ni Co alloy
   G4Material* materialPMTHousing = G4Material::GetMaterial("Kovar");
   logicalPmtHousing = new G4LogicalVolume(PMTDiskTubs,materialPMTHousing,"logicalPmtHousing");  
-  //logicalPmtHousing->SetVisAttributes ( new G4VisAttributes(G4Colour(0.9,0.1,0.1) ) );
+  logicalPmtHousing->SetVisAttributes ( new G4VisAttributes(G4Colour(0.9,0.1,0.1) ) );
   
   G4Tubs* PMTGlassTubs = new G4Tubs("PMTGlassTubs",0,grouprmax,glassHalfThickness,0,twopi);
   G4Material* materialPMTGlass = G4Material::GetMaterial("Quartz"); 
   logicalPmtGlass = new G4LogicalVolume(PMTGlassTubs,materialPMTGlass,"logicalPmtGlass");            
-  //logicalPmtGlass->SetVisAttributes ( new G4VisAttributes(G4Colour(0.1,0.9,0.1) ) );
+  logicalPmtGlass->SetVisAttributes ( new G4VisAttributes(G4Colour(0.1,0.9,0.1) ) );
   
   G4Tubs* PMTWlsTubs = new G4Tubs("PMTWlsTubs",0,grouprmax,WLSHalfThickness,0,twopi);
-  
   logicalPMTWLS = new G4LogicalVolume(PMTWlsTubs,fTPB,"logicalPmtGlassWLS");   
   logicalPMTWLS->SetVisAttributes ( new G4VisAttributes(G4Colour(0.6,0.1,0.7) ) );
   //fPMTGlassOptSurface defined in LegendDetectorMaterials.icc
@@ -474,7 +472,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
       0,twopi);
 
   logicalVM2000 = new G4LogicalVolume(VM2000Tubs,fVM2000,"logicalVM2000");
-  logicalVM2000->SetVisAttributes(new G4VisAttributes(G4Colour(1.,0.6,1.)) );
+  //logicalVM2000->SetVisAttributes(new G4VisAttributes(G4Colour(1.,0.6,1.)) );
 
   new G4LogicalSkinSurface("VM200Skin",logicalVM2000,fVM2000OptSurface);
 
@@ -488,7 +486,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
       groupzmax+pmtZOffset+housingHalfThickness,
       0,twopi); 
   logicalCryo = new G4LogicalVolume(CryoTubs,fCuMaterial,"logicalCryo");
-  logicalCryo->SetVisAttributes(new G4VisAttributes(G4Colour(1.,1.,0.) ) );
+  //logicalCryo->SetVisAttributes(new G4VisAttributes(G4Colour(1.,1.,0.) ) );
   
   new G4LogicalSkinSurface("CryoSkin",logicalCryo,fCuOptSurface);
   

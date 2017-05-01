@@ -35,7 +35,7 @@ RunAction::~RunAction()
 void RunAction::BeginOfRunAction(const G4Run* aRun)
 {
 
-  G4cout << "### Run " << aRun->GetRunID() << " start." << G4endl;
+  G4cout << "\t BeginOfRunAction ### Run " << aRun->GetRunID() << " start ### " << G4endl;
   G4String filename2 = filename + ".root";
   fRootFout = new TFile(filename2,"RECREATE",filename) ;
   fRootTree = new TTree("tree",filename2);
@@ -77,7 +77,7 @@ void RunAction::EndOfRunAction(const G4Run* aRun)
   fRootTree->Write();
   fRootFout->Close();
 
-  G4cout <<nofEvents<<" Events in "<< end.tv_sec-start.tv_sec<<"s"<< G4endl;
+  G4cout << "\t EndOfRunAction ### # events = " << nofEvents << "  time = " << end.tv_sec-start.tv_sec<<"s"<< G4endl;
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

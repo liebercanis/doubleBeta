@@ -4,11 +4,13 @@
 
 #include "LegendAnalysis.hh"
 #include "LegendTrajectory.hh"
+#include "G4RunManager.hh"
 #include "UserTrackInformation.hh"
 #include "G4VProcess.hh"
 #include "G4UnitsTable.hh"
 #include "G4SystemOfUnits.hh"
 #include "G4PhysicalConstants.hh"
+#include "UserEventInformation.hh"
 
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -76,15 +78,21 @@ void  LegendAnalysis::anaEvent( const G4Event *anEvent)
     G4cout << " LegendAnalysis called with NULL G4Event pointer!!! " << G4endl;
     return;
   }
+  UserEventInformation* eventInformation = (UserEventInformation*)G4EventManager::GetEventManager()->GetConstCurrentEvent()->GetUserInformation();
   fEvent->clear();
   fEvent->evId = anEvent->GetEventID();
   fEvent->nPVert = anEvent->GetNumberOfPrimaryVertex();
   for(int iv=0; iv < fEvent->nPVert; ++iv) {
     G4PrimaryVertex* pvi = anEvent->GetPrimaryVertex(iv);
     LTPVertex lpv;
+    G4VPhysicalVolume *physVol = eventInformation->GetPrimaryPhysicalVolume();
+    
+    lpv.physVolumeName = physVol->GetName();
     // fill primary vertex info
     lpv.VertexId=iv;
     lpv.Position.SetXYZT(pvi->GetX0(),pvi->GetY0(),pvi->GetZ0(),pvi->GetT0());
+    G4ThreeVector pvrel = pvi->GetPosition() - physVol->GetTranslation();
+    lpv.RelPosition.SetXYZT(pvrel.x(),pvrel.y(),pvrel.z(),pvi->GetT0());
     //G4VUserPrimaryVertexInformation* pvinfo= pvi->GetUserInformation() 
     lpv.nParticles =pvi->GetNumberOfParticle();
     for(int ip=0; ip< lpv.nParticles; ++ip ) {
@@ -97,13 +105,14 @@ void  LegendAnalysis::anaEvent( const G4Event *anEvent)
       part.Charge=  pvPart->GetCharge();
       part.KEnergy= pvPart->GetKineticEnergy();
       part.Momentum.SetPxPyPzE( pvPart->GetPx(),pvPart->GetPy(),pvPart->GetPz(),pvPart->GetTotalEnergy());
-      part.print(ip);
+      //part.print(ip);
       lpv.particle.push_back(part);
       if(iv==0&&part.TrackId==1) {
         fEvent->PDG=part.PDG;
         fEvent->ePrimary = pvPart->GetTotalEnergy();
       }
     }
+    //lpv.print(fEvent->evId);
     fEvent->pvertex.push_back(lpv);
   }
   anaTrajectories( anEvent->GetTrajectoryContainer());
@@ -138,8 +147,8 @@ void  LegendAnalysis::anaTrajectories(G4TrajectoryContainer* trajectoryContainer
     
     // find creator process 
     const G4VProcess* creator=aTrack->GetCreatorProcess();
-    if(!creator) 
-      G4cout << " LegendAnalysis:: track definition is  " << aTrack->GetDefinition()->GetParticleName()<< " no creator " << endl;
+    //if(!creator) 
+      //G4cout << " LegendAnalysis:: track definition is  " << aTrack->GetDefinition()->GetParticleName()<< " no creator " << endl;
 
     LTTraject ltraj;
    // fill from trajectory 
@@ -170,7 +179,8 @@ void  LegendAnalysis::anaTrajectories(G4TrajectoryContainer* trajectoryContainer
     // set primary 
     if(gtrj->IsPrimary()) {
       ltraj.Type = LTTrajectType::PRI;
-      //if(creator) 
+      /*
+      if(creator) 
         //G4cout << " LegendAnalysis primary creator process " << creator->GetProcessName() 
         //<< " track status " << trackInformation->GetTrackStatus() <<  " PRIMARY TRACK track definition is  " << aTrack->GetDefinition()->GetParticleName()
         //<< "  KE=" << ltraj.KE << G4endl;
@@ -178,6 +188,7 @@ void  LegendAnalysis::anaTrajectories(G4TrajectoryContainer* trajectoryContainer
        G4cout << " LegendAnalysis primary no creator process " 
         << " track status " << trackInformation->GetTrackStatus() <<  " PRIMARY TRACK track definition is  " << aTrack->GetDefinition()->GetParticleName()
         << "  KE=" << ltraj.KE << G4endl;
+        */
     }
 
     //G4cout <<  " ANALYSIS id " <<   ltraj.TrajId  << " parent "  << ltraj.ParentId << " PDG "  <<  ltraj.PDG << " charge " <<
@@ -197,14 +208,16 @@ void  LegendAnalysis::anaTrajectories(G4TrajectoryContainer* trajectoryContainer
     //enum LTTrajectType {UNK,PRI,SCI,WLS,HIT};
     ltraj.Type = LTTrajectType::UNK;
     if(gtrj->GetParticleName()=="opticalphoton") {
+      ++fEvent->nOptPhotons;
       G4double waveLength =  h_Planck*c_light/ltraj.KE/nm;//700 nm
       if(gtrj->IsHit()) {
         ++fEvent->nPmtHits;
+        fEvent->ePmt += ltraj.KE;
         hPmtHits->Fill(waveLength);
         ltraj.Type = LTTrajectType::HIT;
-        G4cout << " LegendAnalysis hitPMT creator process " << creator->GetProcessName() 
-          << " track status " << trackInformation->GetTrackStatus() << " is hit  " 
-          << gtrj->IsHit() <<  " is wls " << gtrj->IsWLS() << "  KE=" << ltraj.KE  << G4endl;
+        //G4cout << " LegendAnalysis hitPMT creator process " << creator->GetProcessName() 
+        //  << " track status " << trackInformation->GetTrackStatus() << " is hit  " 
+        //  << gtrj->IsHit() <<  " is wls " << gtrj->IsWLS() << "  KE=" << ltraj.KE  << G4endl;
       } else if(gtrj->IsWLS()) {
         ++fEvent->nWlsScint;
         hWls->Fill(waveLength);

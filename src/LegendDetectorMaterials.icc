@@ -183,9 +183,9 @@
   kovar->AddElement(elFe,fractionmass= 0.5349);
   
   //  VM2000
-  G4Material* VM2000 = new G4Material(name="VM2000", density=0.9*g/cm3, ncomponents=2);
-  VM2000->AddElement(elC, 2);
-  VM2000->AddElement(elH, 4);
+  fVM2000 = new G4Material(name="VM2000", density=0.9*g/cm3, ncomponents=2);
+  fVM2000->AddElement(elC, 2);
+  fVM2000->AddElement(elH, 4);
   
   // liquid N2
   density=0.808*g/cm3;
