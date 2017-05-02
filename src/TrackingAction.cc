@@ -59,11 +59,17 @@ TrackingAction::TrackingAction()
   G4double HighWLS = h_Planck*c_light/(200.0*nm);//200 nm
   hTrackScintE = new TH1F("TrackScintE"," scint photon energy in LAr",1000,LowE,HighE);
   hTrackPhotonE = new TH1F("TrackPhotonE"," all photon energy in LAr",1000,LowE,HighE);
+  hTrackScintYield = new TH1F("TrackScintYield"," scint photon yield",1000,0,5);
+  hTrackScintYield->SetXTitle(" mean scint photons / primary energy (MeV) ");
   hAbsorbedPhotonE = new TH1F("AbsorbedPhotonE"," absorbed scint photon energy in LAr",1000,LowE,HighE);
   hWLSPhotonE = new TH1F("WLSPhotonE"," WLS photon energy ",1000,LowWLS,HighWLS);
   hPMTPhotonE = new TH1F("PMTPhotonE"," WLS photon energy ",1000,LowWLS,HighWLS);
   hCherenkovPhotonE  = new TH1F("CherenkovPhotonE"," WLS photon energy ",1000,LowWLS,HighWLS);
   hTrackStatus = new TH1F("TrackStatus"," track status ", TrackBit::MaxHistogramBit+1,0, TrackBit::MaxHistogramBit+1);
+
+  ntTrack = new TNtuple("ntTrack"," track variables ","parent:flag:status:energy");
+
+  
    
   G4cout << " ...  = " << G4endl;
   
@@ -86,6 +92,9 @@ void TrackingAction::PostUserTrackingAction(const G4Track* aTrack){
     G4cout << " WARNING TrackingAction called with NULL track!  " << G4endl;
     return;
   }
+
+   LTEvent* ltEvent = LegendAnalysis::Instance()->getEvent();
+  
   //The UI command /tracking/storeTrajectory _bool_ does the same.
   fpTrackingManager->SetStoreTrajectory(true);
   LegendTrajectory* trajectory=(LegendTrajectory*) fpTrackingManager->GimmeTrajectory();
@@ -100,8 +109,7 @@ void TrackingAction::PostUserTrackingAction(const G4Track* aTrack){
   
   
   //LegendAnalysis::Instance()->FillTrajectory(trajectory);
-  G4double totE = aTrack->GetTotalEnergy();//Returns energy in MeV
-  //G4double KE = aTrack->GetKineticEnergy();//Returns energy in MeV
+  G4double totE = aTrack->GetKineticEnergy();//Returns energy in MeV
   
   trajectory->SetParentId(trackInformation->GetParentId());
   const G4VProcess* creator=aTrack->GetCreatorProcess();
@@ -114,15 +122,26 @@ void TrackingAction::PostUserTrackingAction(const G4Track* aTrack){
   if(trackInformation->IsPrimary()) {  
     trajectory->SetDrawTrajectory(true);
     trajectory->SetPrimary();
+    ltEvent->ePrimary=totE;
     //G4cout << " TrackingAction PRIMARY TRACK track definition is  " << aTrack->GetDefinition()->GetParticleName() << " is prim? " << trajectory->IsPrimary() << G4endl;
   }
 
+   float evertex  =  ltEvent->ePrimary;
+   //G4cout << " \t TRACKINGACTION event vertex energy " << evertex << G4endl;
+   G4double meanScintE = h_Planck*c_light/(128.0*nm);
+
   if(aTrack->GetDefinition() ==G4OpticalPhoton::OpticalPhotonDefinition()){
+    ++ltEvent->nOptPhotons;
     hTrackStatus->Fill(trackInformation->GetTrackBit()); 
     
     hTrackPhotonE->Fill(totE);
     if(trackInformation->GetTrackStatus()&absorbed) hAbsorbedPhotonE->Fill(totE);
-    if(creator->GetProcessName() ==  "Scintillation") hTrackScintE->Fill(totE);
+    if(creator->GetProcessName() ==  "Scintillation") {
+      ++ltEvent->nArScint;
+      hTrackScintE->Fill(totE);
+      if(evertex>0) hTrackScintYield->Fill( totE /evertex /meanScintE);
+      //if(evertex>0) G4cout << " \t TRACKINGACTION event vertex energy " << evertex << "  photon energy ratio " << totE /evertex << G4endl;
+    }
     if(creator->GetProcessName() == "Cerenkov") hCherenkovPhotonE->Fill(totE);
     
     // use track status set in SteppingAction
@@ -130,11 +149,14 @@ void TrackingAction::PostUserTrackingAction(const G4Track* aTrack){
       hPMTPhotonE->Fill(totE);
       trajectory->SetDrawTrajectory(false);
       trajectory->SetHit();
+      ++ltEvent->nPmtHits;
     } else if(trackInformation->GetTrackStatus()&hitWLS) {
       trajectory->SetDrawTrajectory(false);
       trajectory->SetWLS();
       hWLSPhotonE->Fill(totE);
+      ++ltEvent->nWlsScint; 
     } 
   }
+  ntTrack->Fill( trackInformation->GetParentId(), trackInformation->GetTrackBit(), trackInformation->GetTrackStatus(), totE );
   
 }

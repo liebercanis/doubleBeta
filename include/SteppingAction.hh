@@ -61,6 +61,7 @@ class SteppingAction : public G4UserSteppingAction
   private:
  
     TDirectory* fDir;
+    TNtuple* ntStep;
     TH1F* hWLSPhotonE;
     TH1F* hBoundaryStatus;
     TH1F* hParticleType;

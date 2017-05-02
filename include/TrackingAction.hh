@@ -50,11 +50,13 @@ class TrackingAction : public G4UserTrackingAction {
     TDirectory *fDir;
     TH1F *hTrackPhotonE;
     TH1F *hTrackScintE;
+    TH1F *hTrackScintYield;
     TH1F *hAbsorbedPhotonE;
     TH1F *hWLSPhotonE;
     TH1F *hPMTPhotonE;
     TH1F *hCherenkovPhotonE;
     TH1F *hTrackStatus;
+    TNtuple *ntTrack;
   private:
   
  

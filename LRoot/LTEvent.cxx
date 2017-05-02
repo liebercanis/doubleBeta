@@ -27,6 +27,12 @@ void LTEvent::clear()
   nAbsorbed=0;
   nAbsorbedBoundary=0;
 
+  nTrajPmtHits=0;
+  nTrajOptPhotons=0;
+  nTrajArScint=0;
+  nTrajWlsScint=0;
+  
+
   PDG=0;
   ePrimary=0;
   eCharged=0;

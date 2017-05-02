@@ -9,6 +9,8 @@
 #include "G4SystemOfUnits.hh"
 
 //#include "g4root.hh"
+#include "TTree.h"
+#include "TNtuple.h"
 #include "TMath.h"
 #include "TFile.h"
 #include "TH1F.h"

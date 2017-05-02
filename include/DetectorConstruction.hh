@@ -157,6 +157,7 @@ class DetectorConstruction : public G4VUserDetectorConstruction
     G4double grouprmax, groupzmax, WLSHalfThickness; 
     G4LogicalVolume* logicalPmtHousing;  
     G4LogicalVolume* logicalPmtGlass;  
+    G4LogicalVolume* logicalPmtCathode;  
     G4LogicalVolume* logicalPMTWLS; 
     G4VPhysicalVolume* larPhysical;
 

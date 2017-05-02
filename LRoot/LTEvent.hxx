@@ -34,10 +34,16 @@ class LTEvent: public TNamed {
     Int_t nTraj;
     vector<LTTraject> traject;
 
-    Int_t nPmtHits;
     Int_t nOptPhotons;
+    Int_t nPmtHits;
     Int_t nArScint;
     Int_t nWlsScint;
+
+    Int_t nTrajOptPhotons;
+    Int_t nTrajPmtHits;
+    Int_t nTrajArScint;
+    Int_t nTrajWlsScint;
+    
     Int_t nCherenkov;
     Int_t nAbsorbed;
     Int_t nAbsorbedBoundary;

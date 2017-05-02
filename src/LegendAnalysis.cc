@@ -79,7 +79,6 @@ void  LegendAnalysis::anaEvent( const G4Event *anEvent)
     return;
   }
   UserEventInformation* eventInformation = (UserEventInformation*)G4EventManager::GetEventManager()->GetConstCurrentEvent()->GetUserInformation();
-  fEvent->clear();
   fEvent->evId = anEvent->GetEventID();
   fEvent->nPVert = anEvent->GetNumberOfPrimaryVertex();
   for(int iv=0; iv < fEvent->nPVert; ++iv) {
@@ -109,7 +108,7 @@ void  LegendAnalysis::anaEvent( const G4Event *anEvent)
       lpv.particle.push_back(part);
       if(iv==0&&part.TrackId==1) {
         fEvent->PDG=part.PDG;
-        fEvent->ePrimary = pvPart->GetTotalEnergy();
+        fEvent->ePrimary = pvPart->GetKineticEnergy();
       }
     }
     //lpv.print(fEvent->evId);
@@ -208,10 +207,10 @@ void  LegendAnalysis::anaTrajectories(G4TrajectoryContainer* trajectoryContainer
     //enum LTTrajectType {UNK,PRI,SCI,WLS,HIT};
     ltraj.Type = LTTrajectType::UNK;
     if(gtrj->GetParticleName()=="opticalphoton") {
-      ++fEvent->nOptPhotons;
+      ++fEvent->nTrajOptPhotons;
       G4double waveLength =  h_Planck*c_light/ltraj.KE/nm;//700 nm
       if(gtrj->IsHit()) {
-        ++fEvent->nPmtHits;
+        ++fEvent->nTrajPmtHits;
         fEvent->ePmt += ltraj.KE;
         hPmtHits->Fill(waveLength);
         ltraj.Type = LTTrajectType::HIT;
@@ -219,11 +218,11 @@ void  LegendAnalysis::anaTrajectories(G4TrajectoryContainer* trajectoryContainer
         //  << " track status " << trackInformation->GetTrackStatus() << " is hit  " 
         //  << gtrj->IsHit() <<  " is wls " << gtrj->IsWLS() << "  KE=" << ltraj.KE  << G4endl;
       } else if(gtrj->IsWLS()) {
-        ++fEvent->nWlsScint;
+        ++fEvent->nTrajWlsScint;
         hWls->Fill(waveLength);
         ltraj.Type = LTTrajectType::WLS;
       } else {
-        ++fEvent->nArScint;
+        ++fEvent->nTrajArScint;
         hOptical->Fill(waveLength);
         ltraj.Type = LTTrajectType::SCI;
       }

@@ -48,6 +48,11 @@ void EventAction::BeginOfEventAction(const G4Event* event)
 	counter = 0;
 
   for (int k=0;k<300;k++) length[k] = 0.;
+
+  // clear the LegendAnalysis event branch 
+  LegendAnalysis::Instance()->getEvent()->clear();
+
+
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

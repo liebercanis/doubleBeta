@@ -31,6 +31,7 @@
 #ifndef EventAction_h
 #define EventAction_h 1
 
+#include "LegendAnalysis.hh"
 #include "G4UserEventAction.hh"
 #include "globals.hh"
 #include "G4ThreeVector.hh"

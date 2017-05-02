@@ -50,8 +50,8 @@ void ana(char *chtag = "1493395802")//Feb9_50V_5000V")
     //
     hOpticalYield->Fill( float(ev->nOptPhotons)/ev->ePrimary);
     hArYield->Fill( float(ev->nArScint)/ev->ePrimary);
-    float evertex  =  ev->pvertex[0].particle[0].KEnergy;
-    hPhotonsVsEnergy->Fill( evertex , float(ev->nPmtHits) );
+    //float evertex  =  ev->pvertex[0].particle[0].KEnergy;
+    hPhotonsVsEnergy->Fill( ev->ePrimary , float(ev->nPmtHits) );
 
 
     // loop over trajectories

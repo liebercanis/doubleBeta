@@ -30,6 +30,7 @@ SteppingAction::SteppingAction(DetectorConstruction* det, EventAction* evt)
   G4cout << " ... " << G4endl;
   hBoundaryStatus = new TH1F("StepBoundaryStatus"," boundary status ",Dichroic,0,Dichroic); // last in enum G4OpBoundaryProcessStatus
   hParticleType = new TH1F("StepParticleType"," step particle type ",100,0,100);
+  ntStep = new TNtuple("ntStep"," step variables ","parent:boundary:flag:length:energy");
 
 }
 
@@ -79,7 +80,6 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
   if ( aTrack->GetCurrentStepNumber() == 1 ) fExpectedNextStatus = Undefined;
   UserTrackInformation* trackInformation = (UserTrackInformation*) aTrack->GetUserInformation();
   UserEventInformation* eventInformation = (UserEventInformation*)G4EventManager::GetEventManager()->GetConstCurrentEvent()->GetUserInformation();
-  
 
   G4StepPoint* thePrePoint = step->GetPreStepPoint();
   G4VPhysicalVolume* thePrePV = thePrePoint->GetPhysicalVolume();
@@ -272,6 +272,7 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
   //} else {
     //G4cout<<"SteppingAction:: Process Name that Neil could not find is ... "<<processName<<" !!!"<<G4endl;
   } //is fGeomBoundary)
+  ntStep->Fill(trackInformation->GetParentId(),boundaryStatus,trackInformation->GetTrackStatus(),length,aTrack->GetKineticEnergy());
 }
 
 

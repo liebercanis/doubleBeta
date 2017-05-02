@@ -420,40 +420,45 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4double roughness = 0.5;
   G4OpticalSurface* WLSoptSurf = new G4OpticalSurface("WLS_rough_surf",glisur,ground,dielectric_dielectric,roughness);
 
-  G4PVPlacement* phys_PMTWLS =  new G4PVPlacement (0,group1pos,WLSgroupTubeLogical,"WLSgroup1TubeLogical", larSourceLogical,false,0,checkOverlaps);
-  new G4LogicalBorderSurface("Phys_PMT_WLS_cylinder_1",group1Physical,phys_PMTWLS,WLSoptSurf);
-  new G4LogicalBorderSurface("Phys_PMT_WLS_cylinder_1",phys_PMTWLS,group1Physical,WLSoptSurf);
+  G4PVPlacement* phys_WLSGroup1 =  new G4PVPlacement (0,group1pos,WLSgroupTubeLogical,"WLSgroup1TubeLogical", larSourceLogical,false,0,checkOverlaps);
+  new G4LogicalBorderSurface("Phys_PMT_WLS_cylinder_1",group1Physical,phys_WLSGroup1,WLSoptSurf);
+  new G4LogicalBorderSurface("Phys_PMT_WLS_cylinder_1",phys_WLSGroup1,group1Physical,WLSoptSurf);
 
-  phys_PMTWLS = new G4PVPlacement (0,group2pos,WLSgroupTubeLogical,"WLSgroup2TubeLogical", larSourceLogical,false,1,checkOverlaps);  
-  new G4LogicalBorderSurface("Phys_PMT_WLS_cylinder_2",group2Physical,phys_PMTWLS,WLSoptSurf);
-  new G4LogicalBorderSurface("Phys_PMT_WLS_cylinder_2",phys_PMTWLS,group2Physical,WLSoptSurf);
+  G4PVPlacement* phys_WLSGroup2 = new G4PVPlacement (0,group2pos,WLSgroupTubeLogical,"WLSgroup2TubeLogical", larSourceLogical,false,1,checkOverlaps);  
+  new G4LogicalBorderSurface("Phys_PMT_WLS_cylinder_2",group2Physical,phys_WLSGroup2,WLSoptSurf);
+  new G4LogicalBorderSurface("Phys_PMT_WLS_cylinder_2",phys_WLSGroup2,group2Physical,WLSoptSurf);
   
 
   /////////////PMT coated in WLS/////////////
   //WLSHalfThickness defined above
-  G4double glassHalfThickness = 10*mm;  // half thickness
   G4double housingHalfThickness = 10*mm;  // half thickness
+  G4double glassHalfThickness = 1*mm;  // half thickness
+  G4double cathodeHalfThickness = 1*mm;
+  G4double pmtZOffset = 2*(cathodeHalfThickness+glassHalfThickness+WLSHalfThickness)+housingHalfThickness;//+tubeWall;
+
+
   G4Tubs* PMTDiskTubs = new G4Tubs("PMTDiskTubs",0.,grouprmax,housingHalfThickness,0,twopi);
-  
   //Metal housing, Kovar is a Ni Co alloy
   G4Material* materialPMTHousing = G4Material::GetMaterial("Kovar");
   logicalPmtHousing = new G4LogicalVolume(PMTDiskTubs,materialPMTHousing,"logicalPmtHousing");  
-  logicalPmtHousing->SetVisAttributes ( new G4VisAttributes(G4Colour(0.9,0.1,0.1) ) );
+  logicalPmtHousing->SetVisAttributes ( new G4VisAttributes(G4Colour::Green() ) );
   
   G4Tubs* PMTGlassTubs = new G4Tubs("PMTGlassTubs",0,grouprmax,glassHalfThickness,0,twopi);
   G4Material* materialPMTGlass = G4Material::GetMaterial("Quartz"); 
   logicalPmtGlass = new G4LogicalVolume(PMTGlassTubs,materialPMTGlass,"logicalPmtGlass");            
-  logicalPmtGlass->SetVisAttributes ( new G4VisAttributes(G4Colour(0.1,0.9,0.1) ) );
+  logicalPmtGlass->SetVisAttributes ( new G4VisAttributes(G4Colour::Yellow() ) );
+
+  G4Tubs* PMTCathodeTubs = new G4Tubs("PMTCathodeTubs",0,grouprmax,cathodeHalfThickness,0,twopi);
+  logicalPmtCathode=  new G4LogicalVolume(PMTCathodeTubs,CathodeMetalAluminium,"logicalPmtCathode"); 
+  logicalPmtCathode->SetVisAttributes ( new G4VisAttributes(G4Colour::Red() ) );
   
   G4Tubs* PMTWlsTubs = new G4Tubs("PMTWlsTubs",0,grouprmax,WLSHalfThickness,0,twopi);
   logicalPMTWLS = new G4LogicalVolume(PMTWlsTubs,fTPB,"logicalPmtGlassWLS");   
-  logicalPMTWLS->SetVisAttributes ( new G4VisAttributes(G4Colour(0.6,0.1,0.7) ) );
+  logicalPMTWLS->SetVisAttributes ( new G4VisAttributes(G4Colour::Blue() ) );
   //fPMTGlassOptSurface defined in LegendDetectorMaterials.icc
   new G4LogicalSkinSurface("PMTGlass_surf",logicalPmtGlass,fPMTGlassOptSurface);
   
-  G4cout<< "\t *******************************************" <<G4endl;
   // construcnt and put into larSourceLogical needs larPhysical for LogicalBorderSuface
-  G4double pmtZOffset = 2*(glassHalfThickness+WLSHalfThickness)+housingHalfThickness;//+tubeWall;
   G4ThreeVector rPMT1top = group1pos + G4ThreeVector(0,0,groupzmax+pmtZOffset);
   G4ThreeVector rPMT1bot = group1pos + G4ThreeVector(0,0,-groupzmax-pmtZOffset);
   G4ThreeVector rPMT2top = group2pos + G4ThreeVector(0,0,groupzmax+pmtZOffset);
@@ -509,17 +514,21 @@ void DetectorConstruction::PlacePMT(G4ThreeVector rhousing,double top_or_bot,int
 {
   //PMT Housing 
   new G4PVPlacement(0,rhousing,logicalPmtHousing,"phys_PMTHousing_"+std::to_string(num),larSourceLogical,false,num,checkOverlaps);
+  // photocathode
+  G4double zhalf =  top_or_bot*(dynamic_cast<G4Tubs*>(logicalPmtHousing->GetSolid())->GetZHalfLength() +  
+    dynamic_cast<G4Tubs*>(logicalPmtCathode->GetSolid())->GetZHalfLength());
+  G4ThreeVector rcathode = rhousing + G4ThreeVector(0,0,zhalf);
+  new G4PVPlacement(0,rcathode,logicalPmtCathode,"phys_PMTCathode_"+std::to_string(num),larSourceLogical,false,num,checkOverlaps);
   //PMT GLASS
-  G4double zhalf = dynamic_cast<G4Tubs*>(logicalPmtHousing->GetSolid())->GetZHalfLength() +  
-    dynamic_cast<G4Tubs*>(logicalPmtGlass->GetSolid())->GetZHalfLength();
-  zhalf *= top_or_bot;
+  zhalf += top_or_bot*( dynamic_cast<G4Tubs*>(logicalPmtCathode->GetSolid())->GetZHalfLength()
+      +dynamic_cast<G4Tubs*>(logicalPmtGlass->GetSolid())->GetZHalfLength());
   G4ThreeVector rglass = rhousing + G4ThreeVector(0,0,zhalf);
   new G4PVPlacement(0,rglass,logicalPmtGlass,"phys_PMTGlass_"+std::to_string(num),larSourceLogical,false,num,checkOverlaps);
   //WLS PMT 
   zhalf += top_or_bot*( dynamic_cast<G4Tubs*>(logicalPmtGlass->GetSolid())->GetZHalfLength()
       +dynamic_cast<G4Tubs*>(logicalPMTWLS->GetSolid())->GetZHalfLength());
   G4ThreeVector rwls = rhousing + G4ThreeVector(0,0,zhalf);
-  G4PVPlacement* phys_PMTWLS = new G4PVPlacement(0,rwls,logicalPMTWLS,"phys_WLSGlassPmt_"+std::to_string(num),larSourceLogical,false,num,checkOverlaps);
+  G4PVPlacement* phys_PMTWLS = new G4PVPlacement(0,rwls,logicalPMTWLS,"phys_PMTWLS_"+std::to_string(num),larSourceLogical,false,num,checkOverlaps);
   /* border between WLS and larPhysicsl crossing in both directions WLS is rough on both sides */
   G4double roughness = 0.5;
   G4OpticalSurface* WLSoptSurf = new G4OpticalSurface("WLS_rough_surf",glisur,ground,dielectric_dielectric,roughness);
@@ -534,7 +543,7 @@ void DetectorConstruction::ConstructSDandField()
   G4SDManager* SDman   =  G4SDManager::GetSDMpointer();  
   PMTSD* sd = new PMTSD("PhotoCathode",1,"PhCathodeHC" );    
   SDman->AddNewDetector(sd); 
-  logicalPmtGlass->SetSensitiveDetector(sd);
+  logicalPmtCathode->SetSensitiveDetector(sd);
 }
 
 //
