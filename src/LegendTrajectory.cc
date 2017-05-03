@@ -51,7 +51,8 @@ LegendTrajectory::LegendTrajectory()
 {
   fParticleDefinition=0;
   fTrack=NULL;
-  fHit=false;
+  fPmtHit=false;
+  fGeHit=false;
   fWls= false;
   fPrimary=false;
   positionRecord = new TrajectoryPointContainer();
@@ -64,7 +65,8 @@ LegendTrajectory::LegendTrajectory(const G4Track* aTrack)
   :G4Trajectory(aTrack),fWls(false),fDrawit(false)
 {
   fTrack=aTrack;
-  fHit=false;
+  fPmtHit=false;
+  fGeHit=false;
   fWls= false;
   fPrimary=false;
   fParticleDefinition=aTrack->GetDefinition();
@@ -150,7 +152,7 @@ void LegendTrajectory::DrawTrajectory() const
       if(fWls) {//WLS photons are red
         G4cout << " LegendTrajectory optical photon WLS "  << G4endl;
         colour = G4Colour::Red();
-      } else if(fHit) {
+      } else if(fPmtHit) {
         G4cout << " LegendTrajectory optical photon hit pmt "  << G4endl;
         colour = G4Colour::Blue();
       } else {//Scintillation and Cerenkov photons are green

@@ -148,15 +148,42 @@ void TrackingAction::PostUserTrackingAction(const G4Track* aTrack){
     if(trackInformation->GetTrackStatus()&hitPMT) {
       hPMTPhotonE->Fill(totE);
       trajectory->SetDrawTrajectory(false);
-      trajectory->SetHit();
+      trajectory->SetPmtHit();
       ++ltEvent->nPmtHits;
     } else if(trackInformation->GetTrackStatus()&hitWLS) {
       trajectory->SetDrawTrajectory(false);
       trajectory->SetWLS();
       hWLSPhotonE->Fill(totE);
       ++ltEvent->nWlsScint; 
-    } 
+
+      
+    }  
+  } //optical 
+
+  if(trackInformation->GetTrackStatus()&hitGe) {
+      trajectory->SetDrawTrajectory(true);
+      trajectory->SetGeHit();
+      ++ltEvent->nGeHits; 
   }
+
+ if(trackInformation->GetTrackStatus()&eIoni) {
+      trajectory->SetDrawTrajectory(true);
+      trajectory->SetEIoni();
+  }
+
+ if(trackInformation->GetTrackStatus()&hIoni) {
+      trajectory->SetDrawTrajectory(true);
+      trajectory->SetHIoni();
+  }
+
+  if(trackInformation->GetTrackStatus()&ionIoni) {
+      trajectory->SetDrawTrajectory(true);
+      trajectory->SetIonIoni();
+  }
+ 
+ 
+  
+  
   ntTrack->Fill( trackInformation->GetParentId(), trackInformation->GetTrackBit(), trackInformation->GetTrackStatus(), totE );
   
 }

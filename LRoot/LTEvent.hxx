@@ -36,6 +36,7 @@ class LTEvent: public TNamed {
 
     Int_t nOptPhotons;
     Int_t nPmtHits;
+    Int_t nGeHits;
     Int_t nArScint;
     Int_t nWlsScint;
 

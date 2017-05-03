@@ -32,6 +32,7 @@
 #define DetectorConstruction_h 1
 
 #include "LegendAnalysis.hh"
+#include "GermaniumSD.hh"
 #include "PMTSD.hh"
 #include "globals.hh"
 #include "G4NistManager.hh"
@@ -109,7 +110,7 @@ class DetectorConstruction : public G4VUserDetectorConstruction
     G4double TPBEmissionSpectrum(G4double energy) { 
       G4double wavelength = LambdaE/energy/nm;
       G4double eff=0;
-      if(wavelength>350.0 && wavelength < 650.0) eff =fTPBspec->Eval(wavelength);
+      if(wavelength>380.0 && wavelength < 590.0) eff =fTPBspec->Eval(wavelength);
       return eff;
     }
     //Ge Reflection Spec from TGraph
@@ -154,7 +155,8 @@ class DetectorConstruction : public G4VUserDetectorConstruction
     G4LogicalVolume* logicalVM2000;
 
     //PMT parameters
-    G4double grouprmax, groupzmax, WLSHalfThickness; 
+    G4double grouprmax, groupzmax, WLSHalfThickness;
+    G4LogicalVolume* logicalGeDet;
     G4LogicalVolume* logicalPmtHousing;  
     G4LogicalVolume* logicalPmtGlass;  
     G4LogicalVolume* logicalPmtCathode;  

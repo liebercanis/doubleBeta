@@ -124,8 +124,13 @@ LegendParticleSource::LegendParticleSource(G4String physical_name )
   MinPhi = 0.;
   MaxPhi = twopi;
 
-  EnergyDisType = "Ar39";
+  //EnergyDisType = "Ar39";
+  EnergyDisType = "Mono";
   MonoEnergy = 1*MeV;
+  G4cout<<" LegendParticleSource source type is   " << EnergyDisType;
+  if(EnergyDisType = "Mono") G4cout << " energy " << MonoEnergy;
+  G4cout << G4endl;
+  
 
   verbosityLevel = 0;
 

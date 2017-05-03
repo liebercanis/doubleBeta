@@ -209,11 +209,11 @@ void  LegendAnalysis::anaTrajectories(G4TrajectoryContainer* trajectoryContainer
     if(gtrj->GetParticleName()=="opticalphoton") {
       ++fEvent->nTrajOptPhotons;
       G4double waveLength =  h_Planck*c_light/ltraj.KE/nm;//700 nm
-      if(gtrj->IsHit()) {
+      if(gtrj->IsPmtHit()) {
         ++fEvent->nTrajPmtHits;
         fEvent->ePmt += ltraj.KE;
         hPmtHits->Fill(waveLength);
-        ltraj.Type = LTTrajectType::HIT;
+        ltraj.Type = LTTrajectType::PMTHIT;
         //G4cout << " LegendAnalysis hitPMT creator process " << creator->GetProcessName() 
         //  << " track status " << trackInformation->GetTrackStatus() << " is hit  " 
         //  << gtrj->IsHit() <<  " is wls " << gtrj->IsWLS() << "  KE=" << ltraj.KE  << G4endl;
@@ -226,15 +226,16 @@ void  LegendAnalysis::anaTrajectories(G4TrajectoryContainer* trajectoryContainer
         hOptical->Fill(waveLength);
         ltraj.Type = LTTrajectType::SCI;
       }
-    } else if(ltraj.PDG==11) { // electron
+      // not optical 
+     } 
+    
+    if(gtrj->IsGeHit()) ltraj.Type = LTTrajectType::GEHIT;
+
+    if(ltraj.PDG==11) { // electron
       hEElectron->Fill(ltraj.KE/keV);
     } else if(ltraj.PDG==22) { // gamma 
       hEGamma ->Fill(ltraj.KE/keV);
-    } else
-      G4cout << " LegendAnalysis UNKNOWN traj " << ij << "  " << gtrj->GetParticleName() << "  " << ltraj.PDG << " ke (KeV) " << ltraj.KE/keV  << G4endl;
-
-    //std::vector<Int_t>   Region;
-    //std::vector<LTHitSegment> segments;
+    }
     
     // save in tree
     fEvent->traject.push_back(ltraj);

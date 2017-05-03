@@ -92,10 +92,15 @@
    -This is the sum of all stopped flags so can be used to remove stopped flags
 */
 enum TrackStatus { active=1, hitPMT=2, absorbed=4, boundaryAbsorbed=8,
-                      absorbedLAr=16, inactive=32, hitWLS = 64, totalInternal=128, backScatter=256, notBoundary=512, isBad=1024};
+                      absorbedLAr=16, inactive=32, hitWLS = 64, totalInternal=128, backScatter=256, notBoundary=512,
+                      scint=2*notBoundary, 
+                      eIoni=2*scint, 
+                      hIoni=2*eIoni, 
+                      ionIoni=2*hIoni, 
+                      hitGe=2*ionIoni, isBad=2*hitGe};
 
 
-enum TrackBit {MaxHistogramBit=9};
+enum TrackBit {MaxHistogramBit=17};
 
 class UserTrackInformation : public G4VUserTrackInformation
 {
@@ -114,6 +119,7 @@ class UserTrackInformation : public G4VUserTrackInformation
 
     // just return first bit of interest for histograming
     int GetTrackBit() const { 
+      //photon 
       if(fStatus&hitPMT) return 1;
       else if(fStatus&absorbed) return 2; 
       else if(fStatus&boundaryAbsorbed) return 3;
@@ -121,7 +127,13 @@ class UserTrackInformation : public G4VUserTrackInformation
       else if(fStatus&hitWLS) return 5;
       else if(fStatus&totalInternal) return 6;
       else if(fStatus&backScatter) return 7;
-      else if(fStatus&notBoundary) return 8;
+      // ionization
+      else if(fStatus&hitGe) return 11;
+      else if(fStatus&eIoni) return 12;
+      else if(fStatus&hIoni) return 13;
+      else if(fStatus&ionIoni) return 14;
+      else if(fStatus&scint) return 15;
+      else if(fStatus&notBoundary) return 16;
       else return MaxHistogramBit;
     }
  

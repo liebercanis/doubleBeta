@@ -390,25 +390,27 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   //group2Logical->SetVisAttributes(new G4VisAttributes(G4Colour(0.1,0.5,0.7)));
 
   
-  // place detectors in tubes
-  for(unsigned idet=0; idet < detPositions.size(); ++ idet) {
-    G4ThreeVector r_i(0,0,0);
-    G4ThreeVector r=detRout[idet];
-    G4ThreeVector z=detZhalf[idet];
-    G4Polycone* Det_solid = new G4Polycone(detNamesPhys[idet],0,2*M_PI,3,&z[0],&r_i[0],&r[0]);
-    G4LogicalVolume* Det_logical = new G4LogicalVolume(Det_solid,fGeMaterial,detNamesLog[idet]);
-    //Added from MaGe
-    new G4LogicalSkinSurface("Ge_Detector"+std::to_string(idet),Det_logical,fGeOpticalSurface);
-
-    if(idet<detPositions.size()/2) 
-      new G4PVPlacement (0,detRelPositions[idet],Det_logical,detNames[idet],group1Logical,false,detNumbers[idet],checkOverlaps);
-     else 
-      new G4PVPlacement (0,detRelPositions[idet],Det_logical,detNames[idet],group2Logical,false,detNumbers[idet],checkOverlaps);     
-  }
-    
   G4VPhysicalVolume* group1Physical = new G4PVPlacement(0,group1pos,group1Logical,"group1Physical",larSourceLogical,false,0,checkOverlaps);
   G4VPhysicalVolume* group2Physical = new G4PVPlacement(0,group2pos,group2Logical,"group2Physical",larSourceLogical,false,1,checkOverlaps);
+  
+  // make all the detectors the same
+  G4ThreeVector r_i(0,0,0);
+  G4ThreeVector rdet=detRout[0];
+  G4ThreeVector zdet=detZhalf[0];
+  G4Polycone* Det_solid = new G4Polycone(detNamesPhys[0],0,2*M_PI,3,&zdet[0],&r_i[0],&rdet[0]);
+  logicalGeDet = new G4LogicalVolume(Det_solid,fGeMaterial,"GeDetLogical");
+  
+  // place detectors in tubes
+  for(unsigned idet=0; idet < detPositions.size(); ++ idet) {
+    //Added from MaGe
+    new G4LogicalSkinSurface("Ge_Detector"+std::to_string(idet),logicalGeDet,fGeOpticalSurface);
 
+    if(idet<detPositions.size()/2) 
+      new G4PVPlacement (0,detRelPositions[idet],logicalGeDet,detNames[idet],group1Logical,false,detNumbers[idet],checkOverlaps);
+     else 
+      new G4PVPlacement (0,detRelPositions[idet],logicalGeDet,detNames[idet],group2Logical,false,detNumbers[idet],checkOverlaps);     
+  }
+  
   /////////////WLS Cylinder around groupTubs, does not cover top or bottom, PMTs will do that below/////////////
   WLSHalfThickness = 0.05*mm;  // half thickness
   G4Tubs* WLSgroupTube = new G4Tubs("PMTgroupTube",grouprmax,grouprmax+WLSHalfThickness,groupzmax,0,twopi);
@@ -501,9 +503,13 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
   G4cout << "\t DetectorConstruction done constructing detector  " << G4endl;
   G4cout<<  "\t DetectorConstruction size of store " << theStore->size() << G4endl;
+  
   for(G4int istore = 0; istore< theStore->size() ; ++istore ){
     G4VPhysicalVolume *pvol = theStore->at(istore);
-    G4cout << " stored vol  " << istore << " = " << pvol->GetName() << G4endl; 
+    G4int nsense = 0;
+    G4VSensitiveDetector* sdet = pvol->GetLogicalVolume()->GetSensitiveDetector();
+    if(sdet) nsense = sdet->GetNumberOfCollections();
+    G4cout << " \t   stored phys vol  " << istore << " = " << pvol->GetName() << " logical " <<  pvol->GetLogicalVolume()->GetName() << G4endl; 
   }
   
   return physicalWorld;
@@ -540,10 +546,28 @@ void DetectorConstruction::PlacePMT(G4ThreeVector rhousing,double top_or_bot,int
 ///////////////////////////////////////////////
 void DetectorConstruction::ConstructSDandField()
 {
-  G4SDManager* SDman   =  G4SDManager::GetSDMpointer();  
+  G4SDManager* SDman   =  G4SDManager::GetSDMpointer(); 
+
+  // add PMTs
   PMTSD* sd = new PMTSD("PhotoCathode",1,"PhCathodeHC" );    
   SDman->AddNewDetector(sd); 
   logicalPmtCathode->SetSensitiveDetector(sd);
+
+  GermaniumSD* gesd = new GermaniumSD("GeDetector");    
+  SDman->AddNewDetector(gesd); 
+  logicalGeDet->SetSensitiveDetector(gesd);
+
+  G4PhysicalVolumeStore* theStore = G4PhysicalVolumeStore::GetInstance();
+  G4cout << "\t DetectorConstruction::SDandField done   " << G4endl;
+  for(G4int istore = 0; istore< theStore->size() ; ++istore ){
+    G4VPhysicalVolume *pvol = theStore->at(istore);
+    G4int nsense = 0;
+    G4VSensitiveDetector* sdet = pvol->GetLogicalVolume()->GetSensitiveDetector();
+    if(sdet) nsense = sdet->GetNumberOfCollections();
+    if(nsense>0) G4cout << " SD phys vol  " << istore << 
+      " name = " << pvol->GetName() << " logical " <<  pvol->GetLogicalVolume()->GetName() <<  " number of collections =  " << nsense << G4endl; 
+  }
+   
 }
 
 //
@@ -554,7 +578,7 @@ void DetectorConstruction::ArgonOpticalProperties()
   G4int num = 500;
   static const G4double temp = 88.5*kelvin;
  // static const G4double LambdaE = twopi *1.973269602e-16 * m * GeV;
-  G4double scint_yield = 28120./MeV;//40000./MeV; //sono 40000
+  G4double scint_yield = 40000./MeV; 
 
   G4int ji;
   G4double e;

@@ -16,7 +16,7 @@
 /// this particle, the initial momentum of the particle, and the path followed
 /// by the particle in the detector.  
 //
-enum LTTrajectType {UNK,PRI,SCI,WLS,HIT};
+enum LTTrajectType {UNK,PRI,SCI,WLS,PMTHIT,GEHIT};
 class LTTraject: public TObject {
   public :
     LTTraject();

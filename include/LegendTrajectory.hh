@@ -60,12 +60,23 @@ class LegendTrajectory : public G4Trajectory
 
     void SetDrawTrajectory(G4bool b){fDrawit=b;}
     void SetWLS(){fWls=true;}
-    void SetHit(){fHit=true;}
+    void SetPmtHit(){fPmtHit=true;}
+    bool IsPmtHit() { return fPmtHit; }
+
+    void SetGeHit(){fGeHit=true;}
+    bool IsGeHit() { return fGeHit; }
+    void SetEIoni(){fEIoni=true;}
+    bool IsEIoni() { return fEIoni; }
+    void SetHIoni(){fHIoni=true;}
+    bool IsHIoni() { return fHIoni; }
+    void SetIonIoni(){fIonIoni=true;}
+    bool IsIonIoni() { return fIonIoni; }
+    
+    
     void SetPrimary(){fPrimary=true;}
     void SetForceDrawTrajectory(G4bool b){fForceDraw=b;}
     void SetForceNoDrawTrajectory(G4bool b){fForceNoDraw=b;}
     bool IsWLS() { return fWls; }
-    bool IsHit() { return fHit; }
     bool IsPrimary() { return fPrimary; }
     const G4Track* GetTrack() { return fTrack;};
     void SetParentId( G4int id) { fParentId = id;}
@@ -77,7 +88,11 @@ class LegendTrajectory : public G4Trajectory
     G4int fParentId;
     const G4Track* fTrack;
     G4bool fWls;
-    G4bool fHit;
+    G4bool fPmtHit;
+    G4bool fGeHit;
+    G4bool fHIoni;
+    G4bool fEIoni;
+    G4bool fIonIoni;
     G4bool fPrimary;
     G4bool fDrawit;
     G4bool fForceNoDraw;

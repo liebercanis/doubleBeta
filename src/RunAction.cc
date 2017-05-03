@@ -77,7 +77,10 @@ void RunAction::EndOfRunAction(const G4Run* aRun)
   fRootTree->Write();
   fRootFout->Close();
 
-  G4cout << "\t EndOfRunAction ### # events = " << nofEvents << "  time = " << end.tv_sec-start.tv_sec<<"s"<< G4endl;
+  G4int nEntries = LegendAnalysis::Instance()->getTree()->GetEntries();
+  G4cout << "\t EndOfRunAction ### # events = " << nofEvents << "  time = " << end.tv_sec-start.tv_sec<<"s"<< " **** size of tree *** " << nEntries << G4endl;
+  LegendAnalysis::Instance()->getEvent()->print();
+  
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

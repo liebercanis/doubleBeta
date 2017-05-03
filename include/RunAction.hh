@@ -9,6 +9,7 @@
 
 
 //root includes
+#include "LegendAnalysis.hh" 
 #include "TFile.h"
 #include "TTree.h"
 #include "TH1F.h"

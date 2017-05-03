@@ -30,7 +30,8 @@ SteppingAction::SteppingAction(DetectorConstruction* det, EventAction* evt)
   G4cout << " ... " << G4endl;
   hBoundaryStatus = new TH1F("StepBoundaryStatus"," boundary status ",Dichroic,0,Dichroic); // last in enum G4OpBoundaryProcessStatus
   hParticleType = new TH1F("StepParticleType"," step particle type ",100,0,100);
-  ntStep = new TNtuple("ntStep"," step variables ","parent:boundary:flag:length:energy");
+  ntStep = new TNtuple("ntStep"," step variables ","parent:pdg:flag:length:energy");
+  ntGeStep = new TNtuple("ntGeStep"," step variables ","num:pdg:length:energy");
 
 }
 
@@ -46,32 +47,39 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
 {
 
   // get volume of the current step
-  G4VPhysicalVolume* volume = step->GetPreStepPoint()->GetTouchableHandle()->GetVolume();
-  G4String volumename = 			volume->GetName();
+  G4StepPoint* preStepPoint = step->GetPreStepPoint();
+  G4double length = 					step->GetStepLength();
   G4Track* aTrack = 					step->GetTrack();
+  G4TouchableHandle theTouchable = preStepPoint->GetTouchableHandle();
+  G4VPhysicalVolume* volume = theTouchable->GetVolume();
+  G4String volumename = 			volume->GetName();
   G4ThreeVector pos = 				aTrack->GetPosition();
   G4ThreeVector dir = 				aTrack->GetMomentumDirection();
-  G4double length = 					step->GetStepLength();
+  G4ParticleDefinition* particleType = aTrack->GetDefinition();
+  //Used to find other non optical processes
+  const G4VProcess * process = aTrack->GetCreatorProcess();
+  G4String processName;
+  if(process) processName = process->GetProcessName();
 
-  //G4cout << " stepping volume " << volumename << " length " << length << G4endl; 
 
-  // check if we are in scoring volume
-  if (volumename(0,4) == "source"){
-    G4ThreeVector dir2 = eventaction->direction;
-    if (dir2.x()*dir2.x()+dir2.y()*dir2.y()+dir2.z()*dir2.z() == 0){
-      eventaction->direction = dir;
-      eventaction->position = pos;
-      //G4cout << " d " <<dir.cosTheta() << " " << dir.phi() << G4endl;
-      //G4cout << " p " <<pos.cosTheta() << " " << pos.phi() << G4endl;
-    }
+  // check if we are in Ge volume
+  G4bool inGeDetector = false;
+  G4int GeDetectorNumber=-1;
+  G4int GePostNumber =0;
+  if (  (volumename.find("B8") != string::npos) ||(volumename.find("P4") != string::npos ) ) {
+    GePostNumber = step->GetPostStepPoint()->GetTouchableHandle()->GetCopyNumber();
+    if(GePostNumber!=0) inGeDetector = true;  // remains inside detetor, otherwise it is reflected
   }
 
-
-  if (volumename.contains("P") || volumename.contains("B")){
-    G4int k = step->GetPreStepPoint()->GetTouchableHandle()->GetCopyNumber();
-    //G4cout <<  k << " " <<length/cm << G4endl;
-    eventaction->FillDetector(k,length);
+  if(inGeDetector) {
+    GeDetectorNumber = step->GetPreStepPoint()->GetTouchableHandle()->GetCopyNumber();
+    G4cout <<  " stepping action in ge det " << volumename 
+      << " copy " << GeDetectorNumber << " post " << GePostNumber << " pdg " << particleType->GetPDGEncoding() << "  " <<  processName <<G4endl;
+    //eventaction->FillDetector(GeDetectorNumber,length);
+    ntGeStep->Fill(GeDetectorNumber,particleType->GetPDGEncoding(),length,aTrack->GetKineticEnergy());
   }
+
+  
 
   /*************************************
   ** from LegendStepping Action 
@@ -88,7 +96,7 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
   G4VPhysicalVolume* thePostPV = thePostPoint->GetPhysicalVolume();
   
   if(!thePostPV){//out of the world
-    G4cout<<"SteppingAction::Primary Vertex is out of this world \n\t Ending Stepping Action!"<<G4endl;
+    G4cout<<"SteppingAction:: WARNING Primary Vertex is out of this world \n\t Ending Stepping Action!"<<G4endl;
     fExpectedNextStatus=Undefined;
     return;
   }
@@ -124,33 +132,28 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
     }
   }
 
-
+ 
+  // find the optical boundary process only once
+  // this is a list of all available processes 
   G4OpBoundaryProcessStatus boundaryStatus = Undefined;
   static G4ThreadLocal G4OpBoundaryProcess* boundary = NULL;
 
-  //find the boundary process only once
   if(!boundary){
-    G4ProcessManager* pm = step->GetTrack()->GetDefinition()->GetProcessManager();
-    G4int nprocesses = pm->GetProcessListLength();
-    G4ProcessVector* pv = pm->GetProcessList();
-    G4int i;
-    for( i = 0; i < nprocesses; i++){
+      G4ProcessManager* pm = step->GetTrack()->GetDefinition()->GetProcessManager();
+      G4int nprocesses = pm->GetProcessListLength();
+      G4ProcessVector* pv = pm->GetProcessList();
+     G4cout << "  Stepping action looking for OpBoundary process " << G4endl;
+     for(G4int i = 0; i < nprocesses; i++) G4cout << "\t" << i << " process  " << (*pv)[i]->GetProcessName()<< G4endl ;
+     for(G4int i = 0; i < nprocesses; i++){
       if((*pv)[i]->GetProcessName()=="OpBoundary" ){
-        boundary = (G4OpBoundaryProcess*)(*pv)[i];
+        boundary = dynamic_cast<G4OpBoundaryProcess*>( (*pv)[i] );
+        G4cout << "  Stepping action has found OpBoundary " << G4endl;
         break;
       }
     }
   }
   
-  //Used to find othe non optical processes
-  const G4VProcess * process = aTrack->GetCreatorProcess();
-  
-  G4String processName;
-  if(process) processName = process->GetProcessName();
-  //G4cout<<"SteppingAction:: Process Name  "<<processName<<G4endl;
-
-  G4ParticleDefinition* particleType = aTrack->GetDefinition();
-
+ 
   //Optical Photons
   /*
   G4cout<<"\t SteppingAction:: particleType " 
@@ -263,16 +266,43 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
         aTrack->SetTrackStatus(fStopAndKill);
       } 
     }  //end of if(thePostPoint->GetStepStatus()==fGeomBoundary)
-  } else if(processName == "phot" ){ 
-  } else if(processName == "eIoni"){
+  } 
+  /*else if(processName == "phot" ){ 
   } else if(processName == "compt"){
   } else if(processName == "eBrem"){
   } else if(processName == "conv"){
   } else if(processName == "Cerenkov"){
-  //} else {
-    //G4cout<<"SteppingAction:: Process Name that Neil could not find is ... "<<processName<<" !!!"<<G4endl;
-  } //is fGeomBoundary)
-  ntStep->Fill(trackInformation->GetParentId(),boundaryStatus,trackInformation->GetTrackStatus(),length,aTrack->GetKineticEnergy());
+  } */
+
+
+
+  // scint
+  if(processName =="Scintillation") {
+    trackInformation->AddTrackStatusFlag(scint);
+    if(inGeDetector) trackInformation->AddTrackStatusFlag(hitGe);
+  }
+  // ionizing process
+  if(processName == "eIoni" ) {   
+    trackInformation->AddTrackStatusFlag(eIoni);
+    if(inGeDetector) trackInformation->AddTrackStatusFlag(hitGe);
+    //if(inGeDetector) G4cout<<"SteppingAction:: eIoni Process Name ... "<<processName<<" boundaryStatus " << boundaryStatus <<G4endl;
+  }
+
+  // ionizing process
+  if(processName == "hIoni" ) {   
+    trackInformation->AddTrackStatusFlag(hIoni);
+    if(inGeDetector) trackInformation->AddTrackStatusFlag(hitGe);
+    if(inGeDetector) G4cout<<"SteppingAction:: hIoni Process Name ... "<<processName<<" boundaryStatus " << boundaryStatus <<G4endl;
+  }
+
+  // ionizing process
+  if(processName == "ionIoni" ) {   
+    trackInformation->AddTrackStatusFlag(ionIoni);
+    if(inGeDetector) trackInformation->AddTrackStatusFlag(hitGe);
+    if(inGeDetector) G4cout<<"SteppingAction:: ionIoni Process Name ... "<<processName<<" boundaryStatus " << boundaryStatus <<G4endl;
+  }
+  
+  ntStep->Fill(trackInformation->GetParentId(),particleType->GetPDGEncoding(),trackInformation->GetTrackBit(),length,aTrack->GetKineticEnergy());
 }
 
 
