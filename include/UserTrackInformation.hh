@@ -96,11 +96,13 @@ enum TrackStatus { active=1, hitPMT=2, absorbed=4, boundaryAbsorbed=8,
                       scint=2*notBoundary, 
                       eIoni=2*scint, 
                       hIoni=2*eIoni, 
-                      ionIoni=2*hIoni, 
-                      hitGe=2*ionIoni, isBad=2*hitGe};
+                      ionIoni=2*hIoni,
+                      compton= 2*ionIoni,
+                      hitGe=2*compton, 
+                      isBad=2*hitGe};
 
 
-enum TrackBit {MaxHistogramBit=17};
+enum TrackBit {MaxHistogramBit=18};
 
 class UserTrackInformation : public G4VUserTrackInformation
 {
@@ -133,7 +135,8 @@ class UserTrackInformation : public G4VUserTrackInformation
       else if(fStatus&hIoni) return 13;
       else if(fStatus&ionIoni) return 14;
       else if(fStatus&scint) return 15;
-      else if(fStatus&notBoundary) return 16;
+      else if(fStatus&compton) return 16;
+      else if(fStatus&notBoundary) return 17;
       else return MaxHistogramBit;
     }
  

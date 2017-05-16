@@ -102,34 +102,27 @@
      //   (name="Gallium",symbol="Ga",ncomponents=2);
 //  elGa->AddIsotope(Ga69, abundance=0.61);
 //  elGa->AddIsotope(Ga71, abundance=0.39);
-/*
+
   G4Isotope* Ge70 = new G4Isotope(name="Ge70",  32, 70, 69.92*g/mole);
   G4Isotope* Ge72 = new G4Isotope(name="Ge72",  32, 72, 71.92*g/mole);
   G4Isotope* Ge73 = new G4Isotope(name="Ge73",  32, 73, 73.0*g/mole);
   G4Isotope* Ge74 = new G4Isotope(name="Ge74",  32, 74, 74.0*g/mole);
   G4Isotope* Ge76 = new G4Isotope(name="Ge76",  32, 76, 76.0*g/mole);
-*/
   a = 75.71*g/mole;
   G4int nIsotopes=5;
-//  G4Element* elGeNat=new G4Element
-//    (name="naturalGermanium",symbol="GeNat",nIsotopes);
-  /*
+  G4Element* elGeNat=new G4Element(name="naturalGermanium",symbol="GeNat",nIsotopes);
   elGeNat->AddIsotope(Ge70,abundance= 20.9*perCent);
   elGeNat->AddIsotope(Ge72,abundance= 27.5*perCent);
   elGeNat->AddIsotope(Ge73,abundance= 7.7*perCent);
   elGeNat->AddIsotope(Ge74,abundance= 36.3*perCent);
   elGeNat->AddIsotope(Ge76,abundance= 7.6*perCent);
-*/
 
-//  G4Element* elGeEnr = new G4Element
-//  ( name="enrichedGermanium",symbol="GeEnr",nIsotopes);
-  /*
+  G4Element* elGeEnr = new G4Element( name="enrichedGermanium",symbol="GeEnr",nIsotopes);
   elGeEnr->AddIsotope(Ge70,abundance= 0.0*perCent);
   elGeEnr->AddIsotope(Ge72,abundance= 0.1*perCent);
   elGeEnr->AddIsotope(Ge73,abundance= 0.2*perCent);
   elGeEnr->AddIsotope(Ge74,abundance= 13.1*perCent);
   elGeEnr->AddIsotope(Ge76,abundance= 86.6*perCent);
-  */
 
 //////////***************///////////////////
 //////////Gerda Materials///////////////////
@@ -147,8 +140,7 @@
   G4Material* mat_air = nist->FindOrBuildMaterial("G4_AIR");
  
   //concrete
-  G4Material* concrete = new G4Material
-    (name="Concrete",density=2.3*g/cm3,ncomponents=6);
+  G4Material* concrete = new G4Material(name="Concrete",density=2.3*g/cm3,ncomponents=6);
   concrete->AddElement(elSi,fractionmass= 0.227915);
   concrete->AddElement(elO,fractionmass= 0.60541);
   concrete->AddElement(elH,fractionmass= 0.09972);
@@ -173,8 +165,7 @@
   shipsteel->AddElement(elNi,fractionmass= 0.04);
   */
     //Kovar
-  G4Material* kovar = new G4Material
-    (name="Kovar",density=8.0*g/cm3,ncomponents=6);
+  G4Material* kovar = new G4Material(name="Kovar",density=8.0*g/cm3,ncomponents=6);
   kovar->AddElement(elC,fractionmass= 0.0001);
   kovar->AddElement(elSi,fractionmass= 0.002);
   kovar->AddElement(elMn,fractionmass= 0.003);

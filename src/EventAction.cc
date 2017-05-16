@@ -85,6 +85,9 @@ void EventAction::EndOfEventAction(const G4Event* anEvent)
       //trajectory->DrawTrajectory();
     }
   }*/
+
+   if(LegendAnalysis::Instance()->getEvent()->nGeHits>0) LegendAnalysis::Instance()->getEvent()->print();
+
 }
 
 

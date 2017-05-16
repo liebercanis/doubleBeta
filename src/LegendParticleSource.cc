@@ -96,7 +96,7 @@ LegendParticleSource::LegendParticleSource(G4String physical_name )
     G4cout<<" LegendParticleSource info hAr39Theory found " <<G4endl;
   
   // create directory 
-  fDir = LegendAnalysis::Instance()->topDir()->mkdir("particleSource");
+  fDir = LegendAnalysis::Instance()->topHistDir()->mkdir("particleSource");
   fDir->cd();
   G4cout<<" LegendParticleSource working root directory  is  " << fDir->GetName() << G4endl;  
   gDirectory->pwd();
@@ -124,8 +124,8 @@ LegendParticleSource::LegendParticleSource(G4String physical_name )
   MinPhi = 0.;
   MaxPhi = twopi;
 
-  //EnergyDisType = "Ar39";
-  EnergyDisType = "Mono";
+  EnergyDisType = "Ar39";
+  //EnergyDisType = "Mono";
   MonoEnergy = 1*MeV;
   G4cout<<" LegendParticleSource source type is   " << EnergyDisType;
   if(EnergyDisType = "Mono") G4cout << " energy " << MonoEnergy;

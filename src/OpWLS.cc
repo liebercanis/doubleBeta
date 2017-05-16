@@ -81,7 +81,7 @@ OpWLS::OpWLS(const G4String& processName, G4ProcessType type)
        new G4WLSTimeGeneratorProfileDelta("WLSTimeGeneratorProfileDelta");
 
  // create directory 
-  fDir = LegendAnalysis::Instance()->topDir()->mkdir("OpWLS");
+  fDir = LegendAnalysis::Instance()->topHistDir()->mkdir("OpWLS");
   hOpWLSIntegral =NULL;
     
 

@@ -25,8 +25,9 @@ class LegendAnalysis
   private:
     LegendAnalysis() { Initialize(); };
     void Initialize();
-    TFile *fFile;
-    TTree *fTree;
+    TFile   *fHistFile;
+    TFile   *fTreeFile;
+    TTree  *fTree;
     LTEvent *fEvent;
     static LegendAnalysis* fLegendAnalysis; 
     // Disabled (not implemented) copy constructor and asignment.
@@ -37,19 +38,35 @@ class LegendAnalysis
     TH1F *hPmtHits;
     TH1F *hEElectron;
     TH1F *hEGamma;
-  
+    
  
   public:
     ~LegendAnalysis() {
-      printf(" number of entries in LegendAnalysis tree is %i \n",(int) fTree->GetEntries() );
-      fFile->ls();
-      fFile->Write();
-      fFile->Close();
-    }
+      printf(" LegendAnalysis:: number of entries in LegendAnalysis tree is %i \n",(int) fTree->GetEntries() );
+      // Be careful when writing the final Tree header to the file!
+      fTreeFile = fTree->GetCurrentFile();
+      fTreeFile->cd();
+      G4cout<<" LegendAnalysis:  working root directory  is  "; fTreeFile->pwd();G4cout <<  G4endl; 
+      fTreeFile->ls();
+      //fTree->Print();
+      G4cout<<" LegendAnalysis: fTreeFile->Write(); " << G4endl; 
+      fTreeFile->Write();
+      G4cout<<" LegendAnalysis: fTreeFile->Close(); " << G4endl; 
+      fTreeFile->Close();
+
+      G4cout<<" LegendAnalysis: fHistFile->Write(); " << G4endl; 
+      fHistFile->Write();
+      G4cout<<" LegendAnalysis: fHistFile->Close(); " << G4endl; 
+      fHistFile->Close();
+      
+    } 
     static LegendAnalysis* Instance();
     
-    TDirectory *topDir() { return (TDirectory* ) fFile;}
+    TDirectory *topTreeDir() { return fTreeFile->GetDirectory(NULL); }
+    TDirectory *topHistDir() { return fHistFile->GetDirectory(NULL); }
     TTree *getTree() { return fTree; }
+    TFile *getTreeFile() { return fTreeFile; }
+    TFile *getHistFile() { return fHistFile; }
     void anaEvent(const G4Event* anEvent);
     void anaTrajectories(G4TrajectoryContainer* trajectoryContainer);
     LTEvent* getEvent() { return fEvent;}

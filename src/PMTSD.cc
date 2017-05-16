@@ -65,7 +65,7 @@ PMTSD::PMTSD(G4String name, G4int nCells, G4String colName)
 {
   G4String HCname;
   collectionName.insert(HCname=colName);
-  fDir = LegendAnalysis::Instance()->topDir()->mkdir("PMThits");
+  fDir = LegendAnalysis::Instance()->topHistDir()->mkdir("PMThits");
   fDir->cd();
   hTime = new TH1F("PMTHitsTime"," PMT hit time  ",2000,0,4000);
   hTime->GetYaxis()->SetTitle(" photons/(2ns)");

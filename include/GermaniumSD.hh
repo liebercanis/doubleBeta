@@ -61,6 +61,7 @@ private:
   TDirectory *fDir;
   TH1F* hTime;
   TH1F* hEnergy;
+  TNtuple *ntGe;
   G4int fCopy;
 
 };

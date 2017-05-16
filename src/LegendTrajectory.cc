@@ -47,13 +47,11 @@ G4ThreadLocal G4Allocator<LegendTrajectory>* LegendTrajectoryAllocator = 0;
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 LegendTrajectory::LegendTrajectory()
-  :G4Trajectory(),fWls(false),fDrawit(false),fForceNoDraw(false),fForceDraw(false)
+  :G4Trajectory(),fDrawit(false),fForceNoDraw(false),fForceDraw(false)
 {
   fParticleDefinition=0;
   fTrack=NULL;
-  fPmtHit=false;
-  fGeHit=false;
-  fWls= false;
+  fTrackStatus=0;
   fPrimary=false;
   positionRecord = new TrajectoryPointContainer();
   
@@ -62,12 +60,10 @@ LegendTrajectory::LegendTrajectory()
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 LegendTrajectory::LegendTrajectory(const G4Track* aTrack)
-  :G4Trajectory(aTrack),fWls(false),fDrawit(false)
+  :G4Trajectory(aTrack),fDrawit(false)
 {
   fTrack=aTrack;
-  fPmtHit=false;
-  fGeHit=false;
-  fWls= false;
+  fTrackStatus=0;
   fPrimary=false;
   fParticleDefinition=aTrack->GetDefinition();
   positionRecord = new TrajectoryPointContainer();
@@ -76,7 +72,7 @@ LegendTrajectory::LegendTrajectory(const G4Track* aTrack)
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 LegendTrajectory::LegendTrajectory(LegendTrajectory &right)
-  :G4Trajectory(right),fWls(right.fWls),fDrawit(right.fDrawit)
+  :G4Trajectory(right),fDrawit(right.fDrawit)
 {
   fParticleDefinition=right.fParticleDefinition;
   positionRecord = right.positionRecord;
@@ -149,10 +145,10 @@ void LegendTrajectory::DrawTrajectory() const
     
     if(fParticleDefinition==G4OpticalPhoton::OpticalPhotonDefinition()){
       
-      if(fWls) {//WLS photons are red
+      if(IsWLS()) {//WLS photons are red
         G4cout << " LegendTrajectory optical photon WLS "  << G4endl;
         colour = G4Colour::Red();
-      } else if(fPmtHit) {
+      } else if(IsPmtHit()) {
         G4cout << " LegendTrajectory optical photon hit pmt "  << G4endl;
         colour = G4Colour::Blue();
       } else {//Scintillation and Cerenkov photons are green

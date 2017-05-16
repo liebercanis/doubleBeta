@@ -7,6 +7,10 @@
 #include "SteppingAction.hh"
 #include "G4SDManager.hh"
 #include "PMTSD.hh"
+#include "GermaniumSD.hh"
+#include "G4VTouchable.hh"
+#include "G4TouchableHistory.hh"
+
 #include "UserEventInformation.hh"
 #include "UserTrackInformation.hh"
 #include "DetectorConstruction.hh"
@@ -23,15 +27,18 @@ SteppingAction::SteppingAction(DetectorConstruction* det, EventAction* evt)
 { 
 
   // create directory 
-  fDir = LegendAnalysis::Instance()->topDir()->mkdir("step");
+  fDir = LegendAnalysis::Instance()->topHistDir()->mkdir("step");
   fDir->cd();
   G4cout<<" StepAction working root directory  is  " << G4endl;  
   gDirectory->pwd();
   G4cout << " ... " << G4endl;
   hBoundaryStatus = new TH1F("StepBoundaryStatus"," boundary status ",Dichroic,0,Dichroic); // last in enum G4OpBoundaryProcessStatus
   hParticleType = new TH1F("StepParticleType"," step particle type ",100,0,100);
+
+  // must be in top directory for ChangeFile to work
+  LegendAnalysis::Instance()->topTreeDir()->cd();
   ntStep = new TNtuple("ntStep"," step variables ","parent:pdg:flag:length:energy");
-  ntGeStep = new TNtuple("ntGeStep"," step variables ","num:pdg:length:energy");
+  //ntGeStep = new TNtuple("ntGeStep"," step variables ","num:pdg:length:energy");
 
 }
 
@@ -46,11 +53,13 @@ SteppingAction::~SteppingAction()
 void SteppingAction::UserSteppingAction(const G4Step* step)
 {
 
+  LegendAnalysis::Instance()->getHistFile();
   // get volume of the current step
   G4StepPoint* preStepPoint = step->GetPreStepPoint();
   G4double length = 					step->GetStepLength();
   G4Track* aTrack = 					step->GetTrack();
-  G4TouchableHandle theTouchable = preStepPoint->GetTouchableHandle();
+  //G4TouchableHandle theTouchable = preStepPoint->GetTouchableHandle();
+  G4TouchableHistory* theTouchable = (G4TouchableHistory*)(step->GetPreStepPoint()->GetTouchable());
   G4VPhysicalVolume* volume = theTouchable->GetVolume();
   G4String volumename = 			volume->GetName();
   G4ThreeVector pos = 				aTrack->GetPosition();
@@ -63,12 +72,17 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
 
 
   // check if we are in Ge volume
-  G4bool inGeDetector = false;
+  G4bool  inGeDetector = false;
   G4int GeDetectorNumber=-1;
   G4int GePostNumber =0;
   if (  (volumename.find("B8") != string::npos) ||(volumename.find("P4") != string::npos ) ) {
     GePostNumber = step->GetPostStepPoint()->GetTouchableHandle()->GetCopyNumber();
     if(GePostNumber!=0) inGeDetector = true;  // remains inside detetor, otherwise it is reflected
+    /* no need to do this as 
+    This method is invoked by G4SteppingManager when a step is composed in the G4LogicalVolume which has the pointer to this sensitive detector. 
+    G4SDManager* SDman = G4SDManager::GetSDMpointer();
+    GermaniumSD* geSD = dynamic_cast<GermaniumSD*>(SDman->FindSensitiveDetector(G4String("GeDetector")));
+    */
   }
 
   if(inGeDetector) {
@@ -76,7 +90,7 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
     G4cout <<  " stepping action in ge det " << volumename 
       << " copy " << GeDetectorNumber << " post " << GePostNumber << " pdg " << particleType->GetPDGEncoding() << "  " <<  processName <<G4endl;
     //eventaction->FillDetector(GeDetectorNumber,length);
-    ntGeStep->Fill(GeDetectorNumber,particleType->GetPDGEncoding(),length,aTrack->GetKineticEnergy());
+    //ntGeStep->Fill(GeDetectorNumber,particleType->GetPDGEncoding(),length,aTrack->GetKineticEnergy());
   }
 
   
@@ -165,9 +179,6 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
 
   if(particleType==G4OpticalPhoton::OpticalPhotonDefinition()){
 
-    //Need local definition for ScintSDHit processing
-    G4Step* step = const_cast<G4Step*>(step);
-
     //Kill photons exiting cryostat
     if(thePostPV->GetName()=="phy_World"){
       aTrack->SetTrackStatus(fStopAndKill);
@@ -238,7 +249,7 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
             //Triger sensitive detector manually since photon is absorbed but status was Detection
             G4SDManager* SDman = G4SDManager::GetSDMpointer();
             G4String sdName="PhotoCathode";//"/LegendDet/pmtSD";
-            PMTSD* pmtSD = (PMTSD*)SDman->FindSensitiveDetector(sdName);
+            PMTSD* pmtSD = dynamic_cast<PMTSD*>(SDman->FindSensitiveDetector(sdName));
             if(pmtSD) pmtSD->ProcessHits_constStep(step,NULL);
             else G4cout << " SteppingAction ERROR!!!!!   cannot find PhotoCathode " << G4endl;
             break;
@@ -279,28 +290,35 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
   // scint
   if(processName =="Scintillation") {
     trackInformation->AddTrackStatusFlag(scint);
-    if(inGeDetector) trackInformation->AddTrackStatusFlag(hitGe);
   }
   // ionizing process
   if(processName == "eIoni" ) {   
     trackInformation->AddTrackStatusFlag(eIoni);
-    if(inGeDetector) trackInformation->AddTrackStatusFlag(hitGe);
     //if(inGeDetector) G4cout<<"SteppingAction:: eIoni Process Name ... "<<processName<<" boundaryStatus " << boundaryStatus <<G4endl;
   }
 
   // ionizing process
   if(processName == "hIoni" ) {   
     trackInformation->AddTrackStatusFlag(hIoni);
-    if(inGeDetector) trackInformation->AddTrackStatusFlag(hitGe);
     if(inGeDetector) G4cout<<"SteppingAction:: hIoni Process Name ... "<<processName<<" boundaryStatus " << boundaryStatus <<G4endl;
   }
 
   // ionizing process
   if(processName == "ionIoni" ) {   
     trackInformation->AddTrackStatusFlag(ionIoni);
-    if(inGeDetector) trackInformation->AddTrackStatusFlag(hitGe);
     if(inGeDetector) G4cout<<"SteppingAction:: ionIoni Process Name ... "<<processName<<" boundaryStatus " << boundaryStatus <<G4endl;
   }
+
+  // compt process
+  if(processName == "compt" ) {   
+    trackInformation->AddTrackStatusFlag(compton);
+    if(inGeDetector) G4cout<<"SteppingAction:: compt Process Name ... "<<processName<<" boundaryStatus " << boundaryStatus <<G4endl;
+  }
+
+           
+  if(inGeDetector) trackInformation->AddTrackStatusFlag(hitGe);
+  //if(trackInformation->GetTrackStatus()&hitGe) G4cout << " SteppingAction hitGe  " << G4endl;
+  
   
   ntStep->Fill(trackInformation->GetParentId(),particleType->GetPDGEncoding(),trackInformation->GetTrackBit(),length,aTrack->GetKineticEnergy());
 }

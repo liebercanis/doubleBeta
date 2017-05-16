@@ -26,14 +26,22 @@ void LegendAnalysis::Initialize()
  // open new ouput file with time stamp.
   time_t tnow;
   time(&tnow);
+
+  struct tm* timeinfo;
+  timeinfo = localtime(&tnow);
+
   char chtime[80];
-  sprintf(chtime,"%u",unsigned(tnow));
-  G4String fFileName = G4String("legend-") + G4String(chtime) + G4String(".root");
-  fFile=new TFile(fFileName.data(),"RECREATE");
-  G4String gmess= G4String(" ************  output file is ") + fFileName +  G4String(" ************ ");
+  sprintf(chtime,"%u-%u-%u-%u-%u-%u",timeinfo->tm_year-100+2000,timeinfo->tm_mon,timeinfo->tm_mday,
+      timeinfo->tm_hour,timeinfo->tm_min,timeinfo->tm_sec);
+  G4String fTreeFileName = G4String("legendTree-") + G4String(chtime) + G4String(".root");
+  fTreeFile=new TFile(fTreeFileName.data(),"RECREATE");
+  G4String fHistFileName = G4String("legendHist-") + G4String(chtime) + G4String(".root");
+  fHistFile=new TFile(fHistFileName.data(),"RECREATE");
+
+
+  G4String gmess= G4String(" LegendAnalysis: ************  output tree file  ") + fTreeFileName + G4String(" hist file ") + fHistFileName + G4String(" ************ ");
   G4cout << gmess << G4endl;
-  G4cout<<" LegendAnalysis working root directory  is  " << G4endl;  
-  topDir()->cd();
+  fHistFile->cd();
   hOptical = new TH1F("Optical"," optical photons (nm) ",900,100,1000);
   hOptical->GetYaxis()->SetTitle(" photons/nm ");
   hOptical->GetXaxis()->SetTitle(" wavelength (nm) ");
@@ -55,17 +63,18 @@ void LegendAnalysis::Initialize()
   hEGamma = new TH1F("EGamma"," gammas ",1000,0,1000);
   hEGamma->GetYaxis()->SetTitle(" gamma/KeV ");
   hEGamma->GetXaxis()->SetTitle(" energy (KeV) ");
-  
+
+  topHistDir()->ls();
+
+  fTreeFile->cd();
 
   // make tree in output file
   fTree = new TTree("LTree","LTree");
+  //fTree->SetMaxTreeSize(1000000);
+  fTree->SetMaxTreeSize(25);
   fEvent = new LTEvent();
   fTree->Branch("event",&fEvent);
-
-  G4cout << " root top directory " << G4endl;
-  gDirectory->pwd();
-  topDir()->ls();
-  G4cout << " ... " << G4endl;
+  topTreeDir()->ls();
 
 }
     
@@ -229,7 +238,10 @@ void  LegendAnalysis::anaTrajectories(G4TrajectoryContainer* trajectoryContainer
       // not optical 
      } 
     
-    if(gtrj->IsGeHit()) ltraj.Type = LTTrajectType::GEHIT;
+    if(gtrj->IsGeHit()) {
+      ltraj.Type = LTTrajectType::GEHIT;
+      ++fEvent->nGeHits;
+    }
 
     if(ltraj.PDG==11) { // electron
       hEElectron->Fill(ltraj.KE/keV);

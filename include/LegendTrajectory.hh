@@ -31,6 +31,7 @@
 #ifndef LegendTrajectory_h
 #define LegendTrajectory_h 1
 
+#include "UserTrackInformation.hh"
 #include "G4Trajectory.hh"
 #include "G4Allocator.hh"
 #include "G4ios.hh"
@@ -59,25 +60,18 @@ class LegendTrajectory : public G4Trajectory
     inline void  operator delete(void*);
 
     void SetDrawTrajectory(G4bool b){fDrawit=b;}
-    void SetWLS(){fWls=true;}
-    void SetPmtHit(){fPmtHit=true;}
-    bool IsPmtHit() { return fPmtHit; }
+    void SetTrackStatus(G4int status){fTrackStatus=status;}
+    bool IsPmtHit() const { return fTrackStatus&TrackStatus::hitPMT;}
+    bool IsGeHit() const { return fTrackStatus&TrackStatus::hitGe;}
+    bool IsEIoni() const { return fTrackStatus&TrackStatus::eIoni;}
+    bool IsHIoni() const { return fTrackStatus&TrackStatus::hIoni;}
+    bool IsIonIoni() const { return fTrackStatus&TrackStatus::ionIoni;}
+    bool IsWLS() const { return fTrackStatus&TrackStatus::hitWLS;}
+    bool IsPrimary() { return fPrimary; }
+    bool SetPrimary() { fPrimary=true;}
 
-    void SetGeHit(){fGeHit=true;}
-    bool IsGeHit() { return fGeHit; }
-    void SetEIoni(){fEIoni=true;}
-    bool IsEIoni() { return fEIoni; }
-    void SetHIoni(){fHIoni=true;}
-    bool IsHIoni() { return fHIoni; }
-    void SetIonIoni(){fIonIoni=true;}
-    bool IsIonIoni() { return fIonIoni; }
-    
-    
-    void SetPrimary(){fPrimary=true;}
     void SetForceDrawTrajectory(G4bool b){fForceDraw=b;}
     void SetForceNoDrawTrajectory(G4bool b){fForceNoDraw=b;}
-    bool IsWLS() { return fWls; }
-    bool IsPrimary() { return fPrimary; }
     const G4Track* GetTrack() { return fTrack;};
     void SetParentId( G4int id) { fParentId = id;}
     G4int GetParentId() { return fParentId;}
@@ -86,14 +80,9 @@ class LegendTrajectory : public G4Trajectory
 
     TrajectoryPointContainer *positionRecord;
     G4int fParentId;
-    const G4Track* fTrack;
-    G4bool fWls;
-    G4bool fPmtHit;
-    G4bool fGeHit;
-    G4bool fHIoni;
-    G4bool fEIoni;
-    G4bool fIonIoni;
     G4bool fPrimary;
+    const G4Track* fTrack;
+    G4int fTrackStatus;
     G4bool fDrawit;
     G4bool fForceNoDraw;
     G4bool fForceDraw;

@@ -44,7 +44,7 @@
 TrackingAction::TrackingAction()
 {
   // create directory 
-  fDir = LegendAnalysis::Instance()->topDir()->mkdir("track");
+  fDir = LegendAnalysis::Instance()->topHistDir()->mkdir("track");
   fDir->cd();
   G4cout<<" TrackingAction working root directory  is  " << G4endl;  
   gDirectory->pwd();
@@ -66,7 +66,9 @@ TrackingAction::TrackingAction()
   hPMTPhotonE = new TH1F("PMTPhotonE"," WLS photon energy ",1000,LowWLS,HighWLS);
   hCherenkovPhotonE  = new TH1F("CherenkovPhotonE"," WLS photon energy ",1000,LowWLS,HighWLS);
   hTrackStatus = new TH1F("TrackStatus"," track status ", TrackBit::MaxHistogramBit+1,0, TrackBit::MaxHistogramBit+1);
-
+  
+  // must be in top directory for ChangeFile to work
+  LegendAnalysis::Instance()->topTreeDir()->cd();
   ntTrack = new TNtuple("ntTrack"," track variables ","parent:flag:status:energy");
 
   
@@ -145,44 +147,36 @@ void TrackingAction::PostUserTrackingAction(const G4Track* aTrack){
     if(creator->GetProcessName() == "Cerenkov") hCherenkovPhotonE->Fill(totE);
     
     // use track status set in SteppingAction
+    trajectory->SetTrackStatus(trackInformation->GetTrackStatus());
     if(trackInformation->GetTrackStatus()&hitPMT) {
       hPMTPhotonE->Fill(totE);
       trajectory->SetDrawTrajectory(false);
-      trajectory->SetPmtHit();
       ++ltEvent->nPmtHits;
     } else if(trackInformation->GetTrackStatus()&hitWLS) {
       trajectory->SetDrawTrajectory(false);
-      trajectory->SetWLS();
       hWLSPhotonE->Fill(totE);
       ++ltEvent->nWlsScint; 
-
       
     }  
   } //optical 
 
   if(trackInformation->GetTrackStatus()&hitGe) {
       trajectory->SetDrawTrajectory(true);
-      trajectory->SetGeHit();
       ++ltEvent->nGeHits; 
+      //G4cout << " TrackingAction hitGe ishit? " << trajectory->IsGeHit() << " nGeHits" << ltEvent->nGeHits << G4endl;
   }
 
  if(trackInformation->GetTrackStatus()&eIoni) {
       trajectory->SetDrawTrajectory(true);
-      trajectory->SetEIoni();
   }
 
  if(trackInformation->GetTrackStatus()&hIoni) {
       trajectory->SetDrawTrajectory(true);
-      trajectory->SetHIoni();
   }
 
   if(trackInformation->GetTrackStatus()&ionIoni) {
       trajectory->SetDrawTrajectory(true);
-      trajectory->SetIonIoni();
-  }
- 
- 
-  
+  }  
   
   ntTrack->Fill( trackInformation->GetParentId(), trackInformation->GetTrackBit(), trackInformation->GetTrackStatus(), totE );
   

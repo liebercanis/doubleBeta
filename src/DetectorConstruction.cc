@@ -127,7 +127,7 @@ DetectorConstruction::DetectorConstruction()
     G4cout<<"DetectorConstruction INFO:: Copper Reflections imported"<<G4endl;
     
   // create directory 
-  fDir = LegendAnalysis::Instance()->topDir()->mkdir("detec");
+  fDir = LegendAnalysis::Instance()->topHistDir()->mkdir("detec");
   fDir->cd();
   G4cout<<" DetectorAction working root directory  is  " << G4endl;  
   gDirectory->pwd();
@@ -405,10 +405,12 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     //Added from MaGe
     new G4LogicalSkinSurface("Ge_Detector"+std::to_string(idet),logicalGeDet,fGeOpticalSurface);
 
+    /*
     if(idet<detPositions.size()/2) 
       new G4PVPlacement (0,detRelPositions[idet],logicalGeDet,detNames[idet],group1Logical,false,detNumbers[idet],checkOverlaps);
      else 
-      new G4PVPlacement (0,detRelPositions[idet],logicalGeDet,detNames[idet],group2Logical,false,detNumbers[idet],checkOverlaps);     
+      new G4PVPlacement (0,detRelPositions[idet],logicalGeDet,detNames[idet],group2Logical,false,detNumbers[idet],checkOverlaps); 
+      */
   }
   
   /////////////WLS Cylinder around groupTubs, does not cover top or bottom, PMTs will do that below/////////////
