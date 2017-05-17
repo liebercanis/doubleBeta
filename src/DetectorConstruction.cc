@@ -81,7 +81,8 @@ DetectorConstruction::DetectorConstruction()
   VM2000Debug = false;//true;
   //***//
   //TPB//
-  //***//    
+  //***//   
+  /*
   G4String pathFile = "External_data/tpbGhemann.root";
   TFile *tpbFile = new TFile(pathFile.data());
   if (!tpbFile ) 
@@ -94,6 +95,22 @@ DetectorConstruction::DetectorConstruction()
     G4cout<<" DetectorConstruction ERROR:: not graph tpbBhemann in file " << pathFile <<G4endl;
   else 
     G4cout<<" DetectorConstruction info tpbBhemann graph found " <<G4endl;
+*/
+
+   
+  G4String pathFile = "External_data/TPB_Spec_Lehnert_thesis.root";
+  TFile *tpbFile = new TFile(pathFile.data());
+  if (!tpbFile ) 
+    G4cout<<" DetectorConstruction ERROR:: file " << pathFile << " not found " << G4endl;
+  else
+    G4cout<<" DetectorConstruction INFO:: file " << pathFile << " opened " << G4endl;
+  fTPBspec=NULL;
+  tpbFile->GetObject("TPBSpec",fTPBspec);
+  if (!fTPBspec ) 
+    G4cout<<" DetectorConstruction ERROR:: no graph TPB_Spec_Lehnert_thesis.root in file " << pathFile <<G4endl;
+  else 
+    G4cout<<" DetectorConstruction info TPB_Spec_Lehnert_thesis.root graph found " <<G4endl;
+  
 
   //Germanium Reflectivity
   pathFile = "External_data/Reflectivity_Ge.root";
@@ -132,15 +149,17 @@ DetectorConstruction::DetectorConstruction()
   G4cout<<" DetectorAction working root directory  is  " << G4endl;  
   gDirectory->pwd();
   G4cout << " ... " << G4endl;
-  G4double LowE =1.4*eV;//885.6013 2.4796*eV;//500 nm
-  G4double HighE = 12.3984*eV;//100 nm
-  G4double ArHighE = LambdaE /(115*nanometer);
-  G4double ArLowE = LambdaE /(650*nanometer);
-  hWLSPhotonE = new TH1F("WLSPhotonE"," photon energy in WLS",1000,LowE,HighE);
-  hWLSPhotonWavelength = new TH1F("WLSPhotonWavelength"," photon Wavelength in WLS",1000,LambdaE/HighE,LambdaE/LowE);
-  hArPhotonE = new TH1F("ArPhotonE"," photon energy in LAr",100,ArLowE,ArHighE);
-  hArPhotonWavelength = new TH1F("ArPhotonWavelength"," photon Wavelength in LAr",1000,LambdaE/ArHighE,LambdaE/ArLowE);  
 
+  gDirectory->pwd();
+  G4cout << " ... " << G4endl;
+  G4double WLSHighE =LambdaE / (350*nm);//885.6013 2.4796*eV;//500 nm
+  G4double WLSLowE = LambdaE / (650*nm);//100 nm
+  G4double ArHighE = LambdaE / (115*nanometer);
+  G4double ArLowE =  LambdaE / (300*nanometer);//650*nanometer);
+  hWLSPhotonE = new TH1F("WLSPhotonE"," photon energy in WLS",100,WLSLowE,WLSHighE);
+  hWLSPhotonWavelength = new TH1F("WLSPhotonWavelength"," photon Wavelength in WLS",100,LambdaE/WLSHighE,LambdaE/WLSLowE);
+  hArPhotonE = new TH1F("ArPhotonE"," photon energy in LAr",100,ArLowE,ArHighE);
+  hArPhotonWavelength = new TH1F("ArPhotonWavelength"," photon Wavelength in LAr",100,LambdaE/ArHighE,LambdaE/ArLowE);  
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -610,9 +629,10 @@ void DetectorConstruction::ArgonOpticalProperties()
       LAr_ABSL[ji] = lar_absl_vis;
     }
   }
-
   G4double PPSCHighE = LambdaE /(115*nanometer);
-  G4double PPSCLowE = LambdaE /(650*nanometer);
+  //G4double PPSCLowE = LambdaE /(650*nanometer);
+  //Argon does not Scinillate at 650, so I arbitarly cut the value off at 300 nm
+  G4double PPSCLowE = LambdaE/(300*nanometer);
   G4double dee = ((PPSCHighE - PPSCLowE) / ((G4double)(num-1)));
   G4double LAr_SCIN[num];
   G4double LAr_SCPP[num];
@@ -628,7 +648,6 @@ void DetectorConstruction::ArgonOpticalProperties()
       G4cout<<"DetectorConstruction::ArgonOpticalProperties()...LAr Scint Spec = "<<LAr_SCIN[ji] <<G4endl;
     }
   }
-
 
   G4MaterialPropertiesTable* LAr_mt = new G4MaterialPropertiesTable();
 
@@ -723,8 +742,8 @@ void DetectorConstruction::WLSOpticalProperties()
    // Now attach the optical properties to it.
    // Build table with photon energies
    
-   const G4int numTPB =100;// 63;;
-   G4double HighETPB = LambdaE /(115*nanometer);
+   const G4int numTPB = 500;// 63;;
+   G4double HighETPB = LambdaE /(350*nanometer);
    G4double LowETPB = LambdaE /(650*nanometer);//(650*nanometer); //598
    G4double deeTPB = ((HighETPB - LowETPB) / ((G4double)(numTPB-1)));
    G4double LAr_SCPPTPB[numTPB];
