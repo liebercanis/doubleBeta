@@ -30,6 +30,8 @@
 //
 //
 #include "PrimaryGeneratorAction.hh"
+#include "G4VPhysicalVolume.hh"
+#include "G4PhysicalVolumeStore.hh"
 #include "G4Event.hh"
 #include "G4ParticleGun.hh"
 #include "G4ParticleTable.hh"
@@ -42,6 +44,10 @@
 PrimaryGeneratorAction::PrimaryGeneratorAction(){
   G4int n_particle = 1;
   //fParticleSource = new G4ParticleGun(n_particle);
+  fParticleSource= new LegendParticleSource();
+  
+  G4cout << "  PrimaryGeneratorAction constructor complete. " << G4endl;
+  
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -57,16 +63,15 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent){
   fParticleSource->GeneratePrimaryVertex(anEvent);
 }
 
-void PrimaryGeneratorAction::InitSource(G4String name) 
+void PrimaryGeneratorAction::SetParticle(G4String name) 
 {
-  fParticleSource= new LegendParticleSource(name);
   G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
-  G4String particleName;
-  fParticleSource->SetParticleDefinition(particleTable->FindParticle(particleName="e-"));
-  fParticleSource->SetEnergyDisType("Ar39");
-
-  G4cout << " PrimaryGeneratorAction energy distribution type is " << fParticleSource->GetEnergyDisType() << G4endl;
-  G4VPhysicalVolume* pvol = fParticleSource->GetPhysicalVolume();
-  if(pvol)  G4cout << " PrimaryGeneratorAction source physical volume is " << pvol->GetName() << G4endl;
-  else  G4cout <<  " PrimaryGeneratorAction source physical volume doesnt exist !!" << G4endl;
+  // default is e-
+  G4String eminusName("e-");
+  fParticleSource->SetParticleDefinition(particleTable->FindParticle(eminusName));
+  G4ParticleDefinition* particle = particleTable->FindParticle(name);
+  if(particle) fParticleSource->SetParticleDefinition(particle);
+  else G4cout << " PrimaryGeneratorAction:: no such particle named " << name << " using default " << eminusName << G4endl;
 }
+
+

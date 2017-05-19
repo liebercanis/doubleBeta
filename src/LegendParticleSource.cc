@@ -1,4 +1,4 @@
-//
+
 // ********************************************************************
 // * License and Disclaimer                                           *
 // *                                                                  *
@@ -52,7 +52,7 @@
 
 #include "LegendParticleSource.hh"
 #include "G4PhysicalVolumeStore.hh"
-#include "G4PhysicalConstants.hh"
+#include "G4PhysicalConstants.hh"r
 #include "G4SystemOfUnits.hh"
 #include "G4PrimaryParticle.hh"
 #include "G4Event.hh"
@@ -68,19 +68,11 @@
 #include "G4Track.hh"
 
 
-LegendParticleSource::LegendParticleSource(G4String physical_name ) 
-  :physVolumeName(physical_name)
+LegendParticleSource::LegendParticleSource( ) 
 {
-
-  thePhysicalVolume = G4PhysicalVolumeStore::GetInstance()->GetVolume(physVolumeName);
-  G4cout << " LegendParticleSource physical volume is " << thePhysicalVolume->GetName() << G4endl;
-  
-  
-  G4VPhysicalVolume *larPhys = G4PhysicalVolumeStore::GetInstance()->GetVolume("larPhysical");
-  centerVector = larPhys->GetTranslation();
-
-
-
+  thePhysicalVolume = NULL;
+  particle_definition = NULL;
+   
   // Ar39 spectrum
   G4String pathFile = "External_data/Ar39Theory.root";
   TFile *ar39File = new TFile(pathFile.data());
@@ -104,10 +96,10 @@ LegendParticleSource::LegendParticleSource(G4String physical_name )
   hAr39Gen = (TH1D*) hAr39Theory->Clone("Ar39Gen");
   hAr39Gen->Reset();
   
-  
   NumberOfParticlesToBeGenerated = 1;
   particle_definition = NULL;
   G4ThreeVector zero(0., 0., 0.);
+  SetCenterVector(zero);
   particle_momentum_direction = G4ParticleMomentum(1., 0., 0.);
   particle_energy = 1.0*MeV;
   particle_position = zero;
@@ -124,18 +116,13 @@ LegendParticleSource::LegendParticleSource(G4String physical_name )
   MinPhi = 0.;
   MaxPhi = twopi;
 
-  EnergyDisType = "Ar39";
-  //EnergyDisType = "Mono";
-  MonoEnergy = 1*MeV;
-  G4cout<<" LegendParticleSource source type is   " << EnergyDisType;
-  if(EnergyDisType = "Mono") G4cout << " energy " << MonoEnergy;
-  G4cout << G4endl;
-  
-
+  SourceType = "Ar39";
+  particle_energy = 1*MeV;
   verbosityLevel = 0;
 
   //theMessenger = new LegendParticleSourceMessenger(this);
   gNavigator = G4TransportationManager::GetTransportationManager()->GetNavigatorForTracking();
+  G4cout << "  LegendParticleSource constructor complete. " << G4endl;
 }
 
 LegendParticleSource::~LegendParticleSource()
@@ -143,30 +130,18 @@ LegendParticleSource::~LegendParticleSource()
   //delete theMessenger;
 }
 
-void LegendParticleSource::SetPosDisType(G4String PosType) 
+
+void LegendParticleSource::SetPhysicalVolumeByName(G4String physical_name ) 
 {
-  SourcePosType = PosType;
+  physVolumeName=physical_name;
+  thePhysicalVolume = G4PhysicalVolumeStore::GetInstance()->GetVolume(physVolumeName);
+  if(thePhysicalVolume) {
+    centerVector = thePhysicalVolume->GetTranslation();
+    G4cout << " LegendParticleSource physical volume is " << thePhysicalVolume->GetName() << G4endl;
+  } else 
+    G4cout << " LegendParticleSource physical not set as nae " << physical_name<< " not found in G4PhysicalVolumeStore"<< G4endl;
 }
 
-void LegendParticleSource::SetPosDisShape(G4String shapeType)
-{
-  Shape = shapeType;
-}
-
-void LegendParticleSource::SetCenterVector(G4ThreeVector coordsOfCentre)
-{
-  centerVector = coordsOfCentre;
-}
-
-void LegendParticleSource::SetHalfZ(G4double zhalf)
-{
-  halfz = zhalf;
-}
-
-void LegendParticleSource::SetRadius(G4double radius)
-{
-  Radius = radius;
-}
 
 void LegendParticleSource::ConfineSourceToVolume()
 {
@@ -176,11 +151,6 @@ void LegendParticleSource::ConfineSourceToVolume()
 
 }
 
-
-void LegendParticleSource::SetAngDistType(G4String atype)
-{
-  AngDistType = atype;
-}
 
 
 void LegendParticleSource::GeneratePointSource()
@@ -196,6 +166,10 @@ void LegendParticleSource::GeneratePointSource()
 
 void LegendParticleSource::GeneratePointsInVolume()
 {
+  if(!thePhysicalVolume) {
+    G4cout << " LegendParticleSource::GeneratePointsInVolume **** Error thePhysicalVolume is NULL" << G4endl;
+    return;
+  }
   G4VSolid *solid = thePhysicalVolume->GetLogicalVolume()->GetSolid();
   G4ThreeVector rmin;
   G4ThreeVector rmax;
@@ -266,13 +240,6 @@ G4bool LegendParticleSource::IsSourceConfined()
 }
 
 
-void LegendParticleSource::SetParticleMomentumDirection
-   (G4ParticleMomentum aDirection) {
-
-  particle_momentum_direction =  aDirection.unit();
-}
-
-
 void LegendParticleSource::GenerateIsotropicFlux()
 {
 
@@ -308,28 +275,6 @@ void LegendParticleSource::GenerateIsotropicFlux()
 }
 
 
-void LegendParticleSource::SetEnergyDisType(G4String DisType)
-{
-  EnergyDisType = DisType;
-}
-
-void LegendParticleSource::SetMonoEnergy(G4double menergy)
-{
-  MonoEnergy = menergy;
-}
-
-void LegendParticleSource::GenerateMonoEnergetic()
-{
-  particle_energy = MonoEnergy;
-}
-
-
-void LegendParticleSource::SetVerbosity(int vL)
-{
-  verbosityLevel = vL;
-  G4cout << " LegendParticleSource **** Verbosity Set to: " << verbosityLevel << G4endl;
-}
-
 void LegendParticleSource::SetParticleDefinition
   (G4ParticleDefinition* aParticleDefinition)
 {
@@ -350,6 +295,7 @@ void LegendParticleSource::GeneratePrimaryVertex(G4Event *evt)
   G4bool srcconf = false;
   G4int LoopCount = 0;
   
+
   while(srcconf == false)  {
     if(SourcePosType == "Point")
       GeneratePointSource();
@@ -391,13 +337,10 @@ void LegendParticleSource::GeneratePrimaryVertex(G4Event *evt)
   else
     G4cout << " LegendParticleSource **** Error: AngDistType has unusual value" << G4endl;
   // Energy stuff
-  if(EnergyDisType == "Mono")
-    GenerateMonoEnergetic();
-  else if(EnergyDisType == "Ar39") {
+  if(SourceType == "Ar39") {
     GenAr39Energy();
     hAr39Gen->Fill( GetParticleEnergy());
-  } else 
-    G4cout << " LegendParticleSource **** Error: EnergyDisType has unknown value = " << EnergyDisType << G4endl;
+  } 
   
   // create a new vertex
   G4PrimaryVertex* vertex = 

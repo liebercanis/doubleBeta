@@ -131,6 +131,7 @@ class DetectorConstruction : public G4VUserDetectorConstruction
     G4bool LArDebug;
     G4bool CuDebug;
     G4bool VM2000Debug;
+    G4bool SdDebug;
 
     G4NistManager* nist; 
     DetectorMessenger* detectorMessenger;  // pointer to the Messenger

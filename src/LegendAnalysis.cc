@@ -240,7 +240,7 @@ void  LegendAnalysis::anaTrajectories(G4TrajectoryContainer* trajectoryContainer
     
     if(gtrj->IsGeHit()) {
       ltraj.Type = LTTrajectType::GEHIT;
-      ++fEvent->nGeHits;
+      ++fEvent->nTrajGeHits;
     }
 
     if(ltraj.PDG==11) { // electron

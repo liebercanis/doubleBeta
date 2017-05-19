@@ -79,6 +79,8 @@ DetectorConstruction::DetectorConstruction()
   LArDebug = false;
   CuDebug = false;//true;
   VM2000Debug = false;//true;
+  SdDebug = true;
+
   //***//
   //TPB//
   //***//   
@@ -159,7 +161,10 @@ DetectorConstruction::DetectorConstruction()
   hWLSPhotonE = new TH1F("WLSPhotonE"," photon energy in WLS",100,WLSLowE,WLSHighE);
   hWLSPhotonWavelength = new TH1F("WLSPhotonWavelength"," photon Wavelength in WLS",100,LambdaE/WLSHighE,LambdaE/WLSLowE);
   hArPhotonE = new TH1F("ArPhotonE"," photon energy in LAr",100,ArLowE,ArHighE);
-  hArPhotonWavelength = new TH1F("ArPhotonWavelength"," photon Wavelength in LAr",100,LambdaE/ArHighE,LambdaE/ArLowE);  
+  hArPhotonWavelength = new TH1F("ArPhotonWavelength"," photon Wavelength in LAr",100,LambdaE/ArHighE,LambdaE/ArLowE);
+  G4cout << "  DetectorConstruction constructor complete. " << G4endl;
+
+
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -580,14 +585,15 @@ void DetectorConstruction::ConstructSDandField()
 
   G4PhysicalVolumeStore* theStore = G4PhysicalVolumeStore::GetInstance();
   G4cout << "\t DetectorConstruction::SDandField done   " << G4endl;
-  for(G4int istore = 0; istore< theStore->size() ; ++istore ){
-    G4VPhysicalVolume *pvol = theStore->at(istore);
-    G4int nsense = 0;
-    G4VSensitiveDetector* sdet = pvol->GetLogicalVolume()->GetSensitiveDetector();
-    if(sdet) nsense = sdet->GetNumberOfCollections();
-    if(nsense>0) G4cout << " SD phys vol  " << istore << 
-      " name = " << pvol->GetName() << " logical " <<  pvol->GetLogicalVolume()->GetName() <<  " number of collections =  " << nsense << G4endl; 
-  }
+  if(SdDebug) 
+    for(G4int istore = 0; istore< theStore->size() ; ++istore ){
+      G4VPhysicalVolume *pvol = theStore->at(istore);
+      G4int nsense = 0;
+      G4VSensitiveDetector* sdet = pvol->GetLogicalVolume()->GetSensitiveDetector();
+      if(sdet) nsense = sdet->GetNumberOfCollections();
+      if(nsense>0) G4cout << " SD phys vol  " << istore << 
+        " name = " << pvol->GetName() << " logical " <<  pvol->GetLogicalVolume()->GetName() <<  " number of collections =  " << nsense << G4endl; 
+    }
    
 }
 

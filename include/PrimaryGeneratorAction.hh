@@ -51,7 +51,10 @@ class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
      
   public:
 
-    void InitSource(G4String name); 
+    void SetPhysicalVolumeByName(G4String name) {fParticleSource->SetPhysicalVolumeByName(name);}
+    void SetSource(G4String name) { fParticleSource->SetSource(name);}
+    void SetParticle(G4String name); 
+    void Show() { fParticleSource->Show();}
     virtual void GeneratePrimaries(G4Event* anEvent);
 
   private:

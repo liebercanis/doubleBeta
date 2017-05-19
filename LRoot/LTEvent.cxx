@@ -32,7 +32,7 @@ void LTEvent::clear()
   nTrajOptPhotons=0;
   nTrajArScint=0;
   nTrajWlsScint=0;
-  
+  nTrajGeHits=0;
 
   PDG=0;
   ePrimary=0;

@@ -31,6 +31,7 @@
 #include "DetectorConstruction.hh"
 #include "LegendAnalysis.hh"
 #include "PrimaryGeneratorAction.hh"
+#include "PrimaryGeneratorActionMessenger.hh"
 #include "RunAction.hh"
 #include "EventAction.hh"
 #include "TrackingAction.hh"
@@ -84,6 +85,7 @@ int main(int argc,char** argv)
   // Primary generator action
   PrimaryGeneratorAction* gen_action = new PrimaryGeneratorAction();
   runManager->SetUserAction(gen_action);
+  new PrimaryGeneratorActionMessenger(gen_action);
 
   // Set user action classes
 
@@ -99,12 +101,12 @@ int main(int argc,char** argv)
   G4UserSteppingAction* stepping_action = new SteppingAction(detector, event_action);
   runManager->SetUserAction(stepping_action);
 
-  // Initialize G4 kernel
-  //
+  // Initialize G4
   runManager->Initialize();
 
-  gen_action->InitSource("group1Physical");
-
+  // this has to be done after detector construcgion 
+  gen_action->SetPhysicalVolumeByName("group1Physical");
+  gen_action->Show();
 #ifdef G4VIS_USE
   // Initialize visualization
   G4VisManager* visManager = new G4VisExecutive;
