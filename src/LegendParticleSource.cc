@@ -71,7 +71,10 @@
 LegendParticleSource::LegendParticleSource( ) 
 {
   thePhysicalVolume = NULL;
-  particle_definition = NULL;
+  // just to have a default particle
+  G4String eminusName("e-");
+  G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
+  particle_definition = particleTable->FindParticle(eminusName);//  
    
   // Ar39 spectrum
   G4String pathFile = "External_data/Ar39Theory.root";
@@ -97,7 +100,6 @@ LegendParticleSource::LegendParticleSource( )
   hAr39Gen->Reset();
   
   NumberOfParticlesToBeGenerated = 1;
-  particle_definition = NULL;
   G4ThreeVector zero(0., 0., 0.);
   SetCenterVector(zero);
   particle_momentum_direction = G4ParticleMomentum(1., 0., 0.);

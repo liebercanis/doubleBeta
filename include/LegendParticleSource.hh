@@ -73,11 +73,11 @@ class LegendParticleSource : public G4VPrimaryGenerator {
      G4VPhysicalVolume* GetPhysicalVolume() { return thePhysicalVolume; }
      void Show(){
        G4cout <<
-         " LegendParticleSource " << 
-         " physical volume " << physVolumeName <<
-         " source type is   " << SourceType << 
-         " source position type is   " << SourcePosType;
-       if(particle_definition) G4cout << " particle is "  << particle_definition->GetParticleName(); 
+         " **************** LegendParticleSource ********** " << G4endl << 
+         " \t physical volume " << physVolumeName <<
+         " \t source type is   " << SourceType << 
+         " \t source position type is   " << SourcePosType;
+       if(particle_definition) G4cout << " \t particle is "  << particle_definition->GetParticleName(); 
        G4cout << G4endl;
      }
      void GeneratePointSource();

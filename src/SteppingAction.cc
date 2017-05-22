@@ -5,6 +5,7 @@
 /// \brief Implementation of the SteppingAction class
 
 #include "SteppingAction.hh"
+#include "G4EventManager.hh"
 #include "G4SDManager.hh"
 #include "PMTSD.hh"
 #include "GermaniumSD.hh"
@@ -19,6 +20,8 @@
 #include "G4Step.hh"
 #include "G4RunManager.hh"
 #include "G4UnitsTable.hh"
+#include "G4SystemOfUnits.hh"
+
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
@@ -37,7 +40,7 @@ SteppingAction::SteppingAction(DetectorConstruction* det, EventAction* evt)
 
   // must be in top directory for ChangeFile to work
   LegendAnalysis::Instance()->topTreeDir()->cd();
-  ntStep = new TNtuple("ntStep"," step variables ","parent:pdg:flag:length:energy");
+  ntStep = new TNtuple("ntStep"," step variables ","ev:parent:pdg:flag:microsec:length:energy");
   //ntGeStep = new TNtuple("ntGeStep"," step variables ","num:pdg:length:energy");
 
 }
@@ -301,7 +304,7 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
   if(processName == "hIoni" ) {   
     trackInformation->AddTrackStatusFlag(hIoni);
     if(inGeDetector) G4cout<<"SteppingAction:: hIoni Process Name ... "<<processName<<" boundaryStatus " << boundaryStatus <<G4endl;
-  }
+  };
 
   // ionizing process
   if(processName == "ionIoni" ) {   
@@ -318,9 +321,9 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
            
   if(inGeDetector) trackInformation->AddTrackStatusFlag(hitGe);
   //if(trackInformation->GetTrackStatus()&hitGe) G4cout << " SteppingAction hitGe  " << G4endl;
-  
-  
-  ntStep->Fill(trackInformation->GetParentId(),particleType->GetPDGEncoding(),trackInformation->GetTrackBit(),length,aTrack->GetKineticEnergy());
+  G4int eventId = G4EventManager::GetEventManager()->GetConstCurrentEvent()->GetEventID();
+  ntStep->Fill(eventId,trackInformation->GetParentId(),particleType->GetPDGEncoding(),
+      trackInformation->GetTrackBit(),aTrack->GetGlobalTime()/microsecond,length,aTrack->GetKineticEnergy());
 }
 
 

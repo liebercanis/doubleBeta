@@ -51,9 +51,10 @@
 #include "G4TouchableHistory.hh"
 #include "G4OpticalPhoton.hh"
 #include "G4SDManager.hh"
+#include "G4UserEventAction.hh"
+#include "G4EventManager.hh"
 #include "G4Track.hh"
 #include "G4ParticleDefinition.hh"
-#include "G4SDManager.hh"
 #include "G4UnitsTable.hh"
 #include "G4ios.hh"
 #include "Randomize.hh"
@@ -78,7 +79,7 @@ GermaniumSD::GermaniumSD(G4String name, G4int nCopy)
 
     // must be in top directory for ChangeFile to work
     LegendAnalysis::Instance()->topTreeDir()->cd();
-    ntGe = new TNtuple("ntGe"," Ge hits ","copy:PDG:musec:length:ekev");
+    ntGe = new TNtuple("ntGe"," Ge hits ","ev:copy:PDG:musec:length:ekev");
   }
   
 }
@@ -127,7 +128,9 @@ G4bool GermaniumSD::ProcessHits_constStep(const G4Step* aStep, G4TouchableHistor
   hTime->Fill( aStep->GetTrack()->GetGlobalTime()/microsecond); //convert to ns
   hEnergy->Fill(edep/keV);
   G4int copy = theTouchable->GetVolume()->GetCopyNo();
-  ntGe->Fill( float(copy),particleType->GetPDGEncoding(),aStep->GetTrack()->GetGlobalTime()/microsecond,length,edep/keV);
+  // add event number
+  G4int eventId = G4EventManager::GetEventManager()->GetConstCurrentEvent()->GetEventID();
+  ntGe->Fill(float(eventId),float(copy),particleType->GetPDGEncoding(),aStep->GetTrack()->GetGlobalTime()/microsecond,length,edep/keV);
   return true;
 }
 
