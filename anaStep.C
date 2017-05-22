@@ -3,6 +3,41 @@
 #include <TH2.h>
 #include <TStyle.h>
 #include <TCanvas.h>
+anaStep::anaStep(TTree *tree) : fChain(0) 
+{
+// if parameter tree is not specified (or zero), connect the file
+// used to generate this class and read the Tree.
+   if (tree == 0) {
+      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("legendTree-2017-4-22-13-16-17.root");
+      if (!f || !f->IsOpen()) {
+         f = new TFile("legendTree-2017-4-22-13-16-17.root");
+      }
+      f->GetObject("ntStep",tree);
+
+   }
+   Init(tree);
+  
+   // open ouput file and make some histograms
+  TString outputFileName = TString("anaStep.root");
+  TFile *outfile = new TFile(outputFileName,"recreate");
+  outfile->cd();
+
+   printf(" opening output file %s \n",outputFileName.Data());
+
+   hScintTime = new TH1F("ScintTime","  scint time microsec ",1200,0,12);
+   hWlsTime = new TH1F("WlsTime"," WLS time microsec ",1200,0,12);
+   gDirectory->pwd();
+
+   Loop();
+
+   outfile->Write();
+}
+
+anaStep::~anaStep()
+{
+   if (!fChain) return;
+   delete fChain->GetCurrentFile();
+}
 
 void anaStep::Loop()
 {
@@ -38,6 +73,10 @@ void anaStep::Loop()
       Long64_t ientry = LoadTree(jentry);
       if (ientry < 0) break;
       nb = fChain->GetEntry(jentry);   nbytes += nb;
-      // if (Cut(ientry) < 0) continue;
+      int istatus = int(status);
+      bool isScint =   istatus&TrackStatus::scint ;
+      bool isWls   =   istatus&TrackStatus::hitWLS;
+      if ( isScint&&!isWls )  hScintTime->Fill(microsec);
+      if ( isWls )  hWlsTime->Fill(microsec);
    }
 }

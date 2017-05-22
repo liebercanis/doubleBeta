@@ -1,8 +1,8 @@
 //////////////////////////////////////////////////////////
 // This class has been automatically generated on
-// Mon May 22 12:55:32 2017 by ROOT version 6.08/00
+// Mon May 22 13:17:26 2017 by ROOT version 6.08/00
 // from TTree ntStep/ step variables 
-// found on file: legendTree-2017-4-22-12-46-40.root
+// found on file: legendTree-2017-4-22-13-16-17.root
 //////////////////////////////////////////////////////////
 
 #ifndef anaStep_h
@@ -13,19 +13,32 @@
 #include <TFile.h>
 
 // Header file for the classes stored in the TTree if any.
+enum TrackStatus { active=1, hitPMT=2, absorbed=4, boundaryAbsorbed=8,
+                      absorbedLAr=16, inactive=32, hitWLS = 64, totalInternal=128, backScatter=256, notBoundary=512,
+                      scint=2*notBoundary, 
+                      eIoni=2*scint, 
+                      hIoni=2*eIoni, 
+                      ionIoni=2*hIoni,
+                      compton= 2*ionIoni,
+                      hitGe=2*compton, 
+                      isBad=2*hitGe};
+
 
 class anaStep {
 public :
+
+   TH1F* hScintTime;
+   TH1F* hWlsTime;
    TTree          *fChain;   //!pointer to the analyzed TTree or TChain
    Int_t           fCurrent; //!current Tree number in a TChain
 
-// Fixed size dimensions of array or collections stored in the TTree if any.
+   // Fixed size dimensions of array or collections stored in the TTree if any.
 
    // Declaration of leaf types
    Float_t         ev;
    Float_t         parent;
    Float_t         pdg;
-   Float_t         flag;
+   Float_t         status;
    Float_t         microsec;
    Float_t         length;
    Float_t         energy;
@@ -34,7 +47,7 @@ public :
    TBranch        *b_ev;   //!
    TBranch        *b_parent;   //!
    TBranch        *b_pdg;   //!
-   TBranch        *b_flag;   //!
+   TBranch        *b_status;   //!
    TBranch        *b_microsec;   //!
    TBranch        *b_length;   //!
    TBranch        *b_energy;   //!
@@ -53,26 +66,6 @@ public :
 #endif
 
 #ifdef anaStep_cxx
-anaStep::anaStep(TTree *tree) : fChain(0) 
-{
-// if parameter tree is not specified (or zero), connect the file
-// used to generate this class and read the Tree.
-   if (tree == 0) {
-      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("legendTree-2017-4-22-12-46-40.root");
-      if (!f || !f->IsOpen()) {
-         f = new TFile("legendTree-2017-4-22-12-46-40.root");
-      }
-      f->GetObject("ntStep",tree);
-
-   }
-   Init(tree);
-}
-
-anaStep::~anaStep()
-{
-   if (!fChain) return;
-   delete fChain->GetCurrentFile();
-}
 
 Int_t anaStep::GetEntry(Long64_t entry)
 {
@@ -112,7 +105,7 @@ void anaStep::Init(TTree *tree)
    fChain->SetBranchAddress("ev", &ev, &b_ev);
    fChain->SetBranchAddress("parent", &parent, &b_parent);
    fChain->SetBranchAddress("pdg", &pdg, &b_pdg);
-   fChain->SetBranchAddress("flag", &flag, &b_flag);
+   fChain->SetBranchAddress("status", &status, &b_status);
    fChain->SetBranchAddress("microsec", &microsec, &b_microsec);
    fChain->SetBranchAddress("length", &length, &b_length);
    fChain->SetBranchAddress("energy", &energy, &b_energy);

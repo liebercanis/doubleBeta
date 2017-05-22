@@ -40,7 +40,7 @@ SteppingAction::SteppingAction(DetectorConstruction* det, EventAction* evt)
 
   // must be in top directory for ChangeFile to work
   LegendAnalysis::Instance()->topTreeDir()->cd();
-  ntStep = new TNtuple("ntStep"," step variables ","ev:parent:pdg:flag:microsec:length:energy");
+  ntStep = new TNtuple("ntStep"," step variables ","ev:parent:pdg:status:microsec:length:energy");
   //ntGeStep = new TNtuple("ntGeStep"," step variables ","num:pdg:length:energy");
 
 }
@@ -323,7 +323,7 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
   //if(trackInformation->GetTrackStatus()&hitGe) G4cout << " SteppingAction hitGe  " << G4endl;
   G4int eventId = G4EventManager::GetEventManager()->GetConstCurrentEvent()->GetEventID();
   ntStep->Fill(eventId,trackInformation->GetParentId(),particleType->GetPDGEncoding(),
-      trackInformation->GetTrackBit(),aTrack->GetGlobalTime()/microsecond,length,aTrack->GetKineticEnergy());
+      trackInformation->GetTrackStatus(),aTrack->GetGlobalTime()/microsecond,length,aTrack->GetKineticEnergy());
 }
 
 
