@@ -39,7 +39,10 @@ public :
    Float_t         parent;
    Float_t         pdg;
    Float_t         status;
-   Float_t         microsec;
+   // tglobal Time since the event in which the track belongs was created.
+   Float_t         tglobal;
+   // tlocal Time since the current track was created.
+   Float_t         tlocal;
    Float_t         length;
    Float_t         energy;
 
@@ -48,16 +51,17 @@ public :
    TBranch        *b_parent;   //!
    TBranch        *b_pdg;   //!
    TBranch        *b_status;   //!
-   TBranch        *b_microsec;   //!
+   TBranch        *b_tglobal;   //!
+   TBranch        *b_tlocal;   //!
    TBranch        *b_length;   //!
    TBranch        *b_energy;   //!
 
-   anaStep(TTree *tree=0);
+   anaStep();
    virtual ~anaStep();
    virtual Int_t    Cut(Long64_t entry);
    virtual Int_t    GetEntry(Long64_t entry);
    virtual Long64_t LoadTree(Long64_t entry);
-   virtual void     Init(TTree *tree);
+   virtual void     Init();
    virtual void     Loop();
    virtual Bool_t   Notify();
    virtual void     Show(Long64_t entry = -1);
@@ -86,7 +90,7 @@ Long64_t anaStep::LoadTree(Long64_t entry)
    return centry;
 }
 
-void anaStep::Init(TTree *tree)
+void anaStep::Init()
 {
    // The Init() function is called when the selector needs to initialize
    // a new tree or chain. Typically here the branch addresses and branch
@@ -97,8 +101,6 @@ void anaStep::Init(TTree *tree)
    // (once per file to be processed).
 
    // Set branch addresses and branch pointers
-   if (!tree) return;
-   fChain = tree;
    fCurrent = -1;
    fChain->SetMakeClass(1);
 
@@ -106,7 +108,8 @@ void anaStep::Init(TTree *tree)
    fChain->SetBranchAddress("parent", &parent, &b_parent);
    fChain->SetBranchAddress("pdg", &pdg, &b_pdg);
    fChain->SetBranchAddress("status", &status, &b_status);
-   fChain->SetBranchAddress("microsec", &microsec, &b_microsec);
+   fChain->SetBranchAddress("tglobal", &tglobal, &b_tglobal);
+   fChain->SetBranchAddress("tlocal", &tlocal, &b_tlocal);
    fChain->SetBranchAddress("length", &length, &b_length);
    fChain->SetBranchAddress("energy", &energy, &b_energy);
    Notify();

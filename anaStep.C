@@ -3,19 +3,22 @@
 #include <TH2.h>
 #include <TStyle.h>
 #include <TCanvas.h>
-anaStep::anaStep(TTree *tree) : fChain(0) 
+anaStep::anaStep()  
 {
+  char tag[80] = "2017-4-22-15-32-50";
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
-   if (tree == 0) {
-      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("legendTree-2017-4-22-13-16-17.root");
-      if (!f || !f->IsOpen()) {
-         f = new TFile("legendTree-2017-4-22-13-16-17.root");
-      }
-      f->GetObject("ntStep",tree);
+  TString fileName = TString("legendTree-") + TString(tag) + TString(".root");
+  printf(" looking for file %s\n",fileName.Data());
+  TFile *f = new TFile(fileName,"readonly");
+  if(!f) {
+    printf(" couldnt open file %s\n",fileName.Data());
+    return;
+  }
+  fChain = (TChain*) f->Get("ntStep");
+  fChain->ls();
 
-   }
-   Init(tree);
+   Init();
   
    // open ouput file and make some histograms
   TString outputFileName = TString("anaStep.root");
@@ -30,6 +33,19 @@ anaStep::anaStep(TTree *tree) : fChain(0)
 
    Loop();
 
+   TF1 *f1 = new TF1("f1", "expo", .01, 12);
+   hScintTime->Fit("f1", "R");
+   TF1 *f2 = new TF1("f2", "expo", .01, 12);
+   hWlsTime->Fit("f2", "R");
+   double c1=f1->GetParameter(0);
+   double c2=f2->GetParameter(0);
+   double r1=f1->GetParameter(1);
+   double r2=f2->GetParameter(1);
+   
+
+   printf(" scint tau = %f WLS tau = %f \n",-1/r1,-1/r2);
+  
+   
    outfile->Write();
 }
 
@@ -76,7 +92,7 @@ void anaStep::Loop()
       int istatus = int(status);
       bool isScint =   istatus&TrackStatus::scint ;
       bool isWls   =   istatus&TrackStatus::hitWLS;
-      if ( isScint&&!isWls )  hScintTime->Fill(microsec);
-      if ( isWls )  hWlsTime->Fill(microsec);
+      if ( isScint&&!isWls )  hScintTime->Fill(tglobal);
+      if ( isWls )  hWlsTime->Fill(tglobal);
    }
 }

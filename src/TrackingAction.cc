@@ -30,14 +30,15 @@
 //
 //
 #include "TrackingAction.hh"
-#include "LegendTrajectory.hh"
 #include "UserTrackInformation.hh"
+#include "G4EventManager.hh"
 #include "DetectorConstruction.hh"
 #include "G4SystemOfUnits.hh"
 #include "G4PhysicalConstants.hh"
 #include "G4TrackingManager.hh"
 #include "G4Track.hh"
 #include "G4ParticleTypes.hh"
+#include "G4SystemOfUnits.hh"
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
@@ -69,10 +70,13 @@ TrackingAction::TrackingAction()
   
   // must be in top directory for ChangeFile to work
   LegendAnalysis::Instance()->topTreeDir()->cd();
-  ntTrack = new TNtuple("ntTrack"," track variables ","parent:flag:status:energy");
+  // make tree in output file
+  fTrackTree = new TTree("trkTree","trkTree");
+  //fTree->SetMaxTreeSize(1000000);
+  fTrackTree->SetMaxTreeSize(25);
+  fLTTrack = new LTTrack();
+  fTrackTree->Branch("track",&fLTTrack);
 
-  
-   
   G4cout << " ...  = " << G4endl;
   
 }
@@ -111,7 +115,7 @@ void TrackingAction::PostUserTrackingAction(const G4Track* aTrack){
   
   
   //LegendAnalysis::Instance()->FillTrajectory(trajectory);
-  G4double totE = aTrack->GetKineticEnergy();//Returns energy in MeV
+  G4double kineticE = aTrack->GetKineticEnergy();//Returns energy in MeV
   
   trajectory->SetParentId(trackInformation->GetParentId());
   const G4VProcess* creator=aTrack->GetCreatorProcess();
@@ -124,7 +128,7 @@ void TrackingAction::PostUserTrackingAction(const G4Track* aTrack){
   if(trackInformation->IsPrimary()) {  
     trajectory->SetDrawTrajectory(true);
     trajectory->SetPrimary();
-    ltEvent->ePrimary=totE;
+    ltEvent->ePrimary=kineticE;
     //G4cout << " TrackingAction PRIMARY TRACK track definition is  " << aTrack->GetDefinition()->GetParticleName() << " is prim? " << trajectory->IsPrimary() << G4endl;
   }
 
@@ -136,25 +140,25 @@ void TrackingAction::PostUserTrackingAction(const G4Track* aTrack){
     ++ltEvent->nOptPhotons;
     hTrackStatus->Fill(trackInformation->GetTrackBit()); 
     
-    hTrackPhotonE->Fill(totE);
-    if(trackInformation->GetTrackStatus()&absorbed) hAbsorbedPhotonE->Fill(totE);
+    hTrackPhotonE->Fill(kineticE);
+    if(trackInformation->GetTrackStatus()&absorbed) hAbsorbedPhotonE->Fill(kineticE);
     if(creator->GetProcessName() ==  "Scintillation") {
       ++ltEvent->nArScint;
-      hTrackScintE->Fill(totE);
-      if(evertex>0) hTrackScintYield->Fill( totE /evertex /meanScintE);
-      //if(evertex>0) G4cout << " \t TRACKINGACTION event vertex energy " << evertex << "  photon energy ratio " << totE /evertex << G4endl;
+      hTrackScintE->Fill(kineticE);
+      if(evertex>0) hTrackScintYield->Fill( kineticE /evertex /meanScintE);
+      //if(evertex>0) G4cout << " \t TRACKINGACTION event vertex energy " << evertex << "  photon energy ratio " << kineticE /evertex << G4endl;
     }
-    if(creator->GetProcessName() == "Cerenkov") hCherenkovPhotonE->Fill(totE);
+    if(creator->GetProcessName() == "Cerenkov") hCherenkovPhotonE->Fill(kineticE);
     
     // use track status set in SteppingAction
     trajectory->SetTrackStatus(trackInformation->GetTrackStatus());
     if(trackInformation->GetTrackStatus()&hitPMT) {
-      hPMTPhotonE->Fill(totE);
+      hPMTPhotonE->Fill(kineticE);
       trajectory->SetDrawTrajectory(false);
       ++ltEvent->nPmtHits;
     } else if(trackInformation->GetTrackStatus()&hitWLS) {
       trajectory->SetDrawTrajectory(false);
-      hWLSPhotonE->Fill(totE);
+      hWLSPhotonE->Fill(kineticE);
       ++ltEvent->nWlsScint; 
       
     }  
@@ -178,6 +182,64 @@ void TrackingAction::PostUserTrackingAction(const G4Track* aTrack){
       trajectory->SetDrawTrajectory(true);
   }  
   
-  ntTrack->Fill( trackInformation->GetParentId(), trackInformation->GetTrackBit(), trackInformation->GetTrackStatus(), totE );
-  
+  // fill tree
+  fLTTrack->evId = G4EventManager::GetEventManager()->GetConstCurrentEvent()->GetEventID();
+  fLTTrack->trkId = aTrack->GetTrackID();
+  fLTTrack->parentId = aTrack->GetParentID();
+  fLTTrack->status=trackInformation->GetTrackStatus();
+  fLTTrack->length=aTrack->GetTrackLength();
+  fLTTrack->nstep=aTrack->GetCurrentStepNumber();
+  fLTTrack->stepLength=aTrack->GetStepLength();
+  fLTTrack->traject=*FillLTTraject(trajectory);
+  G4ThreeVector trkPos = aTrack->GetPosition();
+  fLTTrack->position.SetXYZ(trkPos.x(),trkPos.y(),trkPos.z());
+  G4ThreeVector vertPos = aTrack->GetVertexPosition(); 
+  fLTTrack->vertPosition.SetXYZ(vertPos.x(),vertPos.y(),vertPos.z());
+  fLTTrack->time=aTrack->GetGlobalTime()/microsecond;
+  fLTTrack->ke=aTrack->GetKineticEnergy()/electronvolt;
+  //fLTTrack->print();
+  fTrackTree->Fill();
+}
+
+
+
+LTTraject* TrackingAction::FillLTTraject(LegendTrajectory *gtrj )
+{
+
+  LTTraject *ltraj = new LTTraject();
+  // fill from trajectory 
+  ltraj->TrajId = gtrj->GetTrackID() ;  
+  ltraj->ParentId = gtrj->GetParentID();        
+  //PrimaryId = gtrj-> ;        
+  ltraj->PDG = gtrj->GetPDGEncoding();       
+  //Mass = gtrj-> ;   
+  ltraj->Charge = gtrj->GetCharge(); 
+
+  // each element in std::vector corresponds to a point on the particle path
+  // typdef CLHEP::Hep3Vector G4ThreeVector;
+  G4ThreeVector gpos0 = gtrj->GetPoint(0)->GetPosition();
+  TLorentzVector r4(gpos0.x(),gpos0.y(),gpos0.z(),0);// were is the time?
+
+  ltraj->Position.push_back(r4);
+  G4ThreeVector momentum3 = gtrj->GetInitialMomentum();
+  TVector3 p3(momentum3.x(),momentum3.y(),momentum3.z());
+  ltraj->KE = p3.Mag();// don't have mass
+  ltraj->Momentum.push_back(p3);
+
+  // set primary 
+  if(gtrj->IsPrimary()) ltraj->Type = LTTrajectType::PRI;
+
+  ltraj->Name = TString(gtrj->GetParticleName().data());
+
+  //enum LTTrajectType {UNK,PRI,SCI,WLS,HIT};
+  ltraj->Type = LTTrajectType::UNK;
+  if(gtrj->GetParticleName()=="opticalphoton") {
+    if(gtrj->IsPmtHit()) ltraj->Type = LTTrajectType::PMTHIT;
+    else if(gtrj->IsWLS()) ltraj->Type = LTTrajectType::WLS;
+    else ltraj->Type = LTTrajectType::SCI;
+  } 
+    
+  if(gtrj->IsGeHit()) ltraj->Type = LTTrajectType::GEHIT;
+
+  return ltraj;  
 }
