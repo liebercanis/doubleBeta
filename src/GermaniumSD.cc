@@ -55,7 +55,6 @@
 #include "G4EventManager.hh"
 #include "G4Track.hh"
 #include "G4ParticleDefinition.hh"
-#include "G4SDManager.hh"
 #include "G4UnitsTable.hh"
 #include "G4ios.hh"
 #include "Randomize.hh"
@@ -136,6 +135,7 @@ G4bool GermaniumSD::ProcessHits_constStep(const G4Step* aStep, G4TouchableHistor
   
   G4int copy = theTouchable->GetVolume()->GetCopyNo();
   // add event number
+
   G4int eventId = G4EventManager::GetEventManager()->GetNonconstCurrentEvent()->GetEventID();
   
   ntGe->Fill( float(eventId),float(copy),particleType->GetPDGEncoding(),aStep->GetTrack()->GetGlobalTime()/microsecond,

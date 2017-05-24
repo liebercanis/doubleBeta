@@ -4,26 +4,35 @@
 #
 # Sets some default verbose
 #
+/run/verbose 1 
+/control/verbose 2 
 #/exp/setShieldingStyle GERDA
-#/exp/setFillGas ArgonLiquid
-#/exp/update
-/control/verbose 2
-/run/verbose 2
-
-/vis/open OGLSQt 
-# 600x600-0+0
 #
+# Create a scene handler/viewer for a specific graphics system
+#    The compound command "/vis/open <vis-driver-name>"
+#    is equivalent to the following set of commands:
+#
+#    /vis/sceneHandler/create
+#    /vis/viewer/create
+#
+# Create a scene handler and a viewer for the OGLIX driver
+/vis/open OGLSQt 
+#600x600-0+0
 /vis/viewer/set/style wireframe
 /vis/viewer/set/auxiliaryEdge true
 /vis/viewer/set/lineSegmentsPerCircle 100
 #Set direction from target to camera.
 /vis/viewer/set/viewpointVector 1 1.5 1.1
 /vis/viewer/set/viewpointThetaPhi 80 90 deg
-/vis/viewer/zoom 63.2736
+/vis/viewer/zoom 6.15
+/vis/viewer/pan -.1 0.08
+#
+#/vis/viewer/zoom 63.2736
 #    The compound command "/vis/drawVolume"
 #    is equivalent to the following set of commands:
 #
 #    /vis/scene/create
 #    /vis/scene/add/volume
+#    /vis/sceneHandler/attach
 # Create an empty scene and add the detector geometry to it
 /vis/drawVolume

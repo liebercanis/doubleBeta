@@ -183,8 +183,8 @@ void PhysicsList::ConstructProcess()
 
   ConstructCerenkov();
 
-  G4cout << " PhyicsList:: NOT doing Construct Had!!!!!!!!!!!!!!!!!" << G4endl;
-  //ConstructHad();
+  //G4cout << " PhyicsList:: NOT doing Construct Had!!!!!!!!!!!!!!!!!" << G4endl;
+  ConstructHad();
 
   ConstructGeneral();
 

@@ -63,6 +63,7 @@ private:
   TDirectory *fDir;
   TH1F* hTime;
   TH1F* hWavelength;
+  TNtuple* ntWLS;
 
 };
 

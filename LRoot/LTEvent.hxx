@@ -58,6 +58,8 @@ class LTEvent: public TNamed {
     Double_t eOptical;
     Double_t ePmt;
     Double_t eMaxDeposit;
+    Double_t GeTrackLength;
+    Double_t eGe;
 
     bool hasConversion;//true (initial) converstion position
     TVector3 positionEWeight;

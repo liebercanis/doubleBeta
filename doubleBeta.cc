@@ -104,7 +104,7 @@ int main(int argc,char** argv)
   // Initialize G4
   runManager->Initialize();
 
-  // this has to be done after detector construcgion 
+  // this has to be done after detector construction 
   gen_action->SetPhysicalVolumeByName("group1Physical");
   gen_action->Show();
 #ifdef G4VIS_USE

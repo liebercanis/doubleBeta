@@ -277,7 +277,7 @@ namespace {
 "/usr/local/root/include",
 "/.",
 "/usr/local/root-6.08.00-build/include",
-"/home/gold/doubleBeta/LRoot/",
+"/home/nmcfadde/doubleBeta/LRoot/",
 0
     };
     static const char* fwdDeclCode = R"DICTFWDDCLS(

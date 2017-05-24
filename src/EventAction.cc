@@ -86,7 +86,6 @@ void EventAction::EndOfEventAction(const G4Event* anEvent)
     }
   }*/
 
-   if(LegendAnalysis::Instance()->getEvent()->nGeHits>0) LegendAnalysis::Instance()->getEvent()->print();
 
 }
 

@@ -50,6 +50,8 @@
 #include "G4VTouchable.hh"
 #include "G4TouchableHistory.hh"
 #include "G4SDManager.hh"
+#include "G4UserEventAction.hh"
+#include "G4EventManager.hh"
 #include "G4Track.hh"
 #include "G4ParticleDefinition.hh"
 #include "G4SDManager.hh"
@@ -74,6 +76,12 @@ PMTSD::PMTSD(G4String name, G4int nCells, G4String colName)
   hWavelength = new TH1F("PMTWavelength"," absorbed photon wavelength ",900,100,1000);
   hWavelength->GetYaxis()->SetTitle(" number of photons/(nm) ");
   hWavelength->GetXaxis()->SetTitle(" wavelength (nm) ");
+
+  // must be in top directory for ChangeFile to work
+  LegendAnalysis::Instance()->topTreeDir()->cd();
+
+  ntWLS = new TNtuple("ntWLS"," WLS hits ","evId:copy:PDG:musec:micron:ekev:posxum:posyum:posyzum");
+
   
 }
 
@@ -98,16 +106,26 @@ G4bool PMTSD::ProcessHits_constStep(const G4Step* aStep, G4TouchableHistory* )
     return false;
   }
   G4ParticleDefinition* particleType = aStep->GetTrack()->GetDefinition();
+  G4double length = aStep->GetStepLength();
   G4String particleName = particleType->GetParticleName();
   G4double edep = aStep->GetTotalEnergyDeposit();
   G4double gtime = aStep->GetPostStepPoint()->GetGlobalTime();   //measured in nanoseconds;
   G4double time = aStep->GetTrack()->GetGlobalTime();
+  G4ThreeVector position = aStep->GetTrack()->GetPosition();
   //G4cout << "testpoint time " << time << " global time   " << gtime << " edep " << edep << " particle name " << particleName << G4endl; 
   //if((particleName != "opticalphoton")) return false;
   //const G4VPhysicalVolume* physVol = aStep->GetPostStepPoint()->GetPhysicalVolume();
   hTime->Fill( aStep->GetTrack()->GetGlobalTime()/ns ); //convert to ns
   G4double wavelength =  CLHEP::h_Planck*CLHEP::c_light/edep/nm;//700 nm
   hWavelength->Fill(wavelength);
+
+  G4int eventId = G4EventManager::GetEventManager()->GetNonconstCurrentEvent()->GetEventID();
+  //how to get volume names
+  G4TouchableHistory* theTouchable = (G4TouchableHistory*)(aStep->GetPreStepPoint()->GetTouchable());
+  G4int copy = theTouchable->GetVolume()->GetCopyNo();
+
+  ntWLS->Fill(float(eventId),float(copy),particleType->GetPDGEncoding(),aStep->GetTrack()->GetGlobalTime()/microsecond,
+      length/micrometer,edep/keV,position(0)/micrometer,position(1)/micrometer,position(2)/micrometer);
   return true;
 }
 

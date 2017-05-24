@@ -33,17 +33,22 @@
 #define TrackingAction_h 1
 
 #include "LegendAnalysis.hh"
+#include "LTTrack.hxx"
 
+#include "LegendTrajectory.hh"
 #include "G4UserTrackingAction.hh"
 #include "G4VTrajectory.hh"
 #include "globals.hh"
 #include "G4SystemOfUnits.hh"
+
 class TrackingAction : public G4UserTrackingAction {
 
   public:
 
     TrackingAction();
     virtual ~TrackingAction() {};
+    LTTraject* FillLTTraject(LegendTrajectory *gtrj );
+    
 
     virtual void PreUserTrackingAction(const G4Track*);
     virtual void PostUserTrackingAction(const G4Track*);
@@ -56,7 +61,8 @@ class TrackingAction : public G4UserTrackingAction {
     TH1F *hPMTPhotonE;
     TH1F *hCherenkovPhotonE;
     TH1F *hTrackStatus;
-    TNtuple *ntTrack;
+    TTree *fTrackTree;
+    LTTrack *fLTTrack;
   private:
   
  

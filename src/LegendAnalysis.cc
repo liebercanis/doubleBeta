@@ -127,7 +127,7 @@ void  LegendAnalysis::anaEvent( const G4Event *anEvent)
 
   // and end of analysis save this event
   //fEvent->print();
-  fTree->Fill();
+  //fTree->Fill();
   //printf(" +++++++++++++++++++ Leaving Legend Analysis +++++++++++++++++++++++++++++ \n");
 }
    
@@ -223,6 +223,7 @@ void  LegendAnalysis::anaTrajectories(G4TrajectoryContainer* trajectoryContainer
         fEvent->ePmt += ltraj.KE;
         hPmtHits->Fill(waveLength);
         ltraj.Type = LTTrajectType::PMTHIT;
+        //G4cout<<"LegendAnalysis::PMTHIT trajectory"<<G4endl;
         //G4cout << " LegendAnalysis hitPMT creator process " << creator->GetProcessName() 
         //  << " track status " << trackInformation->GetTrackStatus() << " is hit  " 
         //  << gtrj->IsHit() <<  " is wls " << gtrj->IsWLS() << "  KE=" << ltraj.KE  << G4endl;
@@ -230,10 +231,12 @@ void  LegendAnalysis::anaTrajectories(G4TrajectoryContainer* trajectoryContainer
         ++fEvent->nTrajWlsScint;
         hWls->Fill(waveLength);
         ltraj.Type = LTTrajectType::WLS;
+        //G4cout<<"LegendAnalysis::WLSTrajectories"<<G4endl;
       } else {
         ++fEvent->nTrajArScint;
         hOptical->Fill(waveLength);
         ltraj.Type = LTTrajectType::SCI;
+        //G4cout<<"LegendAnalysis::ArScintTrajectories"<<G4endl;
       }
       // not optical 
      } 
@@ -241,6 +244,11 @@ void  LegendAnalysis::anaTrajectories(G4TrajectoryContainer* trajectoryContainer
     if(gtrj->IsGeHit()) {
       ltraj.Type = LTTrajectType::GEHIT;
       ++fEvent->nTrajGeHits;
+      //something is wrong with this, gtrj is not correct sometimes 
+      fEvent->GeTrackLength += (gtrj->GetTrack()->GetTrackLength()/mm );
+      //cannot access energy from Tracks, slipping into GermanSD.cc
+      //fEvent->eGe += (gtrj->GetTrack()->GetStep()->GetTotalEnergyDeposit() / keV );
+      //G4cout<<"LegendAnalysis::GermaniumTrajectories...eGe "<<fEvent->eGe<<", stepE "<<(gtrj->GetTrack()->GetStep()->GetTotalEnergyDeposit() / keV )<<G4endl;
     }
 
     if(ltraj.PDG==11) { // electron
