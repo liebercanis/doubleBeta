@@ -59,7 +59,7 @@ class SteppingAction : public G4UserSteppingAction
 
 
   private:
- 
+    bool  GeDebug; 
     TDirectory* fDir;
     TNtuple* ntStep;
     TNtuple* ntGeStep;

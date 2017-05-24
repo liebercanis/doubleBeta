@@ -25,7 +25,7 @@
 SteppingAction::SteppingAction(DetectorConstruction* det, EventAction* evt)
 :detector(det), eventaction(evt)
 { 
-
+   GeDebug = false;
   // create directory 
   fDir = LegendAnalysis::Instance()->topHistDir()->mkdir("step");
   fDir->cd();
@@ -71,27 +71,6 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
   if(process) processName = process->GetProcessName();
 
 
-  // check if we are in Ge volume
-  G4bool  inGeDetector = false;
-  G4int GeDetectorNumber=-1;
-  G4int GePostNumber =0;
-  if (  (volumename.find("B8") != string::npos) ||(volumename.find("P4") != string::npos ) ) {
-    GePostNumber = step->GetPostStepPoint()->GetTouchableHandle()->GetCopyNumber();
-    if(GePostNumber!=0) inGeDetector = true;  // remains inside detetor, otherwise it is reflected
-    /* no need to do this as 
-    This method is invoked by G4SteppingManager when a step is composed in the G4LogicalVolume which has the pointer to this sensitive detector. 
-    G4SDManager* SDman = G4SDManager::GetSDMpointer();
-    GermaniumSD* geSD = dynamic_cast<GermaniumSD*>(SDman->FindSensitiveDetector(G4String("GeDetector")));
-    */
-  }
-
-  if(inGeDetector) {
-    GeDetectorNumber = step->GetPreStepPoint()->GetTouchableHandle()->GetCopyNumber();
-    G4cout <<  " stepping action in ge det " << volumename 
-      << " copy " << GeDetectorNumber << " post " << GePostNumber << " pdg " << particleType->GetPDGEncoding() << "  " <<  processName <<G4endl;
-    //eventaction->FillDetector(GeDetectorNumber,length);
-    //ntGeStep->Fill(GeDetectorNumber,particleType->GetPDGEncoding(),length,aTrack->GetKineticEnergy());
-  }
 
   
 
@@ -146,7 +125,6 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
     }
   }
 
- 
   // find the optical boundary process only once
   // this is a list of all available processes 
   G4OpBoundaryProcessStatus boundaryStatus = Undefined;
@@ -156,8 +134,8 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
       G4ProcessManager* pm = step->GetTrack()->GetDefinition()->GetProcessManager();
       G4int nprocesses = pm->GetProcessListLength();
       G4ProcessVector* pv = pm->GetProcessList();
-     G4cout << "  Stepping action looking for OpBoundary process " << G4endl;
-     for(G4int i = 0; i < nprocesses; i++) G4cout << "\t" << i << " process  " << (*pv)[i]->GetProcessName()<< G4endl ;
+     //G4cout << "  Stepping action looking for OpBoundary process " << G4endl;
+     //for(G4int i = 0; i < nprocesses; i++) G4cout << "\t" << i << " process  " << (*pv)[i]->GetProcessName()<< G4endl ;
      for(G4int i = 0; i < nprocesses; i++){
       if((*pv)[i]->GetProcessName()=="OpBoundary" ){
         boundary = dynamic_cast<G4OpBoundaryProcess*>( (*pv)[i] );
@@ -166,7 +144,28 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
       }
     }
   }
-  
+  if(step == NULL){
+    G4cout<<"NULL Step in steppingaction!"<<G4endl;
+  }
+
+  // check if we are in Ge volume
+  G4bool  inGeDetector = false;
+  G4int GeDetectorNumber=-1;
+  G4int GePostNumber =0;
+  if (  (volumename.find("B8") != string::npos) ||(volumename.find("P4") != string::npos ) ) {
+    GePostNumber = step->GetPostStepPoint()->GetTouchableHandle()->GetCopyNumber();
+    if(GePostNumber!=0){
+      inGeDetector = true;
+      /*if(step->GetTotalEnergyDeposit() > 1.0*eV){
+        G4cout <<  " SteppingAction:: Step inside GeDet...Energy Deposited = "<<step->GetTotalEnergyDeposit()<<
+          ", by "<<particleType->GetPDGEncoding()<<", with process name "<<processName<<
+          ", Total energy for Track "<<aTrack->GetTotalEnergy()<<G4endl;
+      }*/
+      //eventaction->FillDetector(GeDetectorNumber,length);
+      //ntGeStep->Fill(GeDetectorNumber,particleType->GetPDGEncoding(),length,aTrack->GetKineticEnergy());
+      
+    } 
+  }
  
   //Optical Photons
   /*
@@ -178,6 +177,7 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
   hParticleType->Fill(particleType->GetPDGEncoding());
 
   if(particleType==G4OpticalPhoton::OpticalPhotonDefinition()){
+
 
     //Kill photons exiting cryostat
     if(thePostPV->GetName()=="phy_World"){
@@ -204,7 +204,6 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
     }
     
     boundaryStatus=boundary->GetStatus();
-    
     hBoundaryStatus->Fill(boundaryStatus);
     // G4cout << " Stepping geom boundary process " << boundaryStatus  << G4endl;
     //Check to see if the partcile was actually at a boundary
@@ -291,33 +290,34 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
   if(processName =="Scintillation") {
     trackInformation->AddTrackStatusFlag(scint);
   }
+  
   // ionizing process
   if(processName == "eIoni" ) {   
     trackInformation->AddTrackStatusFlag(eIoni);
-    //if(inGeDetector) G4cout<<"SteppingAction:: eIoni Process Name ... "<<processName<<" boundaryStatus " << boundaryStatus <<G4endl;
+    if(inGeDetector && GeDebug) G4cout<<"SteppingAction:: eIoni Process Name ... "<<processName<<" boundaryStatus " << boundaryStatus <<G4endl;
   }
 
   // ionizing process
   if(processName == "hIoni" ) {   
     trackInformation->AddTrackStatusFlag(hIoni);
-    if(inGeDetector) G4cout<<"SteppingAction:: hIoni Process Name ... "<<processName<<" boundaryStatus " << boundaryStatus <<G4endl;
+    if(inGeDetector && GeDebug) G4cout<<"SteppingAction:: hIoni Process Name ... "<<processName<<" boundaryStatus " << boundaryStatus <<G4endl;
   }
 
   // ionizing process
   if(processName == "ionIoni" ) {   
     trackInformation->AddTrackStatusFlag(ionIoni);
-    if(inGeDetector) G4cout<<"SteppingAction:: ionIoni Process Name ... "<<processName<<" boundaryStatus " << boundaryStatus <<G4endl;
+    if(inGeDetector && GeDebug) G4cout<<"SteppingAction:: ionIoni Process Name ... "<<processName<<" boundaryStatus " << boundaryStatus <<G4endl;
   }
 
   // compt process
   if(processName == "compt" ) {   
     trackInformation->AddTrackStatusFlag(compton);
-    if(inGeDetector) G4cout<<"SteppingAction:: compt Process Name ... "<<processName<<" boundaryStatus " << boundaryStatus <<G4endl;
+    if(inGeDetector && GeDebug) G4cout<<"SteppingAction:: compt Process Name ... "<<processName<<" boundaryStatus " << boundaryStatus <<G4endl;
   }
 
            
   if(inGeDetector) trackInformation->AddTrackStatusFlag(hitGe);
-  //if(trackInformation->GetTrackStatus()&hitGe) G4cout << " SteppingAction hitGe  " << G4endl;
+  if(trackInformation->GetTrackStatus()&hitGe && GeDebug) G4cout << " SteppingAction hitGe...TrackStatus "<<trackInformation->GetTrackStatus() << G4endl;
   
   
   ntStep->Fill(trackInformation->GetParentId(),particleType->GetPDGEncoding(),trackInformation->GetTrackBit(),length,aTrack->GetKineticEnergy());

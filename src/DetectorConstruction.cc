@@ -73,17 +73,16 @@ DetectorConstruction::DetectorConstruction()
 : G4VUserDetectorConstruction()
 {
   //Debug bools
-  checkOverlaps = true;
+  checkOverlaps = false; //true;
   GeDebug = false;//true;
   TpbDebug = false;
   LArDebug = false;
   CuDebug = false;//true;
   VM2000Debug = false;//true;
-  SdDebug = true;
-
+  SdDebug = false;
   //***//
   //TPB//
-  //***//   
+  //***//    
   /*
   G4String pathFile = "External_data/tpbGhemann.root";
   TFile *tpbFile = new TFile(pathFile.data());
@@ -97,9 +96,8 @@ DetectorConstruction::DetectorConstruction()
     G4cout<<" DetectorConstruction ERROR:: not graph tpbBhemann in file " << pathFile <<G4endl;
   else 
     G4cout<<" DetectorConstruction info tpbBhemann graph found " <<G4endl;
-*/
-
-   
+  */
+  
   G4String pathFile = "External_data/TPB_Spec_Lehnert_thesis.root";
   TFile *tpbFile = new TFile(pathFile.data());
   if (!tpbFile ) 
@@ -113,7 +111,7 @@ DetectorConstruction::DetectorConstruction()
   else 
     G4cout<<" DetectorConstruction info TPB_Spec_Lehnert_thesis.root graph found " <<G4endl;
   
-
+  
   //Germanium Reflectivity
   pathFile = "External_data/Reflectivity_Ge.root";
   TFile *GeReflectivityFile = new TFile(pathFile.data());
@@ -151,9 +149,6 @@ DetectorConstruction::DetectorConstruction()
   G4cout<<" DetectorAction working root directory  is  " << G4endl;  
   gDirectory->pwd();
   G4cout << " ... " << G4endl;
-
-  gDirectory->pwd();
-  G4cout << " ... " << G4endl;
   G4double WLSHighE =LambdaE / (350*nm);//885.6013 2.4796*eV;//500 nm
   G4double WLSLowE = LambdaE / (650*nm);//100 nm
   G4double ArHighE = LambdaE / (115*nanometer);
@@ -161,9 +156,7 @@ DetectorConstruction::DetectorConstruction()
   hWLSPhotonE = new TH1F("WLSPhotonE"," photon energy in WLS",100,WLSLowE,WLSHighE);
   hWLSPhotonWavelength = new TH1F("WLSPhotonWavelength"," photon Wavelength in WLS",100,LambdaE/WLSHighE,LambdaE/WLSLowE);
   hArPhotonE = new TH1F("ArPhotonE"," photon energy in LAr",100,ArLowE,ArHighE);
-  hArPhotonWavelength = new TH1F("ArPhotonWavelength"," photon Wavelength in LAr",100,LambdaE/ArHighE,LambdaE/ArLowE);
-  G4cout << "  DetectorConstruction constructor complete. " << G4endl;
-
+  hArPhotonWavelength = new TH1F("ArPhotonWavelength"," photon Wavelength in LAr",100,LambdaE/ArHighE,LambdaE/ArLowE);  
 
 }
 
@@ -429,12 +422,10 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     //Added from MaGe
     new G4LogicalSkinSurface("Ge_Detector"+std::to_string(idet),logicalGeDet,fGeOpticalSurface);
 
-    /*
     if(idet<detPositions.size()/2) 
       new G4PVPlacement (0,detRelPositions[idet],logicalGeDet,detNames[idet],group1Logical,false,detNumbers[idet],checkOverlaps);
      else 
-      new G4PVPlacement (0,detRelPositions[idet],logicalGeDet,detNames[idet],group2Logical,false,detNumbers[idet],checkOverlaps); 
-      */
+      new G4PVPlacement (0,detRelPositions[idet],logicalGeDet,detNames[idet],group2Logical,false,detNumbers[idet],checkOverlaps);     
   }
   
   /////////////WLS Cylinder around groupTubs, does not cover top or bottom, PMTs will do that below/////////////
@@ -535,7 +526,8 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     G4int nsense = 0;
     G4VSensitiveDetector* sdet = pvol->GetLogicalVolume()->GetSensitiveDetector();
     if(sdet) nsense = sdet->GetNumberOfCollections();
-    G4cout << " \t   stored phys vol  " << istore << " = " << pvol->GetName() << " logical " <<  pvol->GetLogicalVolume()->GetName() << G4endl; 
+    if(checkOverlaps)
+      G4cout << " \t   stored phys vol  " << istore << " = " << pvol->GetName() << " logical " <<  pvol->GetLogicalVolume()->GetName() << G4endl; 
   }
   
   return physicalWorld;
@@ -585,7 +577,7 @@ void DetectorConstruction::ConstructSDandField()
 
   G4PhysicalVolumeStore* theStore = G4PhysicalVolumeStore::GetInstance();
   G4cout << "\t DetectorConstruction::SDandField done   " << G4endl;
-  if(SdDebug) 
+  if(SdDebug){
     for(G4int istore = 0; istore< theStore->size() ; ++istore ){
       G4VPhysicalVolume *pvol = theStore->at(istore);
       G4int nsense = 0;
@@ -593,7 +585,8 @@ void DetectorConstruction::ConstructSDandField()
       if(sdet) nsense = sdet->GetNumberOfCollections();
       if(nsense>0) G4cout << " SD phys vol  " << istore << 
         " name = " << pvol->GetName() << " logical " <<  pvol->GetLogicalVolume()->GetName() <<  " number of collections =  " << nsense << G4endl; 
-    }
+    } 
+  }
    
 }
 
@@ -635,6 +628,7 @@ void DetectorConstruction::ArgonOpticalProperties()
       LAr_ABSL[ji] = lar_absl_vis;
     }
   }
+
   G4double PPSCHighE = LambdaE /(115*nanometer);
   //G4double PPSCLowE = LambdaE /(650*nanometer);
   //Argon does not Scinillate at 650, so I arbitarly cut the value off at 300 nm
@@ -654,6 +648,7 @@ void DetectorConstruction::ArgonOpticalProperties()
       G4cout<<"DetectorConstruction::ArgonOpticalProperties()...LAr Scint Spec = "<<LAr_SCIN[ji] <<G4endl;
     }
   }
+
 
   G4MaterialPropertiesTable* LAr_mt = new G4MaterialPropertiesTable();
 
@@ -748,7 +743,7 @@ void DetectorConstruction::WLSOpticalProperties()
    // Now attach the optical properties to it.
    // Build table with photon energies
    
-   const G4int numTPB = 500;// 63;;
+   const G4int numTPB =500;// 63;;
    G4double HighETPB = LambdaE /(350*nanometer);
    G4double LowETPB = LambdaE /(650*nanometer);//(650*nanometer); //598
    G4double deeTPB = ((HighETPB - LowETPB) / ((G4double)(numTPB-1)));
@@ -773,8 +768,8 @@ void DetectorConstruction::WLSOpticalProperties()
        WLS_absorption[ji] = 10.5*m; //otherwise transparent
      }
      WLS_emission[ji] = TPBEmissionSpectrum(LAr_SCPPTPB[ji]);
-     hWLSPhotonE->SetBinContent(ji,WLS_emission[ji]);
-     hWLSPhotonWavelength->SetBinContent(numTPB-1-ji,WLS_emission[ji]);
+     hWLSPhotonE->SetBinContent(hWLSPhotonE->FindBin(LAr_SCPPTPB[ji]),WLS_emission[ji]);
+     hWLSPhotonWavelength->SetBinContent(hWLSPhotonWavelength->FindBin(LambdaE/LAr_SCPPTPB[ji]),WLS_emission[ji]);
      if(TpbDebug){
       G4cout<<" WLS Emmsion "<<WLS_emission[ji]<<" LAr Energy "<<LAr_SCPPTPB[ji]<<G4endl;
       G4cout<<" WLS Absorption Length "<<WLS_absorption[ji]<<" LAr Energy "<<LAr_SCPPTPB[ji]<<G4endl;
@@ -845,9 +840,11 @@ void DetectorConstruction::CuOpticalProperties()
   for(G4int i = 0; i < numCu ; i++) {
     NRGSpec[i] = LowEGe +( (G4double) i*deeGe );
     ReflectionSpec[i] = GeReflectionSpectrum( (LambdaE /NRGSpec[i])/nm );//in nm
-    G4cout<<"DetectorConstruction::CuOpticalProperties()...Energy Spec = "<<NRGSpec[i]/eV<<G4endl;
-    G4cout<<"DetectorConstruction::CuOpticalProperties()...Wavelength Spec = "<<(LambdaE /NRGSpec[i])/nm<<G4endl;
-    G4cout<<"DetectorConstruction::CuOpticalProperties()...Reflection Spec = "<<ReflectionSpec[i]<<G4endl;
+    if(CuDebug){
+      G4cout<<"DetectorConstruction::CuOpticalProperties()...Energy Spec = "<<NRGSpec[i]/eV<<G4endl;
+      G4cout<<"DetectorConstruction::CuOpticalProperties()...Wavelength Spec = "<<(LambdaE /NRGSpec[i])/nm<<G4endl;
+      G4cout<<"DetectorConstruction::CuOpticalProperties()...Reflection Spec = "<<ReflectionSpec[i]<<G4endl;
+    }
   }
   
   CuMaterialTable->AddProperty("REFLECTION",NRGSpec,ReflectionSpec,numCu);
@@ -887,17 +884,12 @@ void DetectorConstruction::VM2000OpticalProperties()
       G4cout<<"DetectorConstruction::VM2000OpticalProperties()...Reflection Spec = "<<ReflectionSpec[i]<<G4endl;
     }
   }
-G4cout<<"1"<<G4endl;
   VM2000MaterialTable->AddProperty("REFLECTION",NRGSpec,ReflectionSpec,numVM2000);
-  G4cout<<"2"<<G4endl;
   fVM2000OptSurface = new G4OpticalSurface("VM_surface");
-            G4cout<<"1"<<G4endl;                                             
   fVM2000OptSurface->SetType(dielectric_dielectric);
   fVM2000OptSurface->SetFinish(polishedfrontpainted);
   fVM2000OptSurface->SetMaterialPropertiesTable(VM2000MaterialTable);
-  G4cout<<"3"<<G4endl;
   fVM2000->SetMaterialPropertiesTable(VM2000MaterialTable);
-  G4cout<<"1"<<G4endl;
 }
 
 void DetectorConstruction::UpdateGeometry()

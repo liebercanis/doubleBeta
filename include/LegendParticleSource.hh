@@ -69,56 +69,51 @@ class LegendParticleSource : public G4VPrimaryGenerator {
      // position distribution 
      void SetPhysicalVolume( G4VPhysicalVolume* physVol) { thePhysicalVolume=physVol ; }
      void SetPhysicalVolumeByName( G4String physical_name);
-     
-     G4VPhysicalVolume* GetPhysicalVolume() { return thePhysicalVolume; }
+
      void Show(){
        G4cout <<
-         " LegendParticleSource " << 
-         " physical volume " << physVolumeName <<
-         " source type is   " << SourceType << 
-         " source position type is   " << SourcePosType;
-       if(particle_definition) G4cout << " particle is "  << particle_definition->GetParticleName(); 
+         " **************** LegendParticleSource ********** " << G4endl << 
+         " \t physical volume " << physVolumeName <<
+         " \t source type is   " << SourceType << 
+         " \t source position type is   " << SourcePosType;
+       if(particle_definition) G4cout << " \t particle is "  << particle_definition->GetParticleName(); 
        G4cout << G4endl;
      }
+
+     G4VPhysicalVolume* GetPhysicalVolume() { return thePhysicalVolume; }
+     void SetPosDisType(G4String);
+     void SetPosDisShape(G4String);
+     void SetCenterVector(G4ThreeVector);
+     void SetHalfZ(G4double);
+     void SetRadius(G4double);
      void GeneratePointSource();
      void GeneratePointsInVolume();
+     void GeneratePointsOnGeSurface();
      G4bool IsSourceConfined();
      G4bool IsInArgon(G4ThreeVector rp);
      void ConfineSourceToVolume();
- 
-     void SetPosDisType(G4String PosType) { SourcePosType = PosType;}
-
-     void SetPosDisShape(G4String shapeType){ Shape = shapeType;}
-
-     void SetCenterVector(G4ThreeVector center){ centerVector = center;}
-
-     void SetHalfZ(G4double zhalf) { halfz = zhalf;}
-
-     void SetRadius(G4double radius){ Radius = radius;}
-
-     void SetAngDistType(G4String atype) { AngDistType = atype;}
-
-     void SetParticleMomentumDirection (G4ParticleMomentum aDirection) { particle_momentum_direction =  aDirection.unit(); }
- 
-     void SetSourceType(G4String DisType) {SourceType = DisType;}
-
-     void SetVerbosity(int vL) {
-       verbosityLevel = vL;
-       G4cout << " LegendParticleSource **** Verbosity Set to: " << verbosityLevel << G4endl;
-     }
-     
+  
+     // angular distribution
+     void SetAngDistType(G4String);
+     void SetParticleMomentumDirection(G4ParticleMomentum);
      void GenerateIsotropicFlux();
+     void SetMomentumIntoGeSurface();
+     void SetSource(G4String DisType) {SourceType = DisType;}
 
      // energy distribution 
-     void SetSource(G4String type){ SourceType = type; } 
-     G4String GetSourceType(){ return SourceType ;}
-     void SetMonoEnergy(G4double menergy) { particle_energy = menergy;}
+     void SetEnergyDisType(G4String);
+     void SetMonoEnergy(G4double);
+     void GenerateMonoEnergetic();
+     G4String GetEnergyDisType(){ return EnergyDisType ;}
      
      inline G4double GetParticleEnergy() { return particle_energy;}
-
-     // Ar39 energy
      void   GenAr39Energy() { particle_energy = hAr39Theory->GetRandom(); } // unit is MeV
+     void   GenAlphaEnergy() { particle_energy = 5.5*MeV; } //Random Alpha energy
      
+
+     // verbosity
+     void SetVerbosity(G4int);
+  
      // particle properties
      void SetParticleDefinition(G4ParticleDefinition * aParticleDefinition);
      inline void SetParticleCharge(G4double aCharge)
@@ -137,6 +132,8 @@ class LegendParticleSource : public G4VPrimaryGenerator {
      G4String AngDistType;
      G4double MinTheta, MaxTheta, MinPhi, MaxPhi;
      G4double Phi;
+     G4String EnergyDisType;
+     G4double MonoEnergy;
      G4String SourceType;
 
      // particle properties 
@@ -148,6 +145,7 @@ class LegendParticleSource : public G4VPrimaryGenerator {
      G4ThreeVector          particle_position;
      G4double               particle_time;
      G4ThreeVector          particle_polarization;
+     G4ThreeVector          rSurfNormal;
 
      // Verbose
      G4int verbosityLevel;

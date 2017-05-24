@@ -51,6 +51,8 @@
 #include "G4TouchableHistory.hh"
 #include "G4OpticalPhoton.hh"
 #include "G4SDManager.hh"
+#include "G4UserEventAction.hh"
+#include "G4EventManager.hh"
 #include "G4Track.hh"
 #include "G4ParticleDefinition.hh"
 #include "G4SDManager.hh"
@@ -78,7 +80,7 @@ GermaniumSD::GermaniumSD(G4String name, G4int nCopy)
 
     // must be in top directory for ChangeFile to work
     LegendAnalysis::Instance()->topTreeDir()->cd();
-    ntGe = new TNtuple("ntGe"," Ge hits ","copy:PDG:musec:length:ekev");
+    ntGe = new TNtuple("ntGe"," Ge hits ","evId:copy:PDG:musec:micron:ekev:posxum:posyum:poszum");
   }
   
 }
@@ -100,34 +102,45 @@ G4bool GermaniumSD::ProcessHits(G4Step* aStep, G4TouchableHistory*)
 G4bool GermaniumSD::ProcessHits_constStep(const G4Step* aStep, G4TouchableHistory* )
 {
   if(aStep==NULL) {
-    G4cout << " ProcessHits_constStep called with null step " << G4endl;
+    G4cout << "GermaniumSD::ProcessHits_constStep() called with null step " << G4endl;
     return false;
   }
   // Ignore energy deposited by optical photons
-  if (aStep->GetTrack()->GetDefinition() == G4OpticalPhoton::OpticalPhotonDefinition()) return false;
+  if (aStep->GetTrack()->GetDefinition() == G4OpticalPhoton::OpticalPhotonDefinition()){
+    return false;
+  }
   
-
+  LTEvent* ltEvent = LegendAnalysis::Instance()->getEvent();
 
   G4double edep = aStep->GetTotalEnergyDeposit();
+  if(edep <= 0){
+   // G4cout<<"GermaniumSD::ProcessHits_constStep()...No Energy Deposited, returnin false"<<G4endl; TODO
+   // return false;
+  }
   G4double length = 					aStep->GetStepLength();
     
   // how to get volume name
   G4TouchableHistory* theTouchable = (G4TouchableHistory*)(aStep->GetPreStepPoint()->GetTouchable());
   G4int GePostNumber = aStep->GetPostStepPoint()->GetTouchableHandle()->GetCopyNumber();
+  G4Track* aTrack = aStep->GetTrack();
   //const G4VPhysicalVolume* physVol = aStep->GetPostStepPoint()->GetPhysicalVolume();
   
   G4ParticleDefinition* particleType = aStep->GetTrack()->GetDefinition();
   G4String particleName = particleType->GetParticleName();
   G4double gtime = aStep->GetPostStepPoint()->GetGlobalTime();   //measured in nanoseconds;
   G4double time = aStep->GetTrack()->GetGlobalTime();
-  G4cout << "\t GermaniumSD::ProcessHits_constStep vol name "  << theTouchable->GetVolume()->GetName() << "  copy " << theTouchable->GetVolume()->GetCopyNo()
-    << " phys vol " <<  aStep->GetTrack()->GetVolume() << " post number " << GePostNumber 
-    << " edep " << edep<< " time " << time << " global time   " << gtime << " particle name " << particleName << G4endl; 
+  G4ThreeVector position = aStep->GetTrack()->GetPosition();
   
   hTime->Fill( aStep->GetTrack()->GetGlobalTime()/microsecond); //convert to ns
   hEnergy->Fill(edep/keV);
+  
   G4int copy = theTouchable->GetVolume()->GetCopyNo();
-  ntGe->Fill( float(copy),particleType->GetPDGEncoding(),aStep->GetTrack()->GetGlobalTime()/microsecond,length,edep/keV);
+  // add event number
+  G4int eventId = G4EventManager::GetEventManager()->GetNonconstCurrentEvent()->GetEventID();
+  
+  ntGe->Fill( float(eventId),float(copy),particleType->GetPDGEncoding(),aStep->GetTrack()->GetGlobalTime()/microsecond,
+      length/micrometer,edep/keV,position(0)/micrometer,position(1)/micrometer,position(2)/micrometer);
+  
   return true;
 }
 
