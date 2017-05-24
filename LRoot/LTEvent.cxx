@@ -41,8 +41,6 @@ void LTEvent::clear()
   eOptical=0;
   ePmt=0;
   eMaxDeposit=0;
-  GeTrackLength=0;
-  eGe=0;
 
   hasConversion;//true (initial) converstion position
   positionEWeight.Clear();
@@ -58,6 +56,6 @@ void LTEvent::print(){
   if(nPVert>0) printf("\tPrimary vertex at position,t (%f,%f,%f,%f) num part %i \n",
       pvertex[0].Position.X(),pvertex[0].Position.Y(),pvertex[0].Position.Z(),pvertex[0].Position.T(),pvertex[0].nParticles);
   else  printf("\tNO primary vertex \n");
-  printf(" \tOptical %i Ar scint %i WLS scint %i PMT hits %i Ge hits %i eGe(keV) %f Ge Track Length (mm) %f \n",nOptPhotons,nArScint,nWlsScint,nPmtHits,nGeHits,eGe,GeTrackLength);
+  printf(" \tOptical %i Ar scint %i WLS scint %i PMT hits %i Ge hits %i \n",nOptPhotons,nArScint,nWlsScint,nPmtHits,nGeHits);
   printf(" *************************************************** \n");
 }

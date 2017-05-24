@@ -1,0 +1,16 @@
+# can be run in batch, without graphic
+# or interactively: Idle> /control/execute run.mac
+#
+/run/verbose 1 
+/run/initialize
+/event/verbose 0
+/tracking/verbose 0
+/tracking/storeTrajectory 1
+/vis/scene/add/trajectories
+#
+/gun/particle e-
+/gun/energy 1000 keV
+/gun/position 7 7 0 cm 
+/run/beamOn 1
+/vis/scene/endOfEventAction accumulate 10
+/vis/viewer/save

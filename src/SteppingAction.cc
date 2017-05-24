@@ -303,13 +303,8 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
   // ionizing process
   if(processName == "hIoni" ) {   
     trackInformation->AddTrackStatusFlag(hIoni);
-<<<<<<< HEAD
     if(inGeDetector && GeDebug) G4cout<<"SteppingAction:: hIoni Process Name ... "<<processName<<" boundaryStatus " << boundaryStatus <<G4endl;
   }
-=======
-    if(inGeDetector) G4cout<<"SteppingAction:: hIoni Process Name ... "<<processName<<" boundaryStatus " << boundaryStatus <<G4endl;
-  };
->>>>>>> 94f90be9f270af51c3c1232297dab68cff060200
 
   // ionizing process
   if(processName == "ionIoni" ) {   
@@ -325,17 +320,12 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
 
            
   if(inGeDetector) trackInformation->AddTrackStatusFlag(hitGe);
-<<<<<<< HEAD
   if(trackInformation->GetTrackStatus()&hitGe && GeDebug) G4cout << " SteppingAction hitGe...TrackStatus "<<trackInformation->GetTrackStatus() << G4endl;
   
   
-  ntStep->Fill(trackInformation->GetParentId(),particleType->GetPDGEncoding(),trackInformation->GetTrackBit(),length,aTrack->GetKineticEnergy());
-=======
-  //if(trackInformation->GetTrackStatus()&hitGe) G4cout << " SteppingAction hitGe  " << G4endl;
   G4int eventId = G4EventManager::GetEventManager()->GetConstCurrentEvent()->GetEventID();
   ntStep->Fill(eventId,trackInformation->GetParentId(),particleType->GetPDGEncoding(),
       trackInformation->GetTrackStatus(),aTrack->GetGlobalTime()/microsecond,aTrack->GetLocalTime()/microsecond,length,aTrack->GetKineticEnergy());
->>>>>>> 94f90be9f270af51c3c1232297dab68cff060200
 }
 
 

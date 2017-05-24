@@ -245,7 +245,7 @@ void  LegendAnalysis::anaTrajectories(G4TrajectoryContainer* trajectoryContainer
       ltraj.Type = LTTrajectType::GEHIT;
       ++fEvent->nTrajGeHits;
       //something is wrong with this, gtrj is not correct sometimes 
-      fEvent->GeTrackLength += (gtrj->GetTrack()->GetTrackLength()/mm );
+      //fEvent->GeTrackLength += (gtrj->GetTrack()->GetTrackLength()/mm );
       //cannot access energy from Tracks, slipping into GermanSD.cc
       //fEvent->eGe += (gtrj->GetTrack()->GetStep()->GetTotalEnergyDeposit() / keV );
       //G4cout<<"LegendAnalysis::GermaniumTrajectories...eGe "<<fEvent->eGe<<", stepE "<<(gtrj->GetTrack()->GetStep()->GetTotalEnergyDeposit() / keV )<<G4endl;
