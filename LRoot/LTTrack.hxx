@@ -36,6 +36,7 @@ class LTTrack: public TNamed {
     Double_t length;
     Double_t stepLength;
     Double_t ke;   // kinetic energy electronvolts
+    Double_t edep; // energy deposited in step (electronvolts) 
     Double_t time;  // microseconds
     TVector3 position;
     TVector3 vertPosition;

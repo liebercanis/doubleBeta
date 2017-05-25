@@ -19,6 +19,7 @@ void LTTrack::clear()
   status=0;
   time=0;  
   ke=0;
+  edep=0;
   length=0;
   nstep=0;
   stepLength=0;
