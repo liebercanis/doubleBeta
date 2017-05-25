@@ -197,6 +197,7 @@ void TrackingAction::PostUserTrackingAction(const G4Track* aTrack){
   fLTTrack->vertPosition.SetXYZ(vertPos.x(),vertPos.y(),vertPos.z());
   fLTTrack->time=aTrack->GetGlobalTime()/microsecond;
   fLTTrack->ke=aTrack->GetKineticEnergy()/electronvolt;
+  fLTTrack->edep=aTrack->GetStep()->GetTotalEnergyDeposit()/electronvolt;
   //fLTTrack->print();
   fTrackTree->Fill();
 }
