@@ -61,6 +61,7 @@ class LegendTrajectory : public G4Trajectory
 
     void SetDrawTrajectory(G4bool b){fDrawit=b;}
     void SetTrackStatus(G4int status){fTrackStatus=status;}
+    G4int GetTrackStatus(){ return fTrackStatus;}
     bool IsPmtHit() const { return fTrackStatus&TrackStatus::hitPMT;}
     bool IsGeHit() const { return fTrackStatus&TrackStatus::hitGe;}
     bool IsEIoni() const { return fTrackStatus&TrackStatus::eIoni;}

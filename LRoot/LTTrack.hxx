@@ -9,10 +9,8 @@
 #include <TTree.h>
 #include <TVector3.h>
 #include <vector>
-
 // LRoot classes
 //#include "LTPVertex.hxx"
-#include "LTTraject.hxx"
 
 using namespace std;
 
@@ -37,10 +35,14 @@ class LTTrack: public TNamed {
     Double_t stepLength;
     Double_t ke;   // kinetic energy electronvolts
     Double_t edep; // energy deposited in step (electronvolts) 
-    Double_t time;  // microseconds
+    Double_t time;   //  event time, microseconds
+    Double_t trkTime; // time since track began, microseconds
     TVector3 position;
     TVector3 vertPosition;
-    LTTraject traject;
+    TString physVolName;
+    TString particleName;
+    TString copy;
+    bool isLeaving;
     
 
 ClassDef(LTTrack,1)

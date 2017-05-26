@@ -47,9 +47,6 @@ class TrackingAction : public G4UserTrackingAction {
 
     TrackingAction();
     virtual ~TrackingAction() {};
-    LTTraject* FillLTTraject(LegendTrajectory *gtrj );
-    
-
     virtual void PreUserTrackingAction(const G4Track*);
     virtual void PostUserTrackingAction(const G4Track*);
     TDirectory *fDir;

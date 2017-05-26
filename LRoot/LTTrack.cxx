@@ -12,12 +12,12 @@ LTTrack::~LTTrack()
 
 void LTTrack::clear()
 {
-
   evId=0;    // event id
   trkId=0;    // track id
   parentId=0;    // parent id
   status=0;
-  time=0;  
+  time=0; 
+  trkTime=0;
   ke=0;
   edep=0;
   length=0;
@@ -25,7 +25,10 @@ void LTTrack::clear()
   stepLength=0;
   position.Clear();
   vertPosition.Clear();
-  traject.Clear(); 
+  physVolName.Clear();
+  particleName.Clear();
+  copy=-1;
+  
 }
 void LTTrack::print(){
   printf(" ********************  LTTrack ********************* \n");

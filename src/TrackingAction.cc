@@ -183,6 +183,17 @@ void TrackingAction::PostUserTrackingAction(const G4Track* aTrack){
   }  
   
   // fill tree
+  // Hereafter we call current volume the volume where the step has just gone through. Geometrical informations are available from preStepPoint.
+  G4StepPoint* currentPoint = aTrack->GetStep()->GetPreStepPoint();
+  G4StepPoint* nextPoint    = aTrack->GetStep()->GetPostStepPoint();
+  //G4VTouchable and its derivates keep these geometrical informations. We retrieve a touchable by creating a handle for it:
+  G4TouchableHandle ctouch = currentPoint->GetTouchableHandle();
+  fLTTrack->physVolName = ctouch->GetVolume()->GetName();
+  fLTTrack->copy = ctouch->GetCopyNumber();
+
+  // To check that the particle is leaving the current volume (i.e. it is at the last step in the volume; the postStepPoint is at the boundary):
+  fLTTrack->isLeaving = nextPoint->GetStepStatus() == fGeomBoundary;
+  
   fLTTrack->evId = G4EventManager::GetEventManager()->GetConstCurrentEvent()->GetEventID();
   fLTTrack->trkId = aTrack->GetTrackID();
   fLTTrack->parentId = aTrack->GetParentID();
@@ -190,57 +201,19 @@ void TrackingAction::PostUserTrackingAction(const G4Track* aTrack){
   fLTTrack->length=aTrack->GetTrackLength();
   fLTTrack->nstep=aTrack->GetCurrentStepNumber();
   fLTTrack->stepLength=aTrack->GetStepLength();
-  fLTTrack->traject=*FillLTTraject(trajectory);
   G4ThreeVector trkPos = aTrack->GetPosition();
   fLTTrack->position.SetXYZ(trkPos.x(),trkPos.y(),trkPos.z());
   G4ThreeVector vertPos = aTrack->GetVertexPosition(); 
   fLTTrack->vertPosition.SetXYZ(vertPos.x(),vertPos.y(),vertPos.z());
+  // Global time (time since the current event began)
   fLTTrack->time=aTrack->GetGlobalTime()/microsecond;
+  // Local time (time since the current track began)
+  fLTTrack->trkTime=aTrack->GetLocalTime()/microsecond;
   fLTTrack->ke=aTrack->GetKineticEnergy()/electronvolt;
   fLTTrack->edep=aTrack->GetStep()->GetTotalEnergyDeposit()/electronvolt;
+  fLTTrack->particleName = aTrack->GetDefinition()->GetParticleName();
   //fLTTrack->print();
   fTrackTree->Fill();
 }
 
 
-
-LTTraject* TrackingAction::FillLTTraject(LegendTrajectory *gtrj )
-{
-
-  LTTraject *ltraj = new LTTraject();
-  // fill from trajectory 
-  ltraj->TrajId = gtrj->GetTrackID() ;  
-  ltraj->ParentId = gtrj->GetParentID();        
-  //PrimaryId = gtrj-> ;        
-  ltraj->PDG = gtrj->GetPDGEncoding();       
-  //Mass = gtrj-> ;   
-  ltraj->Charge = gtrj->GetCharge(); 
-
-  // each element in std::vector corresponds to a point on the particle path
-  // typdef CLHEP::Hep3Vector G4ThreeVector;
-  G4ThreeVector gpos0 = gtrj->GetPoint(0)->GetPosition();
-  TLorentzVector r4(gpos0.x(),gpos0.y(),gpos0.z(),0);// were is the time?
-
-  ltraj->Position.push_back(r4);
-  G4ThreeVector momentum3 = gtrj->GetInitialMomentum();
-  TVector3 p3(momentum3.x(),momentum3.y(),momentum3.z());
-  ltraj->KE = p3.Mag();// don't have mass
-  ltraj->Momentum.push_back(p3);
-
-  // set primary 
-  if(gtrj->IsPrimary()) ltraj->Type = LTTrajectType::PRI;
-
-  ltraj->Name = TString(gtrj->GetParticleName().data());
-
-  //enum LTTrajectType {UNK,PRI,SCI,WLS,HIT};
-  ltraj->Type = LTTrajectType::UNK;
-  if(gtrj->GetParticleName()=="opticalphoton") {
-    if(gtrj->IsPmtHit()) ltraj->Type = LTTrajectType::PMTHIT;
-    else if(gtrj->IsWLS()) ltraj->Type = LTTrajectType::WLS;
-    else ltraj->Type = LTTrajectType::SCI;
-  } 
-    
-  if(gtrj->IsGeHit()) ltraj->Type = LTTrajectType::GEHIT;
-
-  return ltraj;  
-}
