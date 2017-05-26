@@ -415,7 +415,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4ThreeVector rdet=detRout[0];
   G4ThreeVector zdet=detZhalf[0];
   G4Polycone* Det_solid = new G4Polycone(detNamesPhys[0],0,2*M_PI,3,&zdet[0],&r_i[0],&rdet[0]);
-  logicalGeDet = new G4LogicalVolume(Det_solid,fGeMaterial,"GeDetLogical");
+  logicalGeDet = new G4LogicalVolume(Det_solid,fGeMaterial/*mat_fill*/,"GeDetLogical");
   
   // place detectors in tubes
   for(unsigned idet=0; idet < detPositions.size(); ++ idet) {
@@ -574,6 +574,7 @@ void DetectorConstruction::ConstructSDandField()
   GermaniumSD* gesd = new GermaniumSD("GeDetector");    
   SDman->AddNewDetector(gesd); 
   logicalGeDet->SetSensitiveDetector(gesd);
+  
 
   G4PhysicalVolumeStore* theStore = G4PhysicalVolumeStore::GetInstance();
   G4cout << "\t DetectorConstruction::SDandField done   " << G4endl;
@@ -666,7 +667,7 @@ void DetectorConstruction::ArgonOpticalProperties()
   LAr_mt->AddConstProperty("FASTTIMECONSTANT", 5.95*ns);//6.*ns);
   LAr_mt->AddConstProperty("SLOWTIMECONSTANT",922*ns);//1590.*ns);
   LAr_mt->AddConstProperty("YIELDRATIO",0.23);
-  // G4cout<<LAr_SCIN<<G4endl;
+  
   G4double fano = 0.11;
   LAr_mt->AddConstProperty("RESOLUTIONSCALE",fano); 
   mat_ArLiq->SetMaterialPropertiesTable(LAr_mt); // G4Material defined in Detector_Materials.icc
@@ -788,10 +789,34 @@ void DetectorConstruction::WLSOpticalProperties()
 
 void DetectorConstruction::GeOpticalProperties()
 {
+  /*
   nist = G4NistManager::Instance();
   fGeMaterial = nist->FindOrBuildMaterial("G4_Ge");
-  GeMaterialTable = new G4MaterialPropertiesTable();
+  */
+  G4double abundance;
+  G4String name;
+  G4int natoms;
+  G4Isotope* Ge70 = new G4Isotope(name="Ge70",  32, 70, 69.92*g/mole);
+  G4Isotope* Ge72 = new G4Isotope(name="Ge72",  32, 72, 71.92*g/mole);
+  G4Isotope* Ge73 = new G4Isotope(name="Ge73",  32, 73, 73.0*g/mole);
+  G4Isotope* Ge74 = new G4Isotope(name="Ge74",  32, 74, 74.0*g/mole);
+  G4Isotope* Ge76 = new G4Isotope(name="Ge76",  32, 76, 76.0*g/mole);
+
+  G4Element* elGeEnr = new G4Element(name="enrichedGermanium","GeEnr",5);
+  elGeEnr->AddIsotope(Ge70,abundance= 0.0*perCent);
+  elGeEnr->AddIsotope(Ge72,abundance= 0.1*perCent);
+  elGeEnr->AddIsotope(Ge73,abundance= 0.2*perCent);
+  elGeEnr->AddIsotope(Ge74,abundance= 13.1*perCent);
+  elGeEnr->AddIsotope(Ge76,abundance= 86.6*perCent);
+
+  //enriched Ge
+  G4double density = 5.54*g/cm3;
+  fGeMaterial = new G4Material(name="EnrichedGe", density, 1);
+  fGeMaterial->AddElement(elGeEnr,natoms=1);
+  G4double fano = 0.129;
   
+  GeMaterialTable = new G4MaterialPropertiesTable();
+
   const G4int numGe = 100;
   //Ge_Reflectivity TGraph range is 111-657 nm
   G4double HighEGe = LambdaE /(115*nanometer);
@@ -800,10 +825,12 @@ void DetectorConstruction::GeOpticalProperties()
   
   G4double NRGSpec[numGe];//if we are going to use the dumb names from MaGe then I get to use my dumb names too!
   G4double ReflectionSpec[numGe];
+  G4double Efficiency[numGe];
 
   for(G4int i = 0; i < numGe ; i++) {
     NRGSpec[i] = LowEGe +( (G4double) i*deeGe );
     ReflectionSpec[i] = GeReflectionSpectrum( (LambdaE /NRGSpec[i])/nm );//in nm
+    Efficiency[i] = 0.;
     if(GeDebug){
       G4cout<<"DetectorConstruction::GeOpticalProperties()...Energy Spec = "<<NRGSpec[i]/eV<<G4endl;
       G4cout<<"DetectorConstruction::GeOpticalProperties()...Wavelength Spec = "<<(LambdaE /NRGSpec[i])/nm<<G4endl;
@@ -811,6 +838,7 @@ void DetectorConstruction::GeOpticalProperties()
     }
   }
   GeMaterialTable->AddProperty("REFLECTION",NRGSpec,ReflectionSpec,numGe);
+  //GeMaterialTable->AddProperty("EFFICIENCY",NRGSpec,Efficiency,numGe);
   
   fGeOpticalSurface = new G4OpticalSurface("Germanium surface");
   
@@ -819,8 +847,13 @@ void DetectorConstruction::GeOpticalProperties()
   fGeOpticalSurface->SetPolish(0.5);
 
   fGeOpticalSurface->SetMaterialPropertiesTable(GeMaterialTable);
-  
+  /*
+  //added by Neil in a vayne attempt to track Ge hits in Tracking Action
+  GeMaterialTable->AddConstProperty("RESOLUTIONSCALE",fano);
+  GeMaterialTable->AddConstProperty("RESOLUTIONSCALE",1.0);
+
   fGeMaterial->SetMaterialPropertiesTable(GeMaterialTable);
+  */
 }
 
 void DetectorConstruction::CuOpticalProperties()

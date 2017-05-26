@@ -79,7 +79,7 @@ GermaniumSD::GermaniumSD(G4String name, G4int nCopy)
 
     // must be in top directory for ChangeFile to work
     LegendAnalysis::Instance()->topTreeDir()->cd();
-    ntGe = new TNtuple("ntGe"," Ge hits ","evId:copy:PDG:musec:micron:ekev:posxum:posyum:poszum");
+    ntGe = new TNtuple("ntGe"," Ge hits ","evId:copy:PDG:musec:micron:edep:ke:posxum:posyum:poszum");
   }
   
 }
@@ -117,6 +117,7 @@ G4bool GermaniumSD::ProcessHits_constStep(const G4Step* aStep, G4TouchableHistor
    // return false;
   }
   G4double length = 					aStep->GetStepLength();
+  G4double KE = aStep->GetTrack()->GetKineticEnergy();
     
   // how to get volume name
   G4TouchableHistory* theTouchable = (G4TouchableHistory*)(aStep->GetPreStepPoint()->GetTouchable());
@@ -135,11 +136,14 @@ G4bool GermaniumSD::ProcessHits_constStep(const G4Step* aStep, G4TouchableHistor
   
   G4int copy = theTouchable->GetVolume()->GetCopyNo();
   // add event number
-
+//G4cout<<"GermaniumSD pre/post volume name "<<aStep->GetPreStepPoint()->GetPhysicalVolume()->GetName()
+  //<<"/"<<aStep->GetPostStepPoint()->GetPhysicalVolume()->GetName()<<G4endl;
+  
+  
   G4int eventId = G4EventManager::GetEventManager()->GetNonconstCurrentEvent()->GetEventID();
   
   ntGe->Fill( float(eventId),float(copy),particleType->GetPDGEncoding(),aStep->GetTrack()->GetGlobalTime()/microsecond,
-      length/micrometer,edep/keV,position(0)/micrometer,position(1)/micrometer,position(2)/micrometer);
+      length/micrometer,edep/keV,KE/keV,position(0)/micrometer,position(1)/micrometer,position(2)/micrometer);
   
   return true;
 }
