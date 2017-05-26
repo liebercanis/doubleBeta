@@ -37,10 +37,24 @@ PrimaryGeneratorActionMessenger::PrimaryGeneratorActionMessenger(PrimaryGenerato
   ShowGeneratorCmd->AvailableForStates(G4State_PreInit, G4State_Idle);
 
   PhysicalVolumeNameCmd = new G4UIcmdWithAString("/generator/volume",this);
-  PhysicalVolumeNameCmd->SetGuidance("set generator particle ");
+  PhysicalVolumeNameCmd->SetGuidance("set source physical volme ");
   PhysicalVolumeNameCmd->SetParameterName("volume",false);
-  PhysicalVolumeNameCmd->SetCandidates("e- gamma alpha");
+  PhysicalVolumeNameCmd->SetCandidates("group1Physical");
   PhysicalVolumeNameCmd->AvailableForStates(G4State_Idle);
+
+
+  AngDistTypeCmd = new G4UIcmdWithAString("/generator/angdist",this);
+  AngDistTypeCmd->SetGuidance("set generator anagular distribution ");
+  AngDistTypeCmd->SetParameterName("angdist",false);
+  AngDistTypeCmd->SetCandidates("iso direction intoGe ");
+  AngDistTypeCmd->AvailableForStates(G4State_Idle);
+
+  EnergyDistTypeCmd = new G4UIcmdWithAString("/generator/edist",this);
+  EnergyDistTypeCmd->SetGuidance("set energy distribution ");
+  EnergyDistTypeCmd->SetParameterName("edist",false);
+  EnergyDistTypeCmd->SetCandidates("mono Ar39 alpha  ");
+  EnergyDistTypeCmd->AvailableForStates(G4State_Idle);
+
 
   ParticleDefinitionCmd = new G4UIcmdWithAString("/generator/particle",this);
   ParticleDefinitionCmd->SetGuidance("set generator particle ");
@@ -49,11 +63,11 @@ PrimaryGeneratorActionMessenger::PrimaryGeneratorActionMessenger(PrimaryGenerato
 	ParticleDefinitionCmd->AvailableForStates(G4State_Idle);
 
 
-  SourceTypeCmd = new G4UIcmdWithAString("/generator/SourceType",this);
-  SourceTypeCmd->SetGuidance("set particle source type");
-  SourceTypeCmd->SetParameterName("source",false);
-  SourceTypeCmd->SetCandidates("Ar39 Point ");
-  SourceTypeCmd->AvailableForStates(G4State_Idle);
+  SourcePositionTypeCmd = new G4UIcmdWithAString("/generator/SourceType",this);
+  SourcePositionTypeCmd->SetGuidance("set source position type");
+  SourcePositionTypeCmd->SetParameterName("position",false);
+  SourcePositionTypeCmd->SetCandidates("point volume GeSurface ");
+  SourcePositionTypeCmd->AvailableForStates(G4State_Idle);
 
 
 }
@@ -69,9 +83,11 @@ PrimaryGeneratorActionMessenger::~PrimaryGeneratorActionMessenger()
 void PrimaryGeneratorActionMessenger::SetNewValue(G4UIcommand* command,G4String newValue)
 {
   G4cout << " PrimaryGeneratorActionMessenger::SetNewValue " << command << " value " << newValue << G4endl;
+  if( command == AngDistTypeCmd) genAction->SetAngDistTypeByName(newValue);
   if( command == PhysicalVolumeNameCmd) genAction->SetPhysicalVolumeByName(newValue);
-  if( command == ParticleDefinitionCmd ) genAction->SetParticle(newValue);
-	if( command == SourceTypeCmd ) genAction->SetSource(newValue);
+  if( command == EnergyDistTypeCmd) genAction->SetEnergyDistTypeByName(newValue);
+  if( command == ParticleDefinitionCmd ) genAction->SetParticleByName(newValue);
+	if( command == SourcePositionTypeCmd ) genAction->SetSourcePositionByName(newValue);
   if (command == ShowGeneratorCmd) genAction->Show();	
 }
 

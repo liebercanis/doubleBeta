@@ -106,6 +106,7 @@ int main(int argc,char** argv)
 
   // this has to be done after detector construction 
   gen_action->SetPhysicalVolumeByName("group1Physical");
+  gen_action->SetParticleByName("e-");
   gen_action->Show();
 #ifdef G4VIS_USE
   // Initialize visualization

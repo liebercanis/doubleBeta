@@ -44,12 +44,9 @@ PrimaryGeneratorAction::PrimaryGeneratorAction(){
   //fParticleSource = new G4ParticleGun(n_particle);
   G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
   G4String particleName;
+  //SetParticleByName("e-");
   fParticleSource= new LegendParticleSource();
-  fParticleSource->SetParticleDefinition(particleTable->FindParticle(particleName="alpha"));
-  fParticleSource->SetPosDisType("GeSurface");//point, volume, GeSurface
-  //fParticleSource->SetEnergyDisType("Ar39");//Mono
-  fParticleSource->SetEnergyDisType("Alpha");
-  fParticleSource->SetAngDistType("InGeSurface");
+  fParticleSource->Show();
   G4cout << "  PrimaryGeneratorAction constructor complete. " << G4endl;
 }
 
@@ -66,24 +63,15 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent){
   fParticleSource->GeneratePrimaryVertex(anEvent);
 }
 
-//name passed in from doubleBeta.cc...currently "group1Physical"
-void PrimaryGeneratorAction::SetParticle(G4String name) 
+void PrimaryGeneratorAction::SetParticleByName(G4String name) 
 {
-  //fParticleSource= new LegendParticleSource(name);
   G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
-  G4String particleName;
-  //fParticleSource->SetParticleDefinition(particleTable->FindParticle(particleName="e-"));
-  fParticleSource->SetParticleDefinition(particleTable->FindParticle(particleName="alpha"));
-  fParticleSource->SetPosDisType("GeSurface");//point, volume, GeSurface
-  //fParticleSource->SetEnergyDisType("Ar39");//Mono
-  fParticleSource->SetEnergyDisType("Alpha");
-  fParticleSource->SetAngDistType("InGeSurface");
-
-  G4cout << " PrimaryGeneratorAction energy distribution type is " << fParticleSource->GetEnergyDisType() << G4endl;
-  G4VPhysicalVolume* pvol = fParticleSource->GetPhysicalVolume();
-  if(pvol)  G4cout << " PrimaryGeneratorAction source physical volume is " << pvol->GetName() << G4endl;
-  else  G4cout <<  " PrimaryGeneratorAction source physical volume doesnt exist !!" << G4endl;
-  G4ParticleDefinition* particle = particleTable->FindParticle(name);
+  G4ParticleDefinition* particle=NULL;
+  if(particleTable) particle = particleTable->FindParticle(name);
+  else {
+    G4cout << " PrimaryGeneratorAction:: no particle table exits so cannot set G4ParticleDefinition "  << G4endl;
+    return;
+  }
   if(particle) fParticleSource->SetParticleDefinition(particle);
   else G4cout << " PrimaryGeneratorAction:: no such particle named " << name << " using default "  << G4endl;
 }

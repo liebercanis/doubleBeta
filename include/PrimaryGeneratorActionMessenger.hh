@@ -39,9 +39,11 @@ class PrimaryGeneratorActionMessenger: public G4UImessenger
 
     G4UIdirectory*             Dir;
     G4UIdirectory*             detDir;
+	  G4UIcmdWithAString*        EnergyDistTypeCmd;
+		G4UIcmdWithAString*        AngDistTypeCmd;
 		G4UIcmdWithAString*        PhysicalVolumeNameCmd;
 		G4UIcmdWithAString*        ParticleDefinitionCmd;
-		G4UIcmdWithAString*        SourceTypeCmd;
+		G4UIcmdWithAString*        SourcePositionTypeCmd;
 		G4UIcmdWithoutParameter*   ShowGeneratorCmd;
 };
 

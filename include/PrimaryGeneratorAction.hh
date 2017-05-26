@@ -51,9 +51,11 @@ class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
      
   public:
 
+    void SetAngDistTypeByName(G4String name) {fParticleSource->SetAngDistTypeByName(name);}
     void SetPhysicalVolumeByName(G4String name) {fParticleSource->SetPhysicalVolumeByName(name);}
-    void SetSource(G4String name) { fParticleSource->SetSource(name);}
-    void SetParticle(G4String name); 
+    void SetSourcePositionByName(G4String name) { fParticleSource->SetSourcePositionByName(name);}
+    void SetEnergyDistTypeByName(G4String name) { fParticleSource->SetEnergyDistTypeByName(name);}
+    void SetParticleByName(G4String name); 
     void Show() { fParticleSource->Show();}
     virtual void GeneratePrimaries(G4Event* anEvent);
 

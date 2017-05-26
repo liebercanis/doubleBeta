@@ -69,14 +69,20 @@ class LegendParticleSource : public G4VPrimaryGenerator {
      // position distribution 
      void SetPhysicalVolume( G4VPhysicalVolume* physVol) { thePhysicalVolume=physVol ; }
      void SetPhysicalVolumeByName( G4String physical_name);
+     void SetAngDistTypeByName(G4String type){AngDistType = type;}
+     void SetSourcePositionByName(G4String type){SourcePosType = type;}
 
      void Show(){
        G4cout <<
          " **************** LegendParticleSource ********** " << G4endl << 
-         " \t physical volume " << physVolumeName <<
-         " \t source type is   " << SourceType << 
-         " \t source position type is   " << SourcePosType;
-       if(particle_definition) G4cout << " \t particle is "  << particle_definition->GetParticleName(); 
+         " \t physical volume       " << physVolumeName <<
+         " \t angular dis type      " << AngDistType << 
+         " \t energy  dis type      " << EnergyDisType << 
+         " \t source position type  " << SourcePosType;
+
+       if(particle_definition) G4cout << " \t particle is "  << particle_definition->GetParticleName();
+       else G4cout << " \t no particle definition ";
+
        G4cout << G4endl;
      }
 
@@ -94,14 +100,12 @@ class LegendParticleSource : public G4VPrimaryGenerator {
      void ConfineSourceToVolume();
   
      // angular distribution
-     void SetAngDistType(G4String);
      void SetParticleMomentumDirection(G4ParticleMomentum);
      void GenerateIsotropicFlux();
      void SetMomentumIntoGeSurface();
-     void SetSource(G4String DisType) {SourceType = DisType;}
 
      // energy distribution 
-     void SetEnergyDisType(G4String);
+     void SetEnergyDistTypeByName(G4String type){EnergyDisType=type;}
      void SetMonoEnergy(G4double);
      void GenerateMonoEnergetic();
      G4String GetEnergyDisType(){ return EnergyDisType ;}
@@ -134,7 +138,6 @@ class LegendParticleSource : public G4VPrimaryGenerator {
      G4double Phi;
      G4String EnergyDisType;
      G4double MonoEnergy;
-     G4String SourceType;
 
      // particle properties 
      G4int                  NumberOfParticlesToBeGenerated;
