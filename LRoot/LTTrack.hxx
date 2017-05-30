@@ -31,6 +31,7 @@ class LTTrack: public TNamed {
     Int_t parentId;
     Int_t status;
     Int_t nstep;
+    Int_t copy;
     Double_t length;
     Double_t stepLength;
     Double_t ke;   // kinetic energy electronvolts
@@ -41,11 +42,9 @@ class LTTrack: public TNamed {
     TVector3 vertPosition;
     TString physVolName;
     TString particleName;
-    TString copy;
     bool isLeaving;
-    
 
-ClassDef(LTTrack,1)
+ClassDef(LTTrack,6)
 };
 #endif
 
