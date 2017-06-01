@@ -323,7 +323,7 @@ void LegendParticleSource::GeneratePointsOnGeSurface()
   centerVector = thePhysicalVolume->GetTranslation(); // absolute position of the center of this phyisical volume
   //List of physical volumes
   G4PhysicalVolumeStore* theStore = G4PhysicalVolumeStore::GetInstance();
-  G4double delta = 0.001; 
+  G4double delta = 1.0e-6;//0.001; 
   int debugCounter = 0;
   bool isInside = false;
   while(!isInside){

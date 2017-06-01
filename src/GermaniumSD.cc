@@ -79,7 +79,7 @@ GermaniumSD::GermaniumSD(G4String name, G4int nCopy)
 
     // must be in top directory for ChangeFile to work
     LegendAnalysis::Instance()->topTreeDir()->cd();
-    ntGe = new TNtuple("ntGe"," Ge hits ","evId:copy:PDG:musec:micron:edep:ke:posxum:posyum:poszum");
+    ntGe = new TNtuple("ntGe"," Ge hits ","evId:PDG:musec:micron:edep:ke:beta:posxum:posyum:poszum");
   }
   
 }
@@ -130,6 +130,7 @@ G4bool GermaniumSD::ProcessHits_constStep(const G4Step* aStep, G4TouchableHistor
   G4double gtime = aStep->GetPostStepPoint()->GetGlobalTime();   //measured in nanoseconds;
   G4double time = aStep->GetTrack()->GetGlobalTime();
   G4ThreeVector position = aStep->GetTrack()->GetPosition();
+  G4double vel = (aStep->GetTrack()->GetVelocity())/(meter/second);
   
   hTime->Fill( aStep->GetTrack()->GetGlobalTime()/microsecond); //convert to ns
   hEnergy->Fill(edep/keV);
@@ -141,9 +142,9 @@ G4bool GermaniumSD::ProcessHits_constStep(const G4Step* aStep, G4TouchableHistor
   
   
   G4int eventId = G4EventManager::GetEventManager()->GetNonconstCurrentEvent()->GetEventID();
-  
-  ntGe->Fill( float(eventId),float(copy),particleType->GetPDGEncoding(),aStep->GetTrack()->GetGlobalTime()/microsecond,
-      length/micrometer,edep/keV,KE/keV,position(0)/micrometer,position(1)/micrometer,position(2)/micrometer);
+//  G4cout<<"GermaniumSD:: PDGEncoding = "<<particleType->GetPDGEncoding()<<G4endl;
+  ntGe->Fill( float(eventId),float(particleType->GetPDGEncoding()),aStep->GetTrack()->GetGlobalTime()/microsecond,
+      length/micrometer,edep/keV,KE/keV,vel/299792458,position(0)/micrometer,position(1)/micrometer,position(2)/micrometer);
   
   return true;
 }
