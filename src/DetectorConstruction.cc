@@ -73,7 +73,7 @@ DetectorConstruction::DetectorConstruction()
 : G4VUserDetectorConstruction()
 {
   //Debug bools
-  checkOverlaps = false; //true;
+  checkOverlaps = true;
   GeDebug = false;//true;
   TpbDebug = false;
   LArDebug = false;
@@ -377,15 +377,6 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   groupzmax = max(group1zmax,group2zmax);
 
 
-
-  G4cout<< "\t *******************************************" <<G4endl;
-  G4cout<< "\t DetectorConstruction -- placement info " <<G4endl;
-  //Units are in millimeters!
-  sprintf(mess,"\t position group 1  (%f,%f,%f) rmax %f  zmax %f\n",sum_x1,sum_y1,sum_z1,group1rmax,group1zmax); G4cout<< mess;
-  sprintf(mess,"\t position group 2  (%f,%f,%f) rmax %f  zmax %f\n",sum_x2,sum_y2,sum_z2,group2rmax,group2zmax); G4cout<< mess;
-  sprintf(mess,"\t group radius  %f  half z %f \n",grouprmax,groupzmax); G4cout<< mess;
-  G4cout<< "\t *******************************************" <<G4endl;
-
   //First Place World volume of LAr...different than LAr cylinders
   G4int sourceRadius = 4*groupzmax;
   G4Sphere* larSolid = new G4Sphere("source",0,sourceRadius,0,2*M_PI,0,2*M_PI);
@@ -418,6 +409,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   logicalGeDet = new G4LogicalVolume(Det_solid,fGeMaterial/*mat_fill*/,"GeDetLogical");
   
   // place detectors in tubes
+  /*
   for(unsigned idet=0; idet < detPositions.size(); ++ idet) {
     //Added from MaGe
     new G4LogicalSkinSurface("Ge_Detector"+std::to_string(idet),logicalGeDet,fGeOpticalSurface);
@@ -427,6 +419,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
      else 
       new G4PVPlacement (0,detRelPositions[idet],logicalGeDet,detNames[idet],group2Logical,false,detNumbers[idet],checkOverlaps);     
   }
+  */
   
   /////////////WLS Cylinder around groupTubs, does not cover top or bottom, PMTs will do that below/////////////
   WLSHalfThickness = 0.05*mm;  // half thickness
@@ -446,7 +439,6 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4PVPlacement* phys_WLSGroup2 = new G4PVPlacement (0,group2pos,WLSgroupTubeLogical,"WLSgroup2TubeLogical", larSourceLogical,false,1,checkOverlaps);  
   new G4LogicalBorderSurface("Phys_PMT_WLS_cylinder_2",group2Physical,phys_WLSGroup2,WLSoptSurf);
   new G4LogicalBorderSurface("Phys_PMT_WLS_cylinder_2",phys_WLSGroup2,group2Physical,WLSoptSurf);
-  
 
   /////////////PMT coated in WLS/////////////
   //WLSHalfThickness defined above
@@ -518,17 +510,35 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4VPhysicalVolume*  PhysCryo2 =new G4PVPlacement(0,group2pos,logicalCryo,"PhysCryo2",larSourceLogical,false,0,checkOverlaps);
   G4PhysicalVolumeStore* theStore = G4PhysicalVolumeStore::GetInstance();
 
-  G4cout << "\t DetectorConstruction done constructing detector  " << G4endl;
-  G4cout<<  "\t DetectorConstruction size of store " << theStore->size() << G4endl;
+
+  G4cout<< "\t *****************************************************************************" <<G4endl;
+  G4cout<< "\t DetectorConstruction -- placement info " <<G4endl;
+  //Units are in millimeters!
+  sprintf(mess,"\t position group 1  (%f,%f,%f) rmax %f  zmax %f\n",sum_x1,sum_y1,sum_z1,group1rmax,group1zmax); G4cout<< mess;
+  sprintf(mess,"\t position group 2  (%f,%f,%f) rmax %f  zmax %f\n",sum_x2,sum_y2,sum_z2,group2rmax,group2zmax); G4cout<< mess;
+  sprintf(mess,"\t group radius  %f  half z %f \n",grouprmax,groupzmax); G4cout<< mess;
+  sprintf(mess,"\t grouprmax+WLSHalfThickness = %f\n",grouprmax+WLSHalfThickness);  G4cout << mess;
+  G4cout<< "\t *****************************************************************************" <<G4endl;
+
   
-  for(G4int istore = 0; istore< theStore->size() ; ++istore ){
-    G4VPhysicalVolume *pvol = theStore->at(istore);
-    G4int nsense = 0;
-    G4VSensitiveDetector* sdet = pvol->GetLogicalVolume()->GetSensitiveDetector();
-    if(sdet) nsense = sdet->GetNumberOfCollections();
-    if(checkOverlaps)
+  G4cout<<  "\t DetectorConstruction size of store " << theStore->size() << G4endl;
+
+  
+  if(checkOverlaps) 
+    for(G4int istore = 0; istore< theStore->size() ; ++istore ){
+      G4VPhysicalVolume *pvol = theStore->at(istore);
+      G4int nsense = 0;
+      G4VSensitiveDetector* sdet = pvol->GetLogicalVolume()->GetSensitiveDetector();
+      if(sdet) nsense = sdet->GetNumberOfCollections();
+      G4ThreeVector pMin;
+      G4ThreeVector pMax;
+      pvol->GetLogicalVolume()->GetSolid()->Extent(pMin,pMax); 
       G4cout << " \t   stored phys vol  " << istore << " = " << pvol->GetName() << " logical " <<  pvol->GetLogicalVolume()->GetName() << G4endl; 
-  }
+      G4cout << " \t\t radius = (" << pMin.perp() << "," << pMax.perp() << ")" << G4endl; 
+      G4cout << " \t\t      z = (" << pMin.z() << "," << pMax.z() << ")" << G4endl; 
+    }
+
+  G4cout << "\t DetectorConstruction done constructing detector  " << G4endl;
   
   return physicalWorld;
 }
@@ -553,7 +563,7 @@ void DetectorConstruction::PlacePMT(G4ThreeVector rhousing,double top_or_bot,int
       +dynamic_cast<G4Tubs*>(logicalPMTWLS->GetSolid())->GetZHalfLength());
   G4ThreeVector rwls = rhousing + G4ThreeVector(0,0,zhalf);
   G4PVPlacement* phys_PMTWLS = new G4PVPlacement(0,rwls,logicalPMTWLS,"phys_PMTWLS_"+std::to_string(num),larSourceLogical,false,num,checkOverlaps);
-  /* border between WLS and larPhysicsl crossing in both directions WLS is rough on both sides */
+  // border between WLS and larPhysicsl crossing in both directions WLS is rough on both sides 
   G4double roughness = 0.5;
   G4OpticalSurface* WLSoptSurf = new G4OpticalSurface("WLS_rough_surf",glisur,ground,dielectric_dielectric,roughness);
   new G4LogicalBorderSurface("Phys_PMT_WLS_"+ std::to_string(num),larPhysical,phys_PMTWLS,WLSoptSurf);

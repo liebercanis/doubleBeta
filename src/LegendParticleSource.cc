@@ -141,7 +141,7 @@ void LegendParticleSource::GeneratePrimaryVertex(G4Event *evt)
     return;
   }
   
-  // Position
+  // Position generation sets particle_position
   G4bool srcconf = false;
   G4int LoopCount = 0;
   
@@ -181,7 +181,7 @@ void LegendParticleSource::GeneratePrimaryVertex(G4Event *evt)
       }
   }
 
-  // Angular stuff
+  // Angular stuff ... particle momentum direction
   if(AngDistType == "iso")
     GenerateIsotropicFlux();
   else if(AngDistType == "direction")
@@ -190,6 +190,7 @@ void LegendParticleSource::GeneratePrimaryVertex(G4Event *evt)
     SetMomentumIntoGeSurface(); 
   else
     G4cout << " LegendParticleSource **** Error: AngDistType has unusual value" << G4endl;
+
   // Energy stuff
   if(EnergyDisType == "mono")
     GenerateMonoEnergetic();
@@ -286,7 +287,7 @@ void LegendParticleSource::GeneratePointSource()
       G4cout << " LegendParticleSource **** Error SourcePosType is not set to Point" << G4endl;
 }
 
-
+// set particle_position vector for points in volume
 void LegendParticleSource::GeneratePointsInVolume()
 {
   G4VSolid *solid = thePhysicalVolume->GetLogicalVolume()->GetSolid();
@@ -294,8 +295,15 @@ void LegendParticleSource::GeneratePointsInVolume()
   G4ThreeVector rmax;
   solid->Extent(rmin,rmax);
   G4ThreeVector rpoint;
-  centerVector = thePhysicalVolume->GetTranslation(); // absolute position of the center of this phyisical volume
-
+  // do not want frame translation here
+  G4RotationMatrix* rotation = thePhysicalVolume->GetRotation();
+  G4ThreeVector translation = thePhysicalVolume->GetTranslation();
+  if(!rotation) centerVector  = translation;
+  else centerVector = (*rotation)*translation; 
+  //G4cout << " new x " << centerVector.x() << " y " << centerVector.y()  << " z " << centerVector.z() << G4endl;
+  //G4cout << " rmax x " << rmax.x() << " y " << rmax.y()  << " z " << rmax.z() << G4endl;
+  //G4cout << " rin  x " << rmin.x() << " y " << rmin.y()  << " z " << rmin.z() << G4endl;
+  
   bool isInside=false;
   while(!isInside){
     G4double rx = ( rmax.x() - rmin.x() )*(2.*G4UniformRand()-1.);
@@ -304,7 +312,10 @@ void LegendParticleSource::GeneratePointsInVolume()
     rpoint.set(rx,ry,rz);                         // relative position 
     particle_position = rpoint +  centerVector ; // absolute position
     isInside = solid->Inside(rpoint)== EInside::kInside && IsInArgon(particle_position) ;
-  }
+    //isInside = solid->Inside(rpoint)== EInside::kInside;
+  }  
+    //G4cout << " rpoint   x " << rpoint.x() << " y " << rpoint.y()  << " z " << rpoint.z() << G4endl;
+    //G4cout << " position x " << particle_position.x() << " y " << particle_position.y()  << " z " << particle_position.z() << G4endl;
 }
 
 void LegendParticleSource::GeneratePointsOnGeSurface()

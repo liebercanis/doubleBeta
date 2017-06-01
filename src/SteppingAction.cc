@@ -273,7 +273,7 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
         default:
           break;
       }
-      // WLS is optical but doesnt seem to correspond to above boundary case 
+      // WLS is optical but doesnt seem to correspond to above boundary case
       if(processName == "OpWLS" ){ 
         trackInformation->AddTrackStatusFlag(hitWLS);
         aTrack->SetTrackStatus(fStopAndKill);
