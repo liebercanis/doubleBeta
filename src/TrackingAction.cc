@@ -198,7 +198,7 @@ void TrackingAction::PostUserTrackingAction(const G4Track* aTrack){
   fLTTrack->trkId = aTrack->GetTrackID();
   fLTTrack->parentId = aTrack->GetParentID();
   fLTTrack->status=trackInformation->GetTrackStatus();
-  fLTTrack->boundaryStatus = trackInformaton->GetBoundaryProcessStatus();
+  fLTTrack->boundaryStatus = trackInformation->GetBoundaryProcessStatus();
   fLTTrack->length=aTrack->GetTrackLength();
   fLTTrack->nstep=aTrack->GetCurrentStepNumber();
   fLTTrack->stepLength=aTrack->GetStepLength();
