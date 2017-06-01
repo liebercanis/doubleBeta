@@ -30,6 +30,7 @@ class LTTrack: public TNamed {
     Int_t trkId;
     Int_t parentId;
     Int_t status;
+    Int_t boundaryStatus;
     Int_t nstep;
     Int_t copy;
     Double_t length;

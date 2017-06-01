@@ -16,6 +16,7 @@ void LTTrack::clear()
   trkId=0;    // track id
   parentId=0;    // parent id
   status=0;
+  boundaryStatus=0;
   time=0; 
   trkTime=0;
   ke=0;

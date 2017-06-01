@@ -111,6 +111,10 @@ class UserTrackInformation : public G4VUserTrackInformation
     UserTrackInformation();
     virtual ~UserTrackInformation();
 
+    void  SetBoundaryProcessStatus(int s){fBoundaryProcessStatus=s;}
+    G4int GetBoundaryProcessStatus(){return fBoundaryProcessStatus;}
+
+
     //Sets the track status to s (does not check validity of flags)
     void SetTrackStatusFlags(int s){fStatus=s;}
     //Does a smart add of track status flags (disabling old flags that conflict)
@@ -156,6 +160,7 @@ class UserTrackInformation : public G4VUserTrackInformation
   private:
 
     G4int fStatus;
+    G4int fBoundaryProcessStatus;
     G4int fParentId;
     G4bool fPrimary;
     G4int  fReflections;

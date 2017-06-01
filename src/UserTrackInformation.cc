@@ -34,7 +34,10 @@
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 UserTrackInformation::UserTrackInformation()
-  : fStatus(active),fReflections(0),fForcedraw(false),fPrimary(false) {}
+  : fStatus(active),fReflections(0),fForcedraw(false),fPrimary(false) 
+{
+  fBoundaryProcessStatus=0;
+}
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
