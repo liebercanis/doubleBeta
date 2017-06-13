@@ -78,7 +78,7 @@ PhysicsList::PhysicsList() : G4VUserPhysicsList()
   cutForPositron      = defaultCutValue;
 
   VerboseLevel = 1;
-  OpVerbLevel = 0;
+  OpVerbLevel = 1;
 
   SetVerboseLevel(VerboseLevel);
 }

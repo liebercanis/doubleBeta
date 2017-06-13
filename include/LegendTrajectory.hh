@@ -69,7 +69,7 @@ class LegendTrajectory : public G4Trajectory
     bool IsIonIoni() const { return fTrackStatus&TrackStatus::ionIoni;}
     bool IsWLS() const { return fTrackStatus&TrackStatus::hitWLS;}
     bool IsPrimary() { return fPrimary; }
-    bool SetPrimary() { fPrimary=true;}
+    void SetPrimary() { fPrimary=true;}
 
     void SetForceDrawTrajectory(G4bool b){fForceDraw=b;}
     void SetForceNoDrawTrajectory(G4bool b){fForceNoDraw=b;}

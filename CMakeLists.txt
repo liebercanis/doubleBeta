@@ -40,7 +40,7 @@ endif()
 # Setup include directory for this project
 #
 include(${Geant4_USE_FILE})
-include_directories(${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/LRoot)
+include_directories(${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/ ${PROJECT_SOURCE_DIR}/LRoot)
 #                   ${Geant4_INCLUDE_DIR})
 
 #----------------------------------------------------------------------------
@@ -56,9 +56,10 @@ find_package( ROOT REQUIRED)
 # NB: headers are included so they will show up in IDEs
 #
 file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cc)
-file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh )
-MESSAGE(sources=${sources})
-MESSAGE(headers=${headers})
+file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh ${PROJECT_SOURCE_DIR}/processes/*.hh ${PROJECT_SOURCE_DIR}/io/*.hh  )
+
+#MESSAGE(sources=${sources})
+#MESSAGE(headers=${headers})
 
 
 #----------------------------------------------------------------------------
@@ -72,7 +73,23 @@ set_property(TARGET LRoot PROPERTY IMPORTED_LOCATION ${PROJECT_SOURCE_DIR}/LRoot
 MESSAGE( Geant4_LIBRARIES = ${Geant4_LIBRARIES} )
 find_library( LPATH LRoot PATHS ${PROJECT_SOURCE_DIR}/LRoot/ )  
 MESSAGE( LPATH = ${LPATH})
+
+# add MaGe io 
+# add_subdirectory(io)
+
+
 target_link_libraries(${myexe} ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} ${LPATH} )
+
+# from https://cmake.org/Wiki/CMake_Useful_Variables/Logging_Useful_Variables !! doesnt work
+# this is used when searching for include files e.g. using the FIND_PATH() command.
+#MESSAGE( "CMAKE_INCLUDE_PATH: " ${CMAKE_INCLUDE_PATH} )
+# THIS WORKS ! 
+get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
+foreach(dir ${dirs})
+  message(STATUS "dir=${dir}")
+endforeach()
+
+
 
 #----------------------------------------------------------------------------
 # Copy all scripts to the build directory, i.e. the directory in which we

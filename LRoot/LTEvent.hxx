@@ -45,6 +45,7 @@ class LTEvent: public TNamed {
     Int_t nTrajArScint;
     Int_t nTrajWlsScint;
     Int_t nTrajGeHits;
+
     
     
     Int_t nCherenkov;

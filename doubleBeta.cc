@@ -42,7 +42,9 @@
 //#include "QBBC.hh"
 //#include "QGSP_BERT_HP.hh"
 
-#include "PhysicsList.hh"
+//#include "PhysicsList.hh"
+/* from MaGe */
+#include "processes/MGProcessesList.hh"
 
 #ifdef G4VIS_USE
 #include "G4VisExecutive.hh"
@@ -77,9 +79,8 @@ int main(int argc,char** argv)
   runManager->SetUserInitialization(detector);
 
   // Physics list
-  //  G4VModularPhysicsList* physicsList = new QGSP_BERT_HP;
-  //  physicsList->SetVerboseLevel(1);
-  PhysicsList* physicsList = new PhysicsList();
+  /******** from MaGe/processes/ ***********/
+  MGProcessesList* physicsList = new MGProcessesList();
   runManager->SetUserInitialization(physicsList);
 
   // Primary generator action

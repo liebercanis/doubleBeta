@@ -28,7 +28,9 @@
 /// \brief Definition of the UserTrackInformation class
 //
 #include "G4VUserTrackInformation.hh"
+#include "G4OpBoundaryProcess.hh"
 #include "globals.hh"
+#include <vector>
 
 #ifndef UserTrackInformation_h
 #define UserTrackInformation_h 1
@@ -93,16 +95,14 @@
 */
 enum TrackStatus { active=1, hitPMT=2, absorbed=4, boundaryAbsorbed=8,
                       absorbedLAr=16, inactive=32, hitWLS = 64, totalInternal=128, backScatter=256, notBoundary=512,
-                      scint=2*notBoundary, 
+                      fresnelReflect = 2*notBoundary,
+                      scint=2*fresnelReflect, 
                       eIoni=2*scint, 
                       hIoni=2*eIoni, 
                       ionIoni=2*hIoni,
                       compton= 2*ionIoni,
                       hitGe=2*compton, 
                       isBad=2*hitGe};
-
-
-enum TrackBit {MaxHistogramBit=18};
 
 class UserTrackInformation : public G4VUserTrackInformation
 {
@@ -111,9 +111,22 @@ class UserTrackInformation : public G4VUserTrackInformation
     UserTrackInformation();
     virtual ~UserTrackInformation();
 
-    void  SetBoundaryProcessStatus(int s){fBoundaryProcessStatus=s;}
-    G4int GetBoundaryProcessStatus(){return fBoundaryProcessStatus;}
+    void  SetProcessName(G4String name){fProcessName=name;}
+    G4String GetProcessName(){ return fProcessName;}
+    void  AddBoundaryProcessStatus(G4int s){ fBoundaryStatus.push_back(unsigned(s));}
+    G4int BoudaryStatusSize() { return G4int( fBoundaryStatus.size() ); }
+    G4int GetBoundaryProcessStatus(int i){return fBoundaryStatus[i];}
+    std::vector<int> GetBoundaryStatusVector() { return fBoundaryStatus; }
 
+    void  AddBoundaryName(G4String s){ fBoundaryName.push_back(std::string(s));}
+    std::string GetBoundaryName(int i){return fBoundaryName[i];}
+    std::vector<std::string> GetBoundaryNameVector() { return fBoundaryName; }
+    
+
+    void SetPreName( G4String name ) { fPreName = name;}
+    G4String GetPreName() { return fPreName;}
+    void SetPostName( G4String name ) { fPostName = name;}
+    G4String GetPostName() { return fPostName;}
 
     //Sets the track status to s (does not check validity of flags)
     void SetTrackStatusFlags(int s){fStatus=s;}
@@ -122,33 +135,20 @@ class UserTrackInformation : public G4VUserTrackInformation
     void AddTrackStatusFlag(int s);
  
     int GetTrackStatus()const {return fStatus;}
-
-    // just return first bit of interest for histograming
-    int GetTrackBit() const { 
-      //photon 
-      if(fStatus&hitPMT) return 1;
-      else if(fStatus&absorbed) return 2; 
-      else if(fStatus&boundaryAbsorbed) return 3;
-      else if(fStatus&absorbedLAr) return 4;
-      else if(fStatus&hitWLS) return 5;
-      else if(fStatus&totalInternal) return 6;
-      else if(fStatus&backScatter) return 7;
-      // ionization
-      else if(fStatus&hitGe) return 11;
-      else if(fStatus&eIoni) return 12;
-      else if(fStatus&hIoni) return 13;
-      else if(fStatus&ionIoni) return 14;
-      else if(fStatus&scint) return 15;
-      else if(fStatus&compton) return 16;
-      else if(fStatus&notBoundary) return 17;
-      else return MaxHistogramBit;
-    }
  
     void IncReflections(){fReflections++;}
     G4int GetReflectionCount()const {return fReflections;}
 
     void SetForceDrawTrajectory(G4bool b){fForcedraw=b;}
     G4bool GetForceDrawTrajectory(){return fForcedraw;}
+
+    void IncInToGe(){fInToGe++;}
+    void IncOutOfGe(){fOutOfGe++;}
+    G4int GetInToGe(){  return fInToGe;}
+    G4int GetOutOfGe(){ return fOutOfGe;}
+    void IncSpikeReflection(){++fSpikeReflection;}
+    G4int GetSpikeReflection(){ return fSpikeReflection;}
+    
 
     inline virtual void Print() const{};
 
@@ -160,11 +160,19 @@ class UserTrackInformation : public G4VUserTrackInformation
   private:
 
     G4int fStatus;
-    G4int fBoundaryProcessStatus;
     G4int fParentId;
     G4bool fPrimary;
     G4int  fReflections;
+    G4int fSpikeReflection;
     G4bool fForcedraw;
+    G4String fProcessName;
+    G4String fPreName;
+    G4String fPostName;
+    G4int fInToGe;
+    G4int fOutOfGe;
+    
+    std::vector<int> fBoundaryStatus;
+    std::vector<std::string> fBoundaryName;
 };
 
 #endif

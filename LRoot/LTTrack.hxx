@@ -11,6 +11,7 @@
 #include <vector>
 // LRoot classes
 //#include "LTPVertex.hxx"
+#include "TBits.h"
 
 using namespace std;
 
@@ -21,7 +22,7 @@ class LTTrack: public TNamed {
 	public:
 		LTTrack();
 		~LTTrack();
-
+    void setBits( TString pattern );
     void clear();
     void print();
     // data elements
@@ -30,7 +31,8 @@ class LTTrack: public TNamed {
     Int_t trkId;
     Int_t parentId;
     Int_t status;
-    Int_t boundaryStatus;
+    std::vector<Int_t> boundaryStatus;
+    std::vector<std::string> boundaryName;
     Int_t nstep;
     Int_t copy;
     Double_t length;
@@ -41,11 +43,17 @@ class LTTrack: public TNamed {
     Double_t trkTime; // time since track began, microseconds
     TVector3 position;
     TVector3 vertPosition;
+    TString process;
     TString physVolName;
     TString particleName;
+    TString preName;
+    TString postName;
+    Int_t nInToGe;
+    Int_t nOutOfGe;
+    Int_t nSpike;
     bool isLeaving;
 
-ClassDef(LTTrack,6)
+ClassDef(LTTrack,9)
 };
 #endif
 

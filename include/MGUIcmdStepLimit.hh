@@ -23,37 +23,26 @@
 // * acceptance of all terms of the Geant4 Software license.          *
 // ********************************************************************
 //
-// $Id: UserTrackInformation.cc 68752 2013-04-05 10:23:47Z gcosmo $
 //
-/// \file optical/Legend/src/UserTrackInformation.cc
-/// \brief Implementation of the UserTrackInformation class
+// $Id: MGUIcmdStepLimit.hh,v 1.1 2009-01-17 15:26:59 jasondet Exp $
+// GEANT4 tag $Name: not supported by cvs2svn $
 //
 //
-#include "UserTrackInformation.hh"
 
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+#ifndef MGUIcmdStepLimit_H
+#define MGUIcmdStepLimit_H 1
 
-UserTrackInformation::UserTrackInformation() 
-  : fStatus(active),fReflections(0),fForcedraw(false),fPrimary(false),fInToGe(0),fOutOfGe(0),fSpikeReflection(0) 
+#include "G4UIcommand.hh"
+
+// class description:
+
+class MGUIcmdStepLimit : public G4UIcommand
 {
-  fProcessName="";
-  fPreName="";
-  fPostName="";
-  fBoundaryStatus.clear();
-  fBoundaryName.clear();
-}
+  public: 
+    MGUIcmdStepLimit(const char* commandPath, G4UImessenger* messenger);
+    G4double GetStepSize(const char* paramString);
+    G4String GetParticleName(const char* paramString);
+    G4String GetVolumeName(const char* paramString);
+};
 
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
-UserTrackInformation::~UserTrackInformation() {}
-
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
-void UserTrackInformation::AddTrackStatusFlag(int s)
-{
-  if(s&active) //track is now active
-    fStatus&=~inactive; //remove any flags indicating it is inactive
-  else if(s&inactive) //track is now inactive
-    fStatus&=~active; //remove any flags indicating it is active
-  fStatus|=s; //add new flags
-}
+#endif

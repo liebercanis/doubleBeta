@@ -145,6 +145,11 @@ class DetectorConstruction : public G4VUserDetectorConstruction
     TH1F* hWLSPhotonWavelength;
     TH1F* hArPhotonE;
     TH1F* hArPhotonWavelength;
+    TH1F* hWlsEmission;
+    TH1F* hWlsAbsorption;
+    TH1F* hWlsRefraction;
+
+    
     
     G4String innerVessel_FillMaterial;
 

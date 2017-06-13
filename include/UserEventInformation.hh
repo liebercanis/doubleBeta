@@ -53,6 +53,7 @@ class UserEventInformation : public G4VUserEventInformation
     void IncAbsorption(){fAbsorptionCount++;}
     void IncBoundaryAbsorption(){fBoundaryAbsorptionCount++;}
     void IncHitCount(G4int i=1){fHitCount+=i;}
+     
 
     void SetEWeightPos(const G4ThreeVector& p){fEWeightPos=p;}
     void SetReconPos(const G4ThreeVector& p){fReconPos=p;}

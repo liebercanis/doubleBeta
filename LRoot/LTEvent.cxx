@@ -27,6 +27,7 @@ void LTEvent::clear()
   nCherenkov=0;
   nAbsorbed=0;
   nAbsorbedBoundary=0;
+  
 
   nTrajPmtHits=0;
   nTrajOptPhotons=0;

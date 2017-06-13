@@ -16,7 +16,8 @@ void LTTrack::clear()
   trkId=0;    // track id
   parentId=0;    // parent id
   status=0;
-  boundaryStatus=0;
+  boundaryStatus.clear();
+  boundaryName.clear();
   time=0; 
   trkTime=0;
   ke=0;
@@ -26,13 +27,21 @@ void LTTrack::clear()
   stepLength=0;
   position.Clear();
   vertPosition.Clear();
+  process.Clear();
   physVolName.Clear();
   particleName.Clear();
+  preName.Clear();
+  postName.Clear();
   copy=-1;
+  nInToGe=0;
+  nOutOfGe=0;
+  nSpike=0;
+  
   
 }
 void LTTrack::print(){
   printf(" ********************  LTTrack ********************* \n");
   printf(" \tevent  %i id %i parent %i step %i time %1.3E KE %1.3E \n",evId,trkId,parentId,nstep,time,ke);
+  printf(" \tOptical nInToGe %i nOutOfGe %i nSpike %i \n",nInToGe,nOutOfGe,nSpike);
   printf(" *************************************************** \n");
 }

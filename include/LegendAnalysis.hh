@@ -38,13 +38,28 @@ class LegendAnalysis
     TH1F *hPmtHits;
     TH1F *hEElectron;
     TH1F *hEGamma;
+    TH1F *hScintYield;
+    TH1F *hWlsYield;
     
  
   public:
     ~LegendAnalysis() {
-      printf(" LegendAnalysis:: number of entries in LegendAnalysis tree is %i \n",(int) fTree->GetEntries() );
+      printSummary();
+      // normalize histogram
+      bool ok = fHistFile->cd("OpBoundary");
+      if(ok) {
+        TH1F* hOptBoundary = (TH1F*) gDirectory->Get("OptBoundary"); 
+        TH1F* hOptBoundaryWeight = (TH1F*) gDirectory->Get("OptBoundaryWeight"); 
+        TH1F* hOptBoundaryAve = (TH1F*) gDirectory->Get("OptBoundaryAve"); 
+        for(unsigned ib=0; ib<hOptBoundary->GetNbinsX(); ++ib) {
+          G4int nbin = hOptBoundary->GetBinContent(ib);
+          if(nbin<1) continue;
+          G4double wbin = hOptBoundaryWeight->GetBinContent(ib);
+          hOptBoundaryAve->SetBinContent( ib,wbin/G4double(nbin) );
+        }
+      }
+      
       // Be careful when writing the final Tree header to the file!
-      fTreeFile = fTree->GetCurrentFile();
       fTreeFile->cd();
       G4cout<<" LegendAnalysis:  working root directory  is  "; fTreeFile->pwd();G4cout <<  G4endl; 
       fTreeFile->ls();
@@ -53,7 +68,6 @@ class LegendAnalysis
       fTreeFile->Write();
       G4cout<<" LegendAnalysis: fTreeFile->Close(); " << G4endl; 
       fTreeFile->Close();
-
       G4cout<<" LegendAnalysis: fHistFile->Write(); " << G4endl; 
       fHistFile->Write();
       G4cout<<" LegendAnalysis: fHistFile->Close(); " << G4endl; 
@@ -70,6 +84,7 @@ class LegendAnalysis
     void anaEvent(const G4Event* anEvent);
     void anaTrajectories(G4TrajectoryContainer* trajectoryContainer);
     LTEvent* getEvent() { return fEvent;}
+    void printSummary();
 }
       
     

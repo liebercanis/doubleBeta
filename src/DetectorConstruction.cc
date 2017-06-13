@@ -69,6 +69,10 @@ using namespace std;
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 const G4double DetectorConstruction::LambdaE = 2.0*TMath::Pi()*1.973269602e-16 * m * GeV;
+//const G4double DetectorConstruction::LambdaE = 2.0*TMath::Pi()*1.973269602e-10 * mm * MeV;// in default Mev-mm units
+
+const G4int numTPB =500;// 63;;
+
 DetectorConstruction::DetectorConstruction()
 : G4VUserDetectorConstruction()
 {
@@ -124,7 +128,7 @@ DetectorConstruction::DetectorConstruction()
   
   GeReflectivityFile->GetObject("Reflectivity_Ge",fGeOpticalSpec);//TODO Look at the name of the plot in the root file
   if(!fGeOpticalSpec)
-    G4cout<<"DetectorConstruction ERROR:: no graph for GE"<<G4endl;
+    G4cout<<"DetectorConstruction ERROR:: no graph for GE!!!!!!!!!!"<<G4endl;
   else
     G4cout<<"DetectorConstruction INFO:: Germanim Reflections imported"<<G4endl;
 
@@ -156,7 +160,14 @@ DetectorConstruction::DetectorConstruction()
   hWLSPhotonE = new TH1F("WLSPhotonE"," photon energy in WLS",100,WLSLowE,WLSHighE);
   hWLSPhotonWavelength = new TH1F("WLSPhotonWavelength"," photon Wavelength in WLS",100,LambdaE/WLSHighE,LambdaE/WLSLowE);
   hArPhotonE = new TH1F("ArPhotonE"," photon energy in LAr",100,ArLowE,ArHighE);
-  hArPhotonWavelength = new TH1F("ArPhotonWavelength"," photon Wavelength in LAr",100,LambdaE/ArHighE,LambdaE/ArLowE);  
+  hArPhotonWavelength = new TH1F("ArPhotonWavelength"," photon Wavelength in LAr",100,LambdaE/ArHighE,LambdaE/ArLowE);
+
+  hWlsEmission   = new TH1F("WlsEmission"," WLS emission ",numTPB,0,numTPB);
+  hWlsAbsorption = new TH1F("WlsAbsorption"," WLS absorption ",numTPB,0,numTPB);
+  hWlsRefraction = new TH1F("WlsRefraction"," WLS refraction ",numTPB,0,numTPB);
+
+  G4cout << " DetectorConstruction info lambda conversion factor =  " << LambdaE << " h_Planck*c_light = "  <<  h_Planck*c_light << " Mev-mm " << G4endl; 
+ 
 
 }
 
@@ -409,18 +420,14 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   logicalGeDet = new G4LogicalVolume(Det_solid,fGeMaterial/*mat_fill*/,"GeDetLogical");
   
   // place detectors in tubes
-  /*
   for(unsigned idet=0; idet < detPositions.size(); ++ idet) {
     //Added from MaGe
     new G4LogicalSkinSurface("Ge_Detector"+std::to_string(idet),logicalGeDet,fGeOpticalSurface);
-
     if(idet<detPositions.size()/2) 
       new G4PVPlacement (0,detRelPositions[idet],logicalGeDet,detNames[idet],group1Logical,false,detNumbers[idet],checkOverlaps);
-     else 
-      new G4PVPlacement (0,detRelPositions[idet],logicalGeDet,detNames[idet],group2Logical,false,detNumbers[idet],checkOverlaps);     
+    else 
+      new G4PVPlacement (0,detRelPositions[idet],logicalGeDet,detNames[idet],group2Logical,false,detNumbers[idet],checkOverlaps);
   }
-  */
-  
   /////////////WLS Cylinder around groupTubs, does not cover top or bottom, PMTs will do that below/////////////
   WLSHalfThickness = 0.05*mm;  // half thickness
   G4Tubs* WLSgroupTube = new G4Tubs("PMTgroupTube",grouprmax,grouprmax+WLSHalfThickness,groupzmax,0,twopi);
@@ -754,7 +761,6 @@ void DetectorConstruction::WLSOpticalProperties()
    // Now attach the optical properties to it.
    // Build table with photon energies
    
-   const G4int numTPB =500;// 63;;
    G4double HighETPB = LambdaE /(350*nanometer);
    G4double LowETPB = LambdaE /(650*nanometer);//(650*nanometer); //598
    G4double deeTPB = ((HighETPB - LowETPB) / ((G4double)(numTPB-1)));
@@ -763,12 +769,12 @@ void DetectorConstruction::WLSOpticalProperties()
    
    G4double WLS_absorption[numTPB];
    G4double WLS_emission[numTPB];
-   G4double Refraction[numTPB];
+   G4double WLS_refraction[numTPB];
    
    // make new table 
    tpbTable = new G4MaterialPropertiesTable();
    for (G4int ji=0;ji < numTPB; ji++) {
-     Refraction[ji] = 1.6; //this is just a guess
+     WLS_refraction[ji] = 1.15; //Lehnert_Dresden_PhDThesis-GeDet.pdf page 180
      // Should the TPB shift the Cherenkov light?
      // This makes a tail starting at 128 until the visible.
      if (LAr_SCPPTPB[ji] > 3.31*eV){// < 374.57 nm 
@@ -787,7 +793,13 @@ void DetectorConstruction::WLSOpticalProperties()
      }
    }
 
-   tpbTable->AddProperty("RINDEX",LAr_SCPPTPB,Refraction,numTPB);
+   for (G4int ji=0; ji<numTPB ;  ++ ji) {
+       hWlsEmission->SetBinContent(ji+1,WLS_emission[ji]);
+       hWlsAbsorption->SetBinContent(ji+1,WLS_absorption[ji]);
+       hWlsRefraction->SetBinContent(ji+1,WLS_refraction[ji]);
+   }
+
+   tpbTable->AddProperty("RINDEX",LAr_SCPPTPB,WLS_refraction,numTPB);
    tpbTable->AddProperty("WLSABSLENGTH",LAr_SCPPTPB,WLS_absorption,numTPB);
    tpbTable->AddProperty("WLSCOMPONENT",LAr_SCPPTPB,WLS_emission,numTPB);
    // From WArP
@@ -835,25 +847,38 @@ void DetectorConstruction::GeOpticalProperties()
   
   G4double NRGSpec[numGe];//if we are going to use the dumb names from MaGe then I get to use my dumb names too!
   G4double ReflectionSpec[numGe];
+
   G4double Efficiency[numGe];
 
+  G4double ReReflection[numGe];
+  G4double ImReflection[numGe];
+
+  G4cout<<"********  DetectorConstruction dump of GeMaterial Table " << G4endl;
   for(G4int i = 0; i < numGe ; i++) {
     NRGSpec[i] = LowEGe +( (G4double) i*deeGe );
     ReflectionSpec[i] = GeReflectionSpectrum( (LambdaE /NRGSpec[i])/nm );//in nm
-    Efficiency[i] = 0.;
-    if(GeDebug){
-      G4cout<<"DetectorConstruction::GeOpticalProperties()...Energy Spec = "<<NRGSpec[i]/eV<<G4endl;
-      G4cout<<"DetectorConstruction::GeOpticalProperties()...Wavelength Spec = "<<(LambdaE /NRGSpec[i])/nm<<G4endl;
-      G4cout<<"DetectorConstruction::GeOpticalProperties()...Reflection Spec = "<<ReflectionSpec[i]<<G4endl;
-    }
+    //ReReflection[i] = GeReflectionSpectrum( (LambdaE /NRGSpec[i])/nm );//function uses nm
+    //ImReflection[i]=0.5;
+    Efficiency[i] = 1.;
+    //if(GeDebug){
+      G4cout<<"\t GeOpticalProperties() bin " << i << " ...Energy Spec = "<<NRGSpec[i]/eV << 
+      " ...Wavelength Spec = "<<(LambdaE /NRGSpec[i])/nm<<
+      " ...Reflection REFLECTIVITY = "<<ReReflection[i] << G4endl;
+      //" ...Reflection Re = "<<ReReflection[i]<<
+      //" ... Im  = "<<ImReflection[i]<<G4endl;
+    //}
   }
-  GeMaterialTable->AddProperty("REFLECTION",NRGSpec,ReflectionSpec,numGe);
-  //GeMaterialTable->AddProperty("EFFICIENCY",NRGSpec,Efficiency,numGe);
+  GeMaterialTable->AddProperty("REFLECTIVITY",NRGSpec,ReflectionSpec,numGe);
+  //GeMaterialTable->AddProperty("REALRINDEX",NRGSpec, ReReflection, numGe); 
+  //GeMaterialTable->AddProperty("IMAGINARYRINDEX",NRGSpec, ImReflection, numGe); 
+  GeMaterialTable->AddProperty("EFFICIENCY",NRGSpec,Efficiency,numGe);
+
+  //GeMaterialTable->DumpTable();
   
-  fGeOpticalSurface = new G4OpticalSurface("Germanium surface");
-  
+  fGeOpticalSurface = new G4OpticalSurface("GermaniumDetSurface");
   fGeOpticalSurface->SetType(dielectric_metal);
-  fGeOpticalSurface->SetFinish(groundfrontpainted);
+  fGeOpticalSurface->SetModel(glisur);
+  fGeOpticalSurface->SetFinish(polished);
   fGeOpticalSurface->SetPolish(0.5);
 
   fGeOpticalSurface->SetMaterialPropertiesTable(GeMaterialTable);
@@ -882,7 +907,7 @@ void DetectorConstruction::CuOpticalProperties()
   G4double ReflectionSpec[numCu];
   for(G4int i = 0; i < numCu ; i++) {
     NRGSpec[i] = LowEGe +( (G4double) i*deeGe );
-    ReflectionSpec[i] = GeReflectionSpectrum( (LambdaE /NRGSpec[i])/nm );//in nm
+    ReflectionSpec[i] = CuReflectionSpectrum( (LambdaE /NRGSpec[i])/nm );//in nm
     if(CuDebug){
       G4cout<<"DetectorConstruction::CuOpticalProperties()...Energy Spec = "<<NRGSpec[i]/eV<<G4endl;
       G4cout<<"DetectorConstruction::CuOpticalProperties()...Wavelength Spec = "<<(LambdaE /NRGSpec[i])/nm<<G4endl;
@@ -890,7 +915,7 @@ void DetectorConstruction::CuOpticalProperties()
     }
   }
   
-  CuMaterialTable->AddProperty("REFLECTION",NRGSpec,ReflectionSpec,numCu);
+  CuMaterialTable->AddProperty("REFLECTIVITY",NRGSpec,ReflectionSpec,numCu);
   
   fCuOptSurface = new G4OpticalSurface("Cu surface");
   fCuOptSurface->SetType(dielectric_metal);
@@ -927,12 +952,19 @@ void DetectorConstruction::VM2000OpticalProperties()
       G4cout<<"DetectorConstruction::VM2000OpticalProperties()...Reflection Spec = "<<ReflectionSpec[i]<<G4endl;
     }
   }
-  VM2000MaterialTable->AddProperty("REFLECTION",NRGSpec,ReflectionSpec,numVM2000);
-  fVM2000OptSurface = new G4OpticalSurface("VM_surface");
+  VM2000MaterialTable->AddProperty("REFLECTIVITY",NRGSpec,ReflectionSpec,numVM2000);
+  fVM2000OptSurface = new G4OpticalSurface("VMOptSurface");
   fVM2000OptSurface->SetType(dielectric_dielectric);
   fVM2000OptSurface->SetFinish(polishedfrontpainted);
   fVM2000OptSurface->SetMaterialPropertiesTable(VM2000MaterialTable);
   fVM2000->SetMaterialPropertiesTable(VM2000MaterialTable);
+  G4cout<<"DetectorConstruction::VM2000OpticalProperties" << G4endl;
+  VM2000MaterialTable->DumpTable();
+  G4MaterialPropertyVector* PropertyPointer=NULL; 
+  PropertyPointer = VM2000MaterialTable->GetProperty("REFLECTIVITY");
+  if(PropertyPointer)  G4cout<<"DetectorConstruction::VM20000 property pointer found " << G4endl;
+  else G4cout<<"DetectorConstruction::VM20000 PROPERTY POINTER NOT FOUND " << G4endl;
+  
 }
 
 void DetectorConstruction::UpdateGeometry()

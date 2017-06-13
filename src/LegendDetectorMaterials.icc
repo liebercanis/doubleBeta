@@ -605,8 +605,7 @@
 	mat_ArLiq = new G4Material("ArgonLiquid", 1.3954*g/cm3, 1, kStateLiquid, 87.0*kelvin, 1.0*bar);
 	mat_ArLiq->AddElement(elAr,1);
 
-  ////////////////// Optical properties ///////////////////
-  /////////////////From Gerda /////////////////////////////
+  ////////////////// Some Optical properties... Cu, Ge in DetectorConstruction subroutines  /////////////////// 
   //PMT glass: Added by Neil
   const G4int num_entries = 24;
   G4double PMTGlassEnergy[num_entries] = {

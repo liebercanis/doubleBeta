@@ -1,9 +1,44 @@
-#include <TLorentzVector.h>
+//#include <TLorentzVector.h>
 #include <TVector3.h>
+
+enum G4OpBoundaryProcessStatus {  Undefined,
+                                  Transmission, FresnelRefraction,
+                                  FresnelReflection, TotalInternalReflection,
+                                  LambertianReflection, LobeReflection,
+                                  SpikeReflection, BackScattering,
+                                  Absorption, Detection, NotAtBoundary,
+                                  SameMaterial, StepTooSmall, NoRINDEX,
+                                  PolishedLumirrorAirReflection,
+                                  PolishedLumirrorGlueReflection,
+                                  PolishedAirReflection,
+                                  PolishedTeflonAirReflection,
+                                  PolishedTiOAirReflection,
+                                  PolishedTyvekAirReflection,
+                                  PolishedVM2000AirReflection,
+                                  PolishedVM2000GlueReflection,
+                                  EtchedLumirrorAirReflection,
+                                  EtchedLumirrorGlueReflection,
+                                  EtchedAirReflection,
+                                  EtchedTeflonAirReflection,
+                                  EtchedTiOAirReflection,
+                                  EtchedTyvekAirReflection,
+                                  EtchedVM2000AirReflection,
+                                  EtchedVM2000GlueReflection,
+                                  GroundLumirrorAirReflection,
+                                  GroundLumirrorGlueReflection,
+                                  GroundAirReflection,
+                                  GroundTeflonAirReflection,
+                                  GroundTiOAirReflection,
+                                  GroundTyvekAirReflection,
+                                  GroundVM2000AirReflection,
+                                  GroundVM2000GlueReflection,
+                                  Dichroic };
+
 
 enum TrackStatus { active=1, hitPMT=2, absorbed=4, boundaryAbsorbed=8,
                       absorbedLAr=16, inactive=32, hitWLS = 64, totalInternal=128, backScatter=256, notBoundary=512,
-                      scint=2*notBoundary, 
+                      fresnelReflect = 2*notBoundary,
+                      scint=2*fresnelReflect, 
                       eIoni=2*scint, 
                       hIoni=2*eIoni, 
                       ionIoni=2*hIoni,
@@ -13,8 +48,116 @@ enum TrackStatus { active=1, hitPMT=2, absorbed=4, boundaryAbsorbed=8,
 
 double hc=1.23984193E+3; // eV-nm  KE unit is eV
 
+TString bnames[Dichroic+1];
+
+int setBorderNames() 
+{
+  int in=0;
+  bnames[in++]="Undefined";   
+  bnames[in++]="Transmission";  
+  bnames[in++]="FresnelRefraction";
+  bnames[in++]="FresnelReflection";
+  bnames[in++]="TotalInternalReflection";
+  bnames[in++]= "LambertianReflection";
+  bnames[in++]="LobeReflection";
+  bnames[in++]="SpikeReflection";
+  bnames[in++]="BackScattering";
+  bnames[in++]="Absorption";
+  bnames[in++]="Detection";
+  bnames[in++]="NotAtBoundary";
+  bnames[in++]="SameMaterial";
+  bnames[in++]="StepTooSmall";
+  bnames[in++]="NoRINDEX";
+  bnames[in++]="PolishedLumirrorAirReflection";
+  bnames[in++]="PolishedLumirrorGlueReflection";
+  bnames[in++]="PolishedAirReflection";
+  bnames[in++]="PolishedTeflonAirReflection";
+  bnames[in++]="PolishedTiOAirReflection";
+  bnames[in++]="PolishedTyvekAirReflection";
+  bnames[in++]="PolishedVM2000AirReflection";
+  bnames[in++]="PolishedVM2000GlueReflection";
+  bnames[in++]="EtchedLumirrorAirReflection";
+  bnames[in++]="EtchedLumirrorGlueReflection";
+  bnames[in++]="EtchedAirReflection";
+  bnames[in++]="EtchedTeflonAirReflection";
+  bnames[in++]="EtchedTiOAirReflection";
+  bnames[in++]="EtchedTyvekAirReflection";
+  bnames[in++]="EtchedVM2000AirReflection";
+  bnames[in++]="EtchedVM2000GlueReflection";
+  bnames[in++]="GroundLumirrorAirReflection";
+  bnames[in++]="GroundLumirrorGlueReflection";
+  bnames[in++]="GroundAirReflection";
+  bnames[in++]="GroundTeflonAirReflection";
+  bnames[in++]="GroundTiOAirReflection";
+  bnames[in++]="GroundTyvekAirReflection";
+  bnames[in++]="GroundVM2000AirReflection";
+  bnames[in++]="GroundVM2000GlueReflection";
+  bnames[in++]="Dichroic";
+  return in;
+}
+
+TString tnames[20];
+
+int setTrackStatusNames()
+{
+  int in=0;
+  tnames[in++]="active";
+  tnames[in++]="hitPMT";
+  tnames[in++]="absorbed";
+  tnames[in++]="boundaryAbsorbed";
+  tnames[in++]="absorbedLAr";
+  tnames[in++]="inactive";
+  tnames[in++]="hitWLS";
+  tnames[in++]="totalInternal";
+  tnames[in++]="backScatter";
+  tnames[in++]="notBoundary";
+  tnames[in++]="fresnelReflect";
+  tnames[in++]="scint";
+  tnames[in++]="eIoni";
+  tnames[in++]="hIoni";
+  tnames[in++]="ionIoni";
+  tnames[in++]="compton";
+  tnames[in++]="hitGe";
+  tnames[in++]="isBad";
+  return in;
+}
+
+void calcRatio(double a, double b, double &r, double &e) 
+{
+  r=0; e=0;
+  if(b<1) return;
+  r=a/b;
+  // assume errors are root(n)A
+  e = r * sqrt( 1./a + 1./b );
+}
+
+void printTrackStatus(int in,int status)
+{
+  printf("track status \n");
+  for (int i=0; i< in; ++i) if( status& (1<<i) )  printf("\t bit %i %s \n",i,tnames[i].Data());
+}
+
+
+void printTrackStatusNames(int in)
+{
+  for (int i=0; i< in ; ++i) printf(" bit %i %s \n",i,tnames[i].Data());
+}
+
+
+
+void printBorderNames(int in)
+{
+  for (int i=0; i< in ; ++i) printf(" bit %i %s \n",i,bnames[i].Data());
+}
+
+int itnames=0;
+
 void anaTrk(TString tag = "2017-4-30-12-2-7")
 {
+  int inames =setBorderNames();
+  printBorderNames(inames);
+  itnames = setTrackStatusNames();
+  printTrackStatusNames(itnames);
   TString inputFileName = TString("legendTree-")+tag+TString(".root");
   printf(" opening file %s \n",inputFileName.Data()); 
   TFile *infile = new TFile(inputFileName,"READONLY");
@@ -37,8 +180,8 @@ void anaTrk(TString tag = "2017-4-30-12-2-7")
   TFile *outfile = new TFile(outputFileName,"recreate");
   printf(" opening output file %s \n",outputFileName.Data());
   // add histograms here
-  double rmax= 150;
-  double zmax= 150;
+  double rmax= 160;
+  double zmax= 160;
 
   double xoffset = 200;  // shift xrange -350,50 to -150,+150 
   double yoffset = 0;
@@ -51,36 +194,49 @@ void anaTrk(TString tag = "2017-4-30-12-2-7")
 
   TH1::SetDefaultSumw2(true); // turn on error bars 
 
-  TNtuple *ntele = new TNtuple("ntele","ntele","rvert:zvert:rele:zele:parent");
-  TNtuple *ntopt = new TNtuple("ntopt","ntopt","parent:rlog:rtrk:ztrk:lambda:length:time:lar:status");
+  TNtuple *ntele = new TNtuple("ntele","ntele","rvert:zvert:rele:zele:parent:ke");
+  TNtuple *ntopt = new TNtuple("ntopt","ntopt","rvert:zvert:parent:rlog:rtrk:ztrk:lambda:length:time:wls:lar:status:boundary");
 
-  TH1F *hLambda = new TH1F("Lambda"," Ar scint photon wavelength ",500,100,600);
+  TH1F *hLambdaLar = new TH1F("LambdaLar"," Ar scint photon absorbed in larPhysical wavelength ",500,100,600);
+  TH1F *hLambda = new TH1F("Lambda"," Ar scint photon absorbed wavelength ",500,100,600);
   TH1F *hLambdaWls = new TH1F("LambdaWls"," WLS photon wavelength ",500,100,600);
   TH1F *hLambdaOther = new TH1F("LambdaOther"," other photon wavelength ",500,100,600);
+
+  TH1F *hLambdaScint = new TH1F("LambdaScint"," all scint photons wavelength ",500,100,600);
+  TH1F *hLambdaPmt = new TH1F("LambdaPmt"," pmt detected photon wavelength ",500,100,600);
+  
   
 
   TH1F *hRvert = new TH1F("Rvert"," primary vertex radial position ",rmax/10,0,rmax);
   TH1F *hZvert = new TH1F("Zvert"," primary vertex z position ",zmax/5,-zmax,zmax);
-  TH1F *hRele = new TH1F("Rele"," electron radial position ",rmax/10,0,rmax);
+  TH1F *hRele = new TH1F("Rele"," electron radial position ",rmax/5,0,rmax);
   TH1F *hZele = new TH1F("Zele"," electron z position ",zmax/5,-zmax,zmax);
   TH1F *hRele0 = new TH1F("Rele0"," electron radial position ",rmax/10,0,rmax);
   TH1F *hZele0 = new TH1F("Zele0"," electron z position ",zmax/5,-zmax,zmax);
   TH1F *hRele1 = new TH1F("Rele1"," electron radial position ",rmax/10,0,rmax);
   TH1F *hZele1 = new TH1F("Zele1"," electron z position ",zmax/5,-zmax,zmax);
+
+  TH1F *hLambdaBoundAbs = new TH1F("LambdaBoundAbs"," photon boundary absorbed ",500,100,600);
+  TH1F *hRtrkBoundAbs = new TH1F("RtrkBoundAbs"," photon R boundary absorbed",rmax*5,0,rmax);
+  TH1F *hZtrkBoundAbs = new TH1F("ZtrkBoundAbs","  photon Z boundary absorbed",zmax*2,-zmax,zmax);
   
-  TH1F *hRtrkLar = new TH1F("RtrkLar"," radial position in larPhysical ",400,0,800);
-  TH1F *hZtrkLar = new TH1F("ZtrkLar"," z position larPhysical ",600,-600,600);
+  
+  
+  TH1F *hRtrkLar = new TH1F("RtrkLar"," radial position absorbed in larPhysical ",400,0,800);
+  TH1F *hZtrkLar = new TH1F("ZtrkLar"," z position absorbed larPhysical ",600,-600,600);
   
   TH1F *hRtrk = new TH1F("Rtrk"," radial position ",rmax*5,0,rmax);
   TH1F *hRtrkWls = new TH1F("RtrkWls"," radial position ",rmax*5,0,rmax);
+  TH1F *hRtrkPmt = new TH1F("RtrkPmt"," radial position ",rmax*5,0,rmax);
   TH1F *hRtrkOther = new TH1F("RtrkOther"," other radial position ",rmax*5,0,rmax);
 
   TH1F *hRScaled = new TH1F("RScaled"," (r/rmax)^2 ",1000,0,1);
   TH1F *hRScaledWls = new TH1F("RScaledWls"," (r/rmax)^2 ",1000,0,1);
   TH1F *hRScaledOther = new TH1F("RScaledOther"," (r/rmax)^2 ",1000,0,1);
-  TH1F *hZtrk = new TH1F("Ztrk"," z position ",1700,-zmax,zmax);
-  TH1F *hZtrkWls = new TH1F("ZtrkWls"," WLS z position ",1700,-zmax,zmax);
-  TH1F *hZtrkOther = new TH1F("ZtrkOther"," other z position ",1700,-zmax,zmax);
+  TH1F *hZtrk = new TH1F("Ztrk"," z position ",zmax*2,-zmax,zmax);
+  TH1F *hZtrkWls = new TH1F("ZtrkWls"," WLS z position ",zmax*2,-zmax,zmax);
+  TH1F *hZtrkPmt = new TH1F("ZtrkPmt"," PMT z position ",zmax*2,-zmax,zmax);
+  TH1F *hZtrkOther = new TH1F("ZtrkOther"," other z position ",zmax*2,-zmax,zmax);
 
   TH1F *hElectronStepLength =  new TH1F("ElectronStepLength"," e- step length (mm) ",1000,0,0.2);
   TH1F *hElectronStepEloss =  new TH1F("ElectronStepEloss"," e- step deposited energy (ev) ",200,0,20);
@@ -105,13 +261,18 @@ void anaTrk(TString tag = "2017-4-30-12-2-7")
   double fanoLAr = 0.1;
 
   //TString theName("");
-  for(unsigned entry =0; entry < aSize ; ++entry ) {
+  int barray[8]; // 64 bits
+  for(unsigned entry =0; entry < aSize  ; ++entry ) {
     trkTree->GetEntry(entry);
-    if(entry%100000==0) printf("\t entry %i %s %s\n",entry,trk->physVolName.Data(), trk->particleName.Data());
-    TVector3 position = trk->position;
-    TVector3 vposition = trk->vertPosition;
+    std::vector<int> boundaryStatus = trk->boundaryStatus;
     TString name = trk->particleName;
     TString volName = trk->physVolName.Data();
+    
+    if(entry%10000==0) printf("\t entry %i %s %s %s status %X boundary size  %lu \n",
+        entry,trk->physVolName.Data(), trk->process.Data(), trk->particleName.Data(),trk->status,boundaryStatus.size());
+    TVector3 position = trk->position;
+    TVector3 vposition = trk->vertPosition;
+
     
     /* for printing some names
     if(theName!=name)  {
@@ -156,9 +317,8 @@ void anaTrk(TString tag = "2017-4-30-12-2-7")
     hRvert->Fill(vradius);
     hZvert->Fill(zvert);
 
-
     if(name == TString("e-")) {
-      ntele->Fill(vradius,zvert,radius,zshift,double(trk->parentId));
+      ntele->Fill(vradius,zvert,radius,zshift,double(trk->parentId),trk->ke);
       hRele->Fill(radius);
       hZele->Fill(zshift);
       if(trk->parentId==0) {
@@ -172,35 +332,87 @@ void anaTrk(TString tag = "2017-4-30-12-2-7")
 
     // look at optical photons only
     if(name != TString("opticalphoton"))  continue;
+
+    bool trkback = status&backScatter;
+
+
+    //if( trkback!=boundback ) printf(" %i %i boundary %X status %X\n",boundback,trkback, trk->boundaryStatus,status);
+
+   // if(trk->boundaryStatus==11) printf(" boundary %X status %X\n",trk->boundaryStatus,status);
+   // if(status&backScatter)      printf(" is backscatter boundary %X status %X\n",trk->boundaryStatus,status);
     // remove backscatter
-    if(status&backScatter) continue;
+    //if(status&backScatter) continue;
 
     double lambda = hc/trk->ke;
     double flar = 0;
     if(volName==TString("larPhysical")) flar=1;
+    double fwls= 0; if(status&hitWLS) fwls=1;
     
-    ntopt->Fill(double(trk->parentId),position.Perp(),radius,zshift,lambda,trk->length,trk->time,flar,double(status));
+    ntopt->Fill(vradius,zvert,double(trk->parentId),position.Perp(),radius,zshift,
+        lambda,trk->length,trk->time,fwls,flar,double(status),double());
+
+    if(volName!=TString("larPhysical") && !(status&hitWLS) ) hLambdaScint->Fill(lambda); 
+
     if(volName==TString("larPhysical")) {
       hRtrkLar->Fill(radius);
       hZtrkLar->Fill(zshift);
-    } else {
+      hLambdaLar->Fill(lambda);
+    }
+    if(status&boundaryAbsorbed) {
+      hRtrkBoundAbs->Fill(radius);
+      hZtrkBoundAbs->Fill(zshift);
+      hLambdaBoundAbs->Fill(lambda);  
+    }
+
+    if(trk->nInToGe>0) {
+      printf(" *** Ge status %i pre/post %s / %s \n",status,trk->preName.Data(),trk->postName.Data());
+      printTrackStatus(itnames,status);
+      printf("     boundary size %lu \n", boundaryStatus.size() );
+      for(unsigned ib=0; ib< boundaryStatus.size(); ++ib ) 
+        printf("\t %i %i %s  pre %s   \n",ib, boundaryStatus[ib],bnames[boundaryStatus[ib]].Data(),trk->boundaryName[ib].c_str());
+      printf("\n");
+    }
+
+
+    if(volName!=TString("larPhysical")) {
       //if(!(status&scint&&status&absorbed)) {
-      if(status&hitWLS) {
+      if(status&hitPMT) {
+        hRtrkPmt->Fill(radius);
+        hZtrkPmt->Fill(zshift);
+        hLambdaPmt->Fill(lambda);
+      } else if(status&hitWLS) {
         hRtrkWls->Fill(radius);
         hRScaledWls->Fill(rscale) ;
-        hZtrkWls->Fill( zshift);
+        hZtrkWls->Fill(zshift);
         hLambdaWls->Fill(lambda);
-      } else if(status&absorbed) {
+      } else if(status&absorbed) {  // absorbed inside cylinder
+       if(entry%10000000==0) {
+          printf(" *** absorbed track status %i pre/post %s / %s \n",status,trk->preName.Data(),trk->postName.Data());
+          printTrackStatus(itnames,status);
+          printf("     boundary size %lu \n", boundaryStatus.size() );
+          for(unsigned ib=0; ib< boundaryStatus.size(); ++ib ) 
+            printf("\t %i %i %s     \n",ib, boundaryStatus[ib],bnames[boundaryStatus[ib]].Data());
+          printf("\n");
+        }
+        
         hLambda->Fill(lambda);
         hRtrk->Fill(radius);
         hRScaled->Fill(rscale);
         hZtrk->Fill( zshift);
      } else {
+        //bool test = (status&hitWLS)&&(status&backScatter);
+        if(entry%10000000==0) {
+          printf(" *** other track status %i pre/post %s / %s \n",status,trk->preName.Data(),trk->postName.Data());
+          printTrackStatus(itnames,status);
+          printf("     boundary size %lu \n", boundaryStatus.size() );
+          for(unsigned ib=0; ib< boundaryStatus.size(); ++ib ) 
+            printf("\t %i %i %s     \n",ib, boundaryStatus[ib],bnames[boundaryStatus[ib]].Data());
+        }
         hLambdaOther->Fill(lambda);
         hRtrkOther->Fill(radius);
         hRScaledOther->Fill(rscale);
         hZtrkOther->Fill( zshift);
-      }
+     }
       
     }
   }
@@ -208,7 +420,11 @@ void anaTrk(TString tag = "2017-4-30-12-2-7")
     // take square roots
   for(unsigned i1=0; i1<errorStepElectron.size(); ++i1) errorStepElectron[i1]=sqrt(errorStepElectron[i1]);
   for(unsigned i2=0; i2<errorStepOptical.size(); ++i2) errorStepOptical[i2]=sqrt(errorStepOptical[i2]);
-
+     
+  hLambdaOther->SetLineColor(kGreen);    
+  hRtrkOther->SetLineColor(kGreen); 
+  hRScaledOther->SetLineColor(kGreen); 
+  hZtrkOther->SetLineColor(kGreen); 
 
   hEStepElectron->SetError(&errorStepElectron[0]);
   hEStepOptical->SetError(&errorStepOptical[0]);
@@ -222,23 +438,46 @@ void anaTrk(TString tag = "2017-4-30-12-2-7")
   //hEStepOptical->Fit("expo");
   hEStepOptical->Draw();
 
+  TCanvas* crtrkLar= new TCanvas("RtrkLar","RtrkLar");
+  hRtrkLar->Draw();
+
+  TCanvas* cztrkLar= new TCanvas("ZtrkLar","ZtrkLar");
+  hZtrkLar->Draw(); 
+  
+
   TCanvas* crtrk= new TCanvas("Rtrk","Rtrk");
   hRtrkWls->SetLineColor(kRed);
   hRtrkWls->SetMarkerColor(kRed);
-  hRtrkWls->Draw(); hRtrk->Draw("sames"); 
+  hRtrkOther->Draw(); hRtrk->Draw("sames");  hRtrkWls->Draw("sames");  
 
   TCanvas* cztrk = new TCanvas("Ztrk","Ztrk");
   hZtrkWls->SetLineColor(kRed);
   hZtrkWls->SetMarkerColor(kRed);
-  hZtrkWls->Draw(); hZtrk->Draw("sames");
+  hZtrkWls->Draw(); hZtrk->Draw("sames"); hZtrkOther->Draw("sames");
+
   
 
   TCanvas* clambda = new TCanvas("lambda","lambda");
   hLambdaWls->SetLineColor(kRed);
   hLambdaWls->SetMarkerColor(kRed);
-  hLambdaWls->Draw(); hLambda->Draw("sames");
+  hLambdaWls->Draw(); hLambda->Draw("sames"); hLambdaOther->Draw("sames");
   
   
+  double intWls = hLambdaWls->Integral();
+  double intScint = hLambdaScint->Integral();
+  double intPmt = hLambdaPmt->Integral();
+  double intOther = hLambdaOther->Integral();
+
+  printf(" photon totals: scint %.0f WLS %.0f PMT %.0f other %.0f  \n",intScint,intWls,intPmt, intOther );
+
+  double pratio; double epratio; calcRatio(intPmt,intScint,pratio,epratio);
+  printf(" Pmt/Scint = %.3f +/- %.3f \n",pratio,epratio);
+  
+ double wratio; double ewratio; calcRatio(intWls,intScint,wratio,ewratio);
+  printf(" Wls/Scint = %.3f +/- %.3f \n",wratio,ewratio);
+
+ double oratio; double eoratio; calcRatio(intOther,intScint,oratio,eoratio);
+  printf(" Oth/Scint = %.3f +/- %.3f \n",oratio,eoratio);
 
 
   // end of ana 

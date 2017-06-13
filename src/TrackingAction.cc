@@ -39,6 +39,7 @@
 #include "G4Track.hh"
 #include "G4ParticleTypes.hh"
 #include "G4SystemOfUnits.hh"
+#include "TString.h"
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
@@ -66,7 +67,6 @@ TrackingAction::TrackingAction()
   hWLSPhotonE = new TH1F("WLSPhotonE"," WLS photon energy ",1000,LowWLS,HighWLS);
   hPMTPhotonE = new TH1F("PMTPhotonE"," WLS photon energy ",1000,LowWLS,HighWLS);
   hCherenkovPhotonE  = new TH1F("CherenkovPhotonE"," WLS photon energy ",1000,LowWLS,HighWLS);
-  hTrackStatus = new TH1F("TrackStatus"," track status ", TrackBit::MaxHistogramBit+1,0, TrackBit::MaxHistogramBit+1);
   
   // must be in top directory for ChangeFile to work
   LegendAnalysis::Instance()->topTreeDir()->cd();
@@ -138,7 +138,6 @@ void TrackingAction::PostUserTrackingAction(const G4Track* aTrack){
 
   if(aTrack->GetDefinition() ==G4OpticalPhoton::OpticalPhotonDefinition()){
     ++ltEvent->nOptPhotons;
-    hTrackStatus->Fill(trackInformation->GetTrackBit()); 
     
     hTrackPhotonE->Fill(kineticE);
     if(trackInformation->GetTrackStatus()&absorbed) hAbsorbedPhotonE->Fill(kineticE);
@@ -198,7 +197,8 @@ void TrackingAction::PostUserTrackingAction(const G4Track* aTrack){
   fLTTrack->trkId = aTrack->GetTrackID();
   fLTTrack->parentId = aTrack->GetParentID();
   fLTTrack->status=trackInformation->GetTrackStatus();
-  fLTTrack->boundaryStatus = trackInformation->GetBoundaryProcessStatus();
+  fLTTrack->process=trackInformation->GetProcessName();
+  fLTTrack->boundaryStatus = trackInformation->GetBoundaryStatusVector();
   fLTTrack->length=aTrack->GetTrackLength();
   fLTTrack->nstep=aTrack->GetCurrentStepNumber();
   fLTTrack->stepLength=aTrack->GetStepLength();
@@ -213,6 +213,14 @@ void TrackingAction::PostUserTrackingAction(const G4Track* aTrack){
   fLTTrack->ke=aTrack->GetKineticEnergy()/electronvolt;
   fLTTrack->edep=aTrack->GetStep()->GetTotalEnergyDeposit()/electronvolt;
   fLTTrack->particleName = aTrack->GetDefinition()->GetParticleName();
+  fLTTrack->preName = trackInformation->GetPreName();
+  fLTTrack->postName = trackInformation->GetPostName();
+  fLTTrack->nInToGe=trackInformation->GetInToGe();
+  fLTTrack->nOutOfGe=trackInformation->GetOutOfGe();
+  fLTTrack->nSpike=trackInformation->GetSpikeReflection();
+  fLTTrack->boundaryName = trackInformation->GetBoundaryNameVector();
+  
+  
   //fLTTrack->print();
   fTrackTree->Fill();
 }

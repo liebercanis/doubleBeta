@@ -68,6 +68,7 @@ G4VParticleChange* SpecialCuts::PostStepDoIt(
    aParticleChange.ProposeEnergy(0.) ;
    aParticleChange.ProposeLocalEnergyDeposit (aTrack.GetKineticEnergy()) ;
    aParticleChange.ProposeTrackStatus(fStopButAlive);
+   aParticleChange.DumpInfo();
    return &aParticleChange;
 }
 

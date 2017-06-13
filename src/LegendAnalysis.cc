@@ -66,6 +66,14 @@ void LegendAnalysis::Initialize()
   hEGamma->GetYaxis()->SetTitle(" gamma/KeV ");
   hEGamma->GetXaxis()->SetTitle(" energy (KeV) ");
 
+  hScintYield = new TH1F("ScintYield"," scint yield photons/kev ",1000,0,100);
+  hScintYield->GetYaxis()->SetTitle("  events ");
+  hScintYield->GetXaxis()->SetTitle("  photons/kev ");
+
+  hWlsYield = new TH1F("WlsYield"," wls yield photons/kev ",1000,0,100);
+  hWlsYield->GetYaxis()->SetTitle("  events ");
+  hWlsYield->GetXaxis()->SetTitle("  photons/kev ");
+
   topHistDir()->ls();
 
   fTreeFile->cd();
@@ -77,6 +85,14 @@ void LegendAnalysis::Initialize()
   fEvent = new LTEvent();
   fTree->Branch("event",&fEvent);
   topTreeDir()->ls();
+
+}
+
+void LegendAnalysis::printSummary() 
+{
+  G4cout << G4endl << " ************************************************************* " << G4endl;
+  G4cout << " LegendAnalysis summary : event entries " << fTree->GetEntries() << G4endl;
+  G4cout  << " ************************************************************* " << G4endl;
 
 }
     
@@ -117,7 +133,7 @@ void  LegendAnalysis::anaEvent( const G4Event *anEvent)
       part.Momentum.SetPxPyPzE( pvPart->GetPx(),pvPart->GetPy(),pvPart->GetPz(),pvPart->GetTotalEnergy());
       //part.print(ip);
       lpv.particle.push_back(part);
-      if(iv==0&&part.TrackId==1) {
+      if(iv==0&&part.TrackId==1) { 
         fEvent->PDG=part.PDG;
         fEvent->ePrimary = pvPart->GetKineticEnergy();
       }
@@ -125,11 +141,17 @@ void  LegendAnalysis::anaEvent( const G4Event *anEvent)
     //lpv.print(fEvent->evId);
     fEvent->pvertex.push_back(lpv);
   }
-  anaTrajectories( anEvent->GetTrajectoryContainer());
+  // plot yields
+  hScintYield->Fill( double(fEvent->nArScint) / (fEvent->ePrimary/keV) );
+  hWlsYield->Fill( double(fEvent->nWlsScint) / (fEvent->ePrimary/keV) );
 
+   //G4cout << " LegendAnalysis eprim " << fEvent->ePrimary/keV << " nscint " << fEvent->nArScint<< " nwls " <<fEvent->nWlsScint << 
+   //  " sint yield " << double(fEvent->nArScint) / (fEvent->ePrimary/keV) << " wls yield " << double(fEvent->nWlsScint) / (fEvent->ePrimary/keV) << G4endl;
+  //  anaTrajectories( anEvent->GetTrajectoryContainer());
+  
   // and end of analysis save this event
   //fEvent->print();
-  //fTree->Fill();
+  fTree->Fill();
   //printf(" +++++++++++++++++++ Leaving Legend Analysis +++++++++++++++++++++++++++++ \n");
 }
    
