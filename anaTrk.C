@@ -195,7 +195,7 @@ void anaTrk(TString tag = "2017-4-30-12-2-7")
   TH1::SetDefaultSumw2(true); // turn on error bars 
 
   TNtuple *ntele = new TNtuple("ntele","ntele","rvert:zvert:rele:zele:parent:ke");
-  TNtuple *ntopt = new TNtuple("ntopt","ntopt","rvert:zvert:parent:rlog:rtrk:ztrk:lambda:length:time:wls:lar:status:boundary");
+  TNtuple *ntopt = new TNtuple("ntopt","ntopt","rvert:zvert:parent:rlog:rtrk:ztrk:lambda:length:time:fstat:lar:status:boundary");
 
   TH1F *hLambdaLar = new TH1F("LambdaLar"," Ar scint photon absorbed in larPhysical wavelength ",500,100,600);
   TH1F *hLambda = new TH1F("Lambda"," Ar scint photon absorbed wavelength ",500,100,600);
@@ -265,9 +265,13 @@ void anaTrk(TString tag = "2017-4-30-12-2-7")
   for(unsigned entry =0; entry < aSize  ; ++entry ) {
     trkTree->GetEntry(entry);
     std::vector<int> boundaryStatus = trk->boundaryStatus;
+    int boundaryLast = 0;
+    if(boundaryStatus.size()>0) boundaryLast = boundaryStatus[boundaryStatus.size()-1];
     TString name = trk->particleName;
     TString volName = trk->physVolName.Data();
-    
+   
+    bool printOut=false;
+    if(entry%100000==0) printOut=true;
     if(entry%10000==0) printf("\t entry %i %s %s %s status %X boundary size  %lu \n",
         entry,trk->physVolName.Data(), trk->process.Data(), trk->particleName.Data(),trk->status,boundaryStatus.size());
     TVector3 position = trk->position;
@@ -346,10 +350,13 @@ void anaTrk(TString tag = "2017-4-30-12-2-7")
     double lambda = hc/trk->ke;
     double flar = 0;
     if(volName==TString("larPhysical")) flar=1;
-    double fwls= 0; if(status&hitWLS) fwls=1;
+    double fstat= 0; 
+    if(status&absorbed) fstat = double(absorbed);
+    if(status&hitWLS) fstat = double(hitWLS);
+    if(status&hitPMT) fstat  = double(hitPMT);
     
     ntopt->Fill(vradius,zvert,double(trk->parentId),position.Perp(),radius,zshift,
-        lambda,trk->length,trk->time,fwls,flar,double(status),double());
+        lambda,trk->length,trk->time,fstat,flar,double(status),double(boundaryLast));
 
     if(volName!=TString("larPhysical") && !(status&hitWLS) ) hLambdaScint->Fill(lambda); 
 
@@ -364,7 +371,7 @@ void anaTrk(TString tag = "2017-4-30-12-2-7")
       hLambdaBoundAbs->Fill(lambda);  
     }
 
-    if(trk->nInToGe>0) {
+    if(trk->nInToGe>0&&printOut) {
       printf(" *** Ge status %i pre/post %s / %s \n",status,trk->preName.Data(),trk->postName.Data());
       printTrackStatus(itnames,status);
       printf("     boundary size %lu \n", boundaryStatus.size() );
@@ -386,7 +393,7 @@ void anaTrk(TString tag = "2017-4-30-12-2-7")
         hZtrkWls->Fill(zshift);
         hLambdaWls->Fill(lambda);
       } else if(status&absorbed) {  // absorbed inside cylinder
-       if(entry%10000000==0) {
+       if(printOut) {
           printf(" *** absorbed track status %i pre/post %s / %s \n",status,trk->preName.Data(),trk->postName.Data());
           printTrackStatus(itnames,status);
           printf("     boundary size %lu \n", boundaryStatus.size() );
@@ -401,7 +408,7 @@ void anaTrk(TString tag = "2017-4-30-12-2-7")
         hZtrk->Fill( zshift);
      } else {
         //bool test = (status&hitWLS)&&(status&backScatter);
-        if(entry%10000000==0) {
+        if(printOut) {
           printf(" *** other track status %i pre/post %s / %s \n",status,trk->preName.Data(),trk->postName.Data());
           printTrackStatus(itnames,status);
           printf("     boundary size %lu \n", boundaryStatus.size() );
