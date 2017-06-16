@@ -152,6 +152,7 @@ void LegendParticleSource::GeneratePrimaryVertex(G4Event *evt)
       GeneratePointsInVolume();
     else if(SourcePosType == "GeSurface"){
       GeneratePointsOnGeSurface();
+      srcconf == true;
     }
     else {
       G4cout << " LegendParticleSource **** Error: SourcePosType undefined" << G4endl;
@@ -323,7 +324,7 @@ void LegendParticleSource::GeneratePointsOnGeSurface()
   centerVector = thePhysicalVolume->GetTranslation(); // absolute position of the center of this phyisical volume
   //List of physical volumes
   G4PhysicalVolumeStore* theStore = G4PhysicalVolumeStore::GetInstance();
-  G4double delta = 1.0e-6;//0.001; 
+  G4double delta = 1.0e-9;//0.001; 
   int debugCounter = 0;
   bool isInside = false;
   while(!isInside){
@@ -343,7 +344,7 @@ void LegendParticleSource::GeneratePointsOnGeSurface()
      G4ThreeVector rTrans = pvol->GetObjectTranslation();//Returns Translation Relative to the mother
      
      //if point is exaclty on the surface, it will be in the detector and not contained
-     particle_position = rSurf + rTrans + delta*rSurfNormal + centerVector;      
+     particle_position = rSurf + rTrans + /*delta*rSurfNormal +*/ centerVector;      
      if(pvol->GetMotherLogical()->GetName() == thePhysicalVolume->GetLogicalVolume()->GetName()){
        isInside = true;
      }
@@ -473,7 +474,7 @@ void LegendParticleSource::SetMomentumIntoGeSurface()
     
     G4double dot = -rSurfNormal.getX()*RotatedVector.getX()-rSurfNormal.getY()*RotatedVector.getY()-rSurfNormal.getZ()*RotatedVector.getZ();
     dotAngle = acos(dot/(magA*magB));
-    //G4cout<<" \t Dot produce test magA "<<magA<<", magB "<<magB<<", dot "<<dot<<", theta "<< dotAngle <<G4endl;
+    G4cout<<" \t Dot produce test magA "<<magA<<", magB "<<magB<<", dot "<<dot<<", theta "<< dotAngle <<G4endl;
   }
   
   particle_momentum_direction.setX(RotatedVector.getX());
