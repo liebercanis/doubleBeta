@@ -77,8 +77,8 @@ PhysicsList::PhysicsList() : G4VUserPhysicsList()
   cutForElectron      = 1.0*nanometer;
   cutForPositron      = defaultCutValue;
 
-  VerboseLevel = 1;
-  OpVerbLevel = 1;
+  VerboseLevel = 0;
+  OpVerbLevel = 0;
 
   SetVerboseLevel(VerboseLevel);
 }

@@ -42,7 +42,7 @@
 //#include "QBBC.hh"
 //#include "QGSP_BERT_HP.hh"
 
-//#include "PhysicsList.hh"
+#include "PhysicsList.hh"
 /* from MaGe */
 #include "processes/MGProcessesList.hh"
 
@@ -71,6 +71,7 @@ int main(int argc,char** argv)
   // Construct the default run manager
   //
   G4RunManager * runManager = new G4RunManager;
+  runManager->SetVerboseLevel(0);
 
   // Set mandatory initialization classes
   //
@@ -80,8 +81,11 @@ int main(int argc,char** argv)
 
   // Physics list
   /******** from MaGe/processes/ ***********/
-  MGProcessesList* physicsList = new MGProcessesList();
+  //MGProcessesList* physicsList = new MGProcessesList();
+  //runManager->SetUserInitialization(physicsList);
+  PhysicsList* physicsList = new PhysicsList();
   runManager->SetUserInitialization(physicsList);
+
 
   // Primary generator action
   PrimaryGeneratorAction* gen_action = new PrimaryGeneratorAction();

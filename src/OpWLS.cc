@@ -115,7 +115,7 @@ OpWLS::PostStepDoIt(const G4Track& aTrack, const G4Step& aStep)
   
   aParticleChange.ProposeTrackStatus(fStopAndKill);
 
-  if (verboseLevel>0) {
+  if (0) {
     G4cout << "\n** Photon absorbed! **" << G4endl;
   }
   

@@ -152,14 +152,14 @@ void LegendParticleSource::GeneratePrimaryVertex(G4Event *evt)
       GeneratePointsInVolume();
     else if(SourcePosType == "GeSurface"){
       GeneratePointsOnGeSurface();
-      srcconf == true;
+      srcconf = true;
     }
     else {
       G4cout << " LegendParticleSource **** Error: SourcePosType undefined" << G4endl;
       G4cout << "Generating point source" << G4endl;
       GeneratePointSource();
     }
-    if(Confine == true) {
+    if(Confine == true&&srcconf==false) {
       srcconf = IsSourceConfined();
       // if source in confined srcconf = true terminating the loop
       // if source isnt confined srcconf = false and loop continues
@@ -168,7 +168,7 @@ void LegendParticleSource::GeneratePrimaryVertex(G4Event *evt)
       srcconf = true; // terminate loop
     
     LoopCount++;
-    if(LoopCount == 100000) {
+    if(LoopCount > 100000) {
       G4cout << " LegendParticleSource *************************************" << G4endl;
         G4cout << "LoopCount = 100000" << G4endl;
         G4cout << "Either the source distribution >> confinement" << G4endl;
@@ -474,7 +474,6 @@ void LegendParticleSource::SetMomentumIntoGeSurface()
     
     G4double dot = -rSurfNormal.getX()*RotatedVector.getX()-rSurfNormal.getY()*RotatedVector.getY()-rSurfNormal.getZ()*RotatedVector.getZ();
     dotAngle = acos(dot/(magA*magB));
-    G4cout<<" \t Dot produce test magA "<<magA<<", magB "<<magB<<", dot "<<dot<<", theta "<< dotAngle <<G4endl;
   }
   
   particle_momentum_direction.setX(RotatedVector.getX());
