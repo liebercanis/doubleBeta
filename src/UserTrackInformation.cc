@@ -41,6 +41,8 @@ UserTrackInformation::UserTrackInformation()
   fPostName="";
   fBoundaryStatus.clear();
   fBoundaryName.clear();
+  fPositionHistory.clear();
+  fPositionEnergy.clear();
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

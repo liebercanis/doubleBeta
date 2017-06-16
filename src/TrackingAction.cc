@@ -113,8 +113,8 @@ void TrackingAction::PostUserTrackingAction(const G4Track* aTrack){
   trajectory->SetDrawTrajectory(false);
   UserTrackInformation* trackInformation=(UserTrackInformation*) aTrack->GetUserInformation();
   
-  
   //LegendAnalysis::Instance()->FillTrajectory(trajectory);
+
   G4double kineticE = aTrack->GetKineticEnergy();//Returns energy in MeV
   
   trajectory->SetParentId(trackInformation->GetParentId());
@@ -187,6 +187,7 @@ void TrackingAction::PostUserTrackingAction(const G4Track* aTrack){
   G4StepPoint* nextPoint    = aTrack->GetStep()->GetPostStepPoint();
   //G4VTouchable and its derivates keep these geometrical informations. We retrieve a touchable by creating a handle for it:
   G4TouchableHandle ctouch = currentPoint->GetTouchableHandle();
+  fLTTrack->clear(); // this is needed because of push_backs below 
   fLTTrack->physVolName = ctouch->GetVolume()->GetName();
   fLTTrack->copy = ctouch->GetCopyNumber();
 
@@ -195,6 +196,7 @@ void TrackingAction::PostUserTrackingAction(const G4Track* aTrack){
   
   fLTTrack->evId = G4EventManager::GetEventManager()->GetConstCurrentEvent()->GetEventID();
   fLTTrack->trkId = aTrack->GetTrackID();
+  fLTTrack->pdg = aTrack->GetDefinition()->GetPDGEncoding();
   fLTTrack->parentId = aTrack->GetParentID();
   fLTTrack->status=trackInformation->GetTrackStatus();
   fLTTrack->process=trackInformation->GetProcessName();
@@ -206,7 +208,7 @@ void TrackingAction::PostUserTrackingAction(const G4Track* aTrack){
   fLTTrack->position.SetXYZ(trkPos.x(),trkPos.y(),trkPos.z());
   G4ThreeVector vertPos = aTrack->GetVertexPosition(); 
   fLTTrack->vertPosition.SetXYZ(vertPos.x(),vertPos.y(),vertPos.z());
-  // Global time (time since the current event began)
+   // Global time (time since the current event began)
   fLTTrack->time=aTrack->GetGlobalTime()/microsecond;
   // Local time (time since the current track began)
   fLTTrack->trkTime=aTrack->GetLocalTime()/microsecond;
@@ -219,10 +221,20 @@ void TrackingAction::PostUserTrackingAction(const G4Track* aTrack){
   fLTTrack->nOutOfGe=trackInformation->GetOutOfGe();
   fLTTrack->nSpike=trackInformation->GetSpikeReflection();
   fLTTrack->boundaryName = trackInformation->GetBoundaryNameVector();
+
+  // add postion and energy history
+  for(unsigned istep =0; istep<  trackInformation->GetPositionHistoryVector().size(); ++istep){
+    G4ThreeVector pos = trackInformation->GetPositionHistory(istep);
+    fLTTrack->addPositionHistory(pos.x(),pos.y(),pos.z());
+  }
+  for(unsigned istep =0; istep<  trackInformation->GetPositionEnergyVector().size(); ++istep){
+    G4double posEnergy = trackInformation->GetPositionEnergy(istep)/electronvolt;  // convert to eV
+    fLTTrack->positionEnergy.push_back(posEnergy);
+  }
   
   
   //fLTTrack->print();
   fTrackTree->Fill();
-}
+ }
 
 

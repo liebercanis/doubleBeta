@@ -32,6 +32,8 @@
 #define SteppingAction_h 1
 #include "LegendAnalysis.hh"
 
+#include "LegendAnalysis.hh"
+#include "LTTrack.hxx"
 #include "G4UserSteppingAction.hh"
 #include "G4OpBoundaryProcess.hh"
 

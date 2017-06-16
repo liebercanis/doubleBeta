@@ -83,6 +83,7 @@ class UserEventInformation : public G4VUserEventInformation
 
     void IncPMTSAboveThreshold(){fPMTsAboveThreshold++;}
     G4int GetPMTSAboveThreshold(){return fPMTsAboveThreshold;}
+    
 
   private:
 

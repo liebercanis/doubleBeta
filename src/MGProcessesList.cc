@@ -261,11 +261,13 @@ void MGProcessesList::ConstructProcess()
   //EM Physics
   if (useLowE) 	    
     {
+      G4cout  << "Using Livermore/LowEnergy electromagnetic physics" << G4endl;	  
       MGLog(trace) << "Using Livermore/LowEnergy electromagnetic physics" << endlog;	  
       fEMConstructor = new G4EmLivermorePhysics();
     }
   else
     {
+      G4cout << "Using Standard electromagnetic physics" << G4endl;
       MGLog(trace) << "Using Standard electromagnetic physics" << endlog;
       fEMConstructor = new G4EmStandardPhysics();
     }

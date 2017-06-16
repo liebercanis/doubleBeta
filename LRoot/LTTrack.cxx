@@ -10,14 +10,19 @@ LTTrack::~LTTrack()
 {
 }
 
+void LTTrack::addPositionHistory( Double_t px, Double_t py, Double_t pz) 
+{
+  TVector3 p(px,py,pz);
+  positionHistory.push_back(p);
+}
+
 void LTTrack::clear()
 {
   evId=0;    // event id
   trkId=0;    // track id
+  pdg=0;
   parentId=0;    // parent id
   status=0;
-  boundaryStatus.clear();
-  boundaryName.clear();
   time=0; 
   trkTime=0;
   ke=0;
@@ -26,6 +31,8 @@ void LTTrack::clear()
   nstep=0;
   stepLength=0;
   position.Clear();
+  positionHistory.clear();
+  positionEnergy.clear();
   vertPosition.Clear();
   process.Clear();
   physVolName.Clear();
@@ -36,7 +43,12 @@ void LTTrack::clear()
   nInToGe=0;
   nOutOfGe=0;
   nSpike=0;
-  
+
+  // std vector clears
+  boundaryStatus.clear();
+  boundaryName.clear();
+  positionHistory.clear();
+  positionEnergy.clear();
   
 }
 void LTTrack::print(){

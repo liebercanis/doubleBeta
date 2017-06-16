@@ -196,6 +196,7 @@ void anaTrk(TString tag = "2017-4-30-12-2-7")
 
   TNtuple *ntele = new TNtuple("ntele","ntele","rvert:zvert:rele:zele:parent:ke");
   TNtuple *ntopt = new TNtuple("ntopt","ntopt","rvert:zvert:parent:rlog:rtrk:ztrk:lambda:length:time:fstat:lar:status:boundary");
+  TNtuple *ntpos = new TNtuple("ntpos","start-end","rstart:xstart:ystart:zstart:rend:xend:yend:zend:wstart:length:fstat:lar:boundary");
 
   TH1F *hLambdaLar = new TH1F("LambdaLar"," Ar scint photon absorbed in larPhysical wavelength ",500,100,600);
   TH1F *hLambda = new TH1F("Lambda"," Ar scint photon absorbed wavelength ",500,100,600);
@@ -220,6 +221,15 @@ void anaTrk(TString tag = "2017-4-30-12-2-7")
   TH1F *hRtrkBoundAbs = new TH1F("RtrkBoundAbs"," photon R boundary absorbed",rmax*5,0,rmax);
   TH1F *hZtrkBoundAbs = new TH1F("ZtrkBoundAbs","  photon Z boundary absorbed",zmax*2,-zmax,zmax);
   
+  TH1F *hRtrkStart = new TH1F("RtrkStart"," radial start position  ",rmax*5,0,rmax);
+  TH1F *hZtrkStart = new TH1F("ZtrkStart"," z start position  ",zmax*2,-zmax,zmax);
+  hRtrkStart->SetMarkerColor(kBlue); hZtrkStart->SetMarkerColor(kBlue);
+  hRtrkStart->SetMarkerStyle(22); hZtrkStart->SetMarkerStyle(22);
+
+  TH1F *hRtrkEnd = new TH1F("RtrkEnd"," radial end position  ",rmax*5,0,rmax);
+  TH1F *hZtrkEnd = new TH1F("ZtrkEnd"," z end position  ",zmax*2,-zmax,zmax);
+  hRtrkEnd->SetMarkerColor(kRed); hZtrkEnd->SetMarkerColor(kRed);
+  hRtrkEnd->SetMarkerStyle(23); hZtrkEnd->SetMarkerStyle(23);
   
   
   TH1F *hRtrkLar = new TH1F("RtrkLar"," radial position absorbed in larPhysical ",400,0,800);
@@ -264,8 +274,11 @@ void anaTrk(TString tag = "2017-4-30-12-2-7")
   int barray[8]; // 64 bits
   for(unsigned entry =0; entry < aSize  ; ++entry ) {
     trkTree->GetEntry(entry);
+    unsigned  nhistory = trk->positionHistory.size();
+    // what are the tracks with nhistory=0?
+    if(nhistory<1) continue;
     std::vector<int> boundaryStatus = trk->boundaryStatus;
-    int boundaryLast = 0;
+    int boundaryLast=0;
     if(boundaryStatus.size()>0) boundaryLast = boundaryStatus[boundaryStatus.size()-1];
     TString name = trk->particleName;
     TString volName = trk->physVolName.Data();
@@ -317,10 +330,8 @@ void anaTrk(TString tag = "2017-4-30-12-2-7")
     double yvert = vposition.Y()+yvoffset;
     double zvert = vposition.Z()+zvoffset;
     double vradius = sqrt(xvert*xvert+yvert*yvert);
-    
-    hRvert->Fill(vradius);
-    hZvert->Fill(zvert);
 
+  
     if(name == TString("e-")) {
       ntele->Fill(vradius,zvert,radius,zshift,double(trk->parentId),trk->ke);
       hRele->Fill(radius);
@@ -357,6 +368,38 @@ void anaTrk(TString tag = "2017-4-30-12-2-7")
     
     ntopt->Fill(vradius,zvert,double(trk->parentId),position.Perp(),radius,zshift,
         lambda,trk->length,trk->time,fstat,flar,double(status),double(boundaryLast));
+
+  // start of track
+    if(nhistory>0) {
+      TVector3 pstart = trk->positionHistory[0];
+      double estart = trk->positionEnergy[0];
+      double wstart = hc/estart;
+      
+      double xstart = pstart.X()+xoffset;
+      double ystart = pstart.Y()+yoffset;
+      double zstart = pstart.Z()+zoffset;
+      double rstart = sqrt(xstart*xstart+ystart*ystart);
+      hRtrkStart->Fill(rstart);
+      hZtrkStart->Fill(zstart);
+
+      TVector3 pend = trk->positionHistory[nhistory-1];
+      double eend = trk->positionEnergy[nhistory-1];
+      double wend = hc/eend;
+      double xend = pend.X()+xoffset;
+      double yend = pend.Y()+yoffset;
+      double zend = pend.Z()+zoffset;
+      double rend = sqrt(xend*xend+yend*yend);
+      hRtrkEnd->Fill(rend);
+      hZtrkEnd->Fill(zend);
+      ntpos->Fill(rstart,xstart,ystart,zstart,rend,xend,yend,zend,wstart,trk->length,fstat,flar,double(boundaryLast));
+      
+
+    } else
+      printf(" \t >>>>>> nhistory = %u \n",nhistory);
+       
+    hRvert->Fill(vradius);
+    hZvert->Fill(zvert);
+    
 
     if(volName!=TString("larPhysical") && !(status&hitWLS) ) hLambdaScint->Fill(lambda); 
 
@@ -489,4 +532,7 @@ void anaTrk(TString tag = "2017-4-30-12-2-7")
 
   // end of ana 
   outfile->Write();
+
+  // report status words
+  printf("\t fstat values: absorbed %i hitWLS %i hitPMT %i \n",absorbed,hitWLS,hitPMT);
 }

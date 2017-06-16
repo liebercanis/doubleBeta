@@ -113,15 +113,7 @@ class UserTrackInformation : public G4VUserTrackInformation
 
     void  SetProcessName(G4String name){fProcessName=name;}
     G4String GetProcessName(){ return fProcessName;}
-    void  AddBoundaryProcessStatus(G4int s){ fBoundaryStatus.push_back(unsigned(s));}
-    G4int BoudaryStatusSize() { return G4int( fBoundaryStatus.size() ); }
-    G4int GetBoundaryProcessStatus(int i){return fBoundaryStatus[i];}
-    std::vector<int> GetBoundaryStatusVector() { return fBoundaryStatus; }
-
-    void  AddBoundaryName(G4String s){ fBoundaryName.push_back(std::string(s));}
-    std::string GetBoundaryName(int i){return fBoundaryName[i];}
-    std::vector<std::string> GetBoundaryNameVector() { return fBoundaryName; }
-    
+       
 
     void SetPreName( G4String name ) { fPreName = name;}
     G4String GetPreName() { return fPreName;}
@@ -157,6 +149,28 @@ class UserTrackInformation : public G4VUserTrackInformation
     void SetParentId( G4int id) { fParentId = id;}
     G4int GetParentId() { return fParentId;}
 
+    // vectors for step by step info
+    void  AddBoundaryProcessStatus(G4int s){ fBoundaryStatus.push_back(s);}
+    G4int BoudaryStatusSize() { return G4int( fBoundaryStatus.size() ); }
+    G4int GetBoundaryProcessStatus(int i){return fBoundaryStatus[i];}
+    std::vector<int> GetBoundaryStatusVector() { return fBoundaryStatus; }
+
+    void  AddBoundaryName(G4String s){ fBoundaryName.push_back(std::string(s));}
+    std::string GetBoundaryName(int i){return fBoundaryName[i];}
+    std::vector<std::string> GetBoundaryNameVector() { return fBoundaryName; }
+
+    G4int GetPositionHistorySize( G4ThreeVector p) { return G4int(fPositionHistory.size());}
+    void AddPositionHistory( G4ThreeVector p) { fPositionHistory.push_back(p);}
+    G4ThreeVector GetPositionHistory(G4int i) { return fPositionHistory[i];}
+    std::vector<G4ThreeVector> GetPositionHistoryVector() { return fPositionHistory; }
+
+    void  AddPositionEnergy(G4double e ){ fPositionEnergy.push_back(e);}
+    G4double GetPositionEnergy(int i){return fPositionEnergy[i];}
+    std::vector<G4double> GetPositionEnergyVector() { return fPositionEnergy; }
+    
+
+    
+
   private:
 
     G4int fStatus;
@@ -170,9 +184,11 @@ class UserTrackInformation : public G4VUserTrackInformation
     G4String fPostName;
     G4int fInToGe;
     G4int fOutOfGe;
-    
+    G4ThreeVector position; // end of track 
     std::vector<int> fBoundaryStatus;
     std::vector<std::string> fBoundaryName;
+    std::vector<G4ThreeVector> fPositionHistory;
+    std::vector<G4double> fPositionEnergy;
 };
 
 #endif

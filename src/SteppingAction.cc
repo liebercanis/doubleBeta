@@ -74,7 +74,6 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
   if(process) processName = process->GetProcessName();
 
 
-
   
 
   /*************************************
@@ -84,6 +83,8 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
   if ( aTrack->GetCurrentStepNumber() == 1 ) fExpectedNextStatus = Undefined;
   UserTrackInformation* trackInformation = (UserTrackInformation*) aTrack->GetUserInformation();
   UserEventInformation* eventInformation = (UserEventInformation*)G4EventManager::GetEventManager()->GetConstCurrentEvent()->GetUserInformation();
+
+  
 
   G4StepPoint* thePrePoint = step->GetPreStepPoint();
   G4VPhysicalVolume* thePrePV = thePrePoint->GetPhysicalVolume();
@@ -184,6 +185,19 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
       
     } 
   }
+
+
+  if(boundary) {
+    boundaryStatus=boundary->GetStatus();
+    hBoundaryStatus->Fill(boundaryStatus);
+    trackInformation->AddBoundaryProcessStatus(boundaryStatus);
+    trackInformation->AddBoundaryName(preName);
+  }
+
+  // add position and energy points of step to vectors.
+  trackInformation->AddPositionHistory(aTrack->GetPosition());
+  trackInformation->AddPositionEnergy(step->GetTotalEnergyDeposit());
+  
  
   //Optical Photons
   /*
@@ -222,10 +236,7 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
       }
     }
     
-    boundaryStatus=boundary->GetStatus();
-    hBoundaryStatus->Fill(boundaryStatus);
-    trackInformation->AddBoundaryProcessStatus(boundaryStatus);
-    trackInformation->AddBoundaryName(preName);
+ 
     //G4cout << " Stepping Action  " <<  boundaryStatus << " " << trackInformation->GetBoundaryProcessStatus() << G4endl;
     // G4cout << " Stepping geom boundary process " << boundaryStatus  << G4endl;
     //Check to see if the partcile was actually at a boundary
