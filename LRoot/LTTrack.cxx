@@ -29,26 +29,27 @@ void LTTrack::clear()
   edep=0;
   length=0;
   nstep=0;
-  stepLength=0;
+  trkStepLength=0;
+  copy=-1;
+  nInToGe=0;
+  nOutOfGe=0;
+  nSpike=0;
+  
+  // root Clears
   position.Clear();
-  positionHistory.clear();
-  positionEnergy.clear();
   vertPosition.Clear();
   process.Clear();
   physVolName.Clear();
   particleName.Clear();
   preName.Clear();
   postName.Clear();
-  copy=-1;
-  nInToGe=0;
-  nOutOfGe=0;
-  nSpike=0;
 
   // std vector clears
   boundaryStatus.clear();
   boundaryName.clear();
   positionHistory.clear();
   positionEnergy.clear();
+  stepLength.clear();
   
 }
 void LTTrack::print(){

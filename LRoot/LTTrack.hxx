@@ -37,7 +37,7 @@ class LTTrack: public TNamed {
     Int_t nstep;
     Int_t copy;
     Double_t length;
-    Double_t stepLength;
+    Double_t trkStepLength;
     Double_t ke;   // kinetic energy electronvolts
     Double_t edep; // energy deposited in step (electronvolts) 
     Double_t time;   //  event time, microseconds
@@ -45,6 +45,7 @@ class LTTrack: public TNamed {
     TVector3 position; //end
     std::vector<TVector3> positionHistory;
     std::vector<Double_t> positionEnergy;
+    std::vector<Double_t> stepLength;
     TVector3 vertPosition;
     TString process;
     TString physVolName;
@@ -56,7 +57,7 @@ class LTTrack: public TNamed {
     Int_t nSpike;
     bool isLeaving;
 
-ClassDef(LTTrack,11)
+ClassDef(LTTrack,12)
 };
 #endif
 

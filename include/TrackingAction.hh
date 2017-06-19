@@ -37,9 +37,13 @@
 
 #include "LegendTrajectory.hh"
 #include "G4UserTrackingAction.hh"
+#include "UserTrackInformation.hh"
 #include "G4VTrajectory.hh"
 #include "globals.hh"
 #include "G4SystemOfUnits.hh"
+#include "G4TrackingManager.hh"
+#include "G4Track.hh"
+
 
 class TrackingAction : public G4UserTrackingAction {
 
@@ -49,6 +53,9 @@ class TrackingAction : public G4UserTrackingAction {
     virtual ~TrackingAction() {};
     virtual void PreUserTrackingAction(const G4Track*);
     virtual void PostUserTrackingAction(const G4Track*);
+    void fillTTrack( LTTrack *lttrk);
+    UserTrackInformation* trackInformation;
+    const G4Track* aTrack;
     TDirectory *fDir;
     TH1F *hTrackPhotonE;
     TH1F *hTrackScintE;
@@ -59,7 +66,12 @@ class TrackingAction : public G4UserTrackingAction {
     TH1F *hCherenkovPhotonE;
     TH1F *hTrackStatus;
     TTree *fTrackTree;
+    TTree *fGeTree;
     LTTrack *fLTTrack;
+    LTTrack *gLTTrack;
+    G4StepPoint* nextPoint;
+    G4int fcopy;
+    G4String fphysVolName;
   private:
   
  

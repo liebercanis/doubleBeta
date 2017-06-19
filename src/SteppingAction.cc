@@ -197,6 +197,7 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
   // add position and energy points of step to vectors.
   trackInformation->AddPositionHistory(aTrack->GetPosition());
   trackInformation->AddPositionEnergy(step->GetTotalEnergyDeposit());
+  trackInformation->AddStepLength(step->GetStepLength());
   
  
   //Optical Photons
