@@ -37,6 +37,7 @@
 #include "LegendAnalysis.hh"
 //#include "PMTSDHit.hh"
 #include "G4VSensitiveDetector.hh"
+#include "G4SDParticleFilter.hh"
 #include "G4SystemOfUnits.hh"
 #include "G4Step.hh"
 
@@ -64,6 +65,7 @@ private:
   TH1F* hTime;
   TH1F* hWavelength;
   TNtuple* ntWLS;
+  G4SDParticleFilter *fParticleFilter;
 
 };
 

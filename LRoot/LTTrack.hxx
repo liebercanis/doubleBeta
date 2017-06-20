@@ -32,8 +32,6 @@ class LTTrack: public TNamed {
     Int_t parentId;
     Int_t status;
     Int_t pdg;
-    std::vector<Int_t> boundaryStatus;
-    std::vector<std::string> boundaryName;
     Int_t nstep;
     Int_t copy;
     Double_t length;
@@ -43,9 +41,6 @@ class LTTrack: public TNamed {
     Double_t time;   //  event time, microseconds
     Double_t trkTime; // time since track began, microseconds
     TVector3 position; //end
-    std::vector<TVector3> positionHistory;
-    std::vector<Double_t> positionEnergy;
-    std::vector<Double_t> stepLength;
     TVector3 vertPosition;
     TString process;
     TString physVolName;
@@ -57,7 +52,14 @@ class LTTrack: public TNamed {
     Int_t nSpike;
     bool isLeaving;
 
-ClassDef(LTTrack,12)
+    std::vector<Int_t> boundaryStatus;
+    std::vector<std::string> boundaryName;
+    std::vector<TVector3> positionHistory;
+    std::vector<Double_t> positionEnergy;
+    std::vector<Double_t> stepLength;
+    std::vector<Double_t> stepKE;
+  
+ClassDef(LTTrack,13)
 };
 #endif
 

@@ -66,6 +66,10 @@
 GermaniumSD::GermaniumSD(G4String name, G4int nCopy) 
 :G4VSensitiveDetector(name),fCopy(nCopy)
 {
+  // init filter
+  fKineticFilter = new G4SDKineticEnergyFilter("GeSDFilter",2.0E-4,DBL_MAX); // threshold is 0.2 KeV
+  fKineticFilter->show();
+  
   if(fCopy==0) {
     fDir = LegendAnalysis::Instance()->topHistDir()->mkdir("GeThits");
     fDir->cd();

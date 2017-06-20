@@ -169,8 +169,13 @@ class UserTrackInformation : public G4VUserTrackInformation
     std::vector<G4double> GetPositionEnergyVector() { return fPositionEnergy; }
 
     void  AddStepLength(G4double l ){ fStepLength.push_back(l);}
-    G4double GetStepLenth(int i){return fStepLength[i];}
+    G4double GetStepLength(int i){return fStepLength[i];}
     std::vector<G4double> GetStepLengthVector() { return fStepLength; }
+
+    void  AddStepKE(G4double l ){ fStepKE.push_back(l);}
+    G4double GetStepKE(int i){return fStepKE[i];}
+    std::vector<G4double> GetStepKEVector() { return fStepKE; }
+    
     
 
   private:
@@ -192,6 +197,8 @@ class UserTrackInformation : public G4VUserTrackInformation
     std::vector<G4ThreeVector> fPositionHistory;
     std::vector<G4double> fPositionEnergy;
     std::vector<G4double> fStepLength;
+    std::vector<G4double> fStepKE;
+    
 };
 
 #endif

@@ -43,6 +43,8 @@ UserTrackInformation::UserTrackInformation()
   fBoundaryName.clear();
   fPositionHistory.clear();
   fPositionEnergy.clear();
+  fStepLength.clear();
+  fStepKE.clear();
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

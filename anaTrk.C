@@ -133,8 +133,9 @@ void calcRatio(double a, double b, double &r, double &e)
 
 void printTrackStatus(int in,int status)
 {
-  printf("track status \n");
-  for (int i=0; i< in; ++i) if( status& (1<<i) )  printf("\t bit %i %s \n",i,tnames[i].Data());
+  printf("track status:  ");
+  for (int i=0; i< in; ++i) if( status& (1<<i) )  printf("\t bit %i %s ",i,tnames[i].Data());
+  printf("\n");
 }
 
 
@@ -155,9 +156,9 @@ int itnames=0;
 void anaTrk(TString tag = "2017-4-30-12-2-7")
 {
   int inames =setBorderNames();
-  printBorderNames(inames);
+  //printBorderNames(inames);
   itnames = setTrackStatusNames();
-  printTrackStatusNames(itnames);
+  //printTrackStatusNames(itnames);
   TString inputFileName = TString("legendTree-")+tag+TString(".root");
   printf(" opening file %s \n",inputFileName.Data()); 
   TFile *infile = new TFile(inputFileName,"READONLY");
@@ -193,6 +194,11 @@ void anaTrk(TString tag = "2017-4-30-12-2-7")
 
 
   TH1::SetDefaultSumw2(true); // turn on error bars 
+  
+  TH2F *hPMTWLS = new TH2F("PMTWLS"," PMTWLS z versus r ",rmax*5,0,rmax,zmax*2,-zmax,zmax);
+  TH2F *hgroup1Physical = new TH2F("group1Physical"," z versus r ",rmax*5,0,rmax,zmax*2,-zmax,zmax);
+  TH2F *hgroup1PhysicalXYStart = new TH2F("group1PhysicalXYStart"," y versus x ",zmax*2,-zmax,zmax,zmax*2,-zmax,zmax);
+  TH2F *hgroup1PhysicalXYEnd = new TH2F("group1PhysicalXYEnd"," y versus x ",zmax*2,-zmax,zmax,zmax*2,-zmax,zmax);
 
   TNtuple *ntele = new TNtuple("ntele","ntele","rvert:zvert:rele:zele:parent:ke");
   TNtuple *ntopt = new TNtuple("ntopt","ntopt","rvert:zvert:parent:rlog:rtrk:ztrk:lambda:length:time:fstat:lar:status:boundary");
@@ -205,7 +211,8 @@ void anaTrk(TString tag = "2017-4-30-12-2-7")
 
   TH1F *hLambdaScint = new TH1F("LambdaScint"," all scint photons wavelength ",500,100,600);
   TH1F *hLambdaPmt = new TH1F("LambdaPmt"," pmt detected photon wavelength ",500,100,600);
-  
+ 
+
   
 
   TH1F *hRvert = new TH1F("Rvert"," primary vertex radial position ",rmax/10,0,rmax);
@@ -308,7 +315,7 @@ void anaTrk(TString tag = "2017-4-30-12-2-7")
     if ((name == TString("e-" )) && trk->edep > 0) {
       int ebin = hEStepElectron->FindBin(ystep);
       hEStepElectron->SetBinContent(ebin,hEStepElectron->GetBinContent(ebin)+trk->edep); // weight by energy
-      hElectronStepLength->Fill(trk->stepLength);
+      hElectronStepLength->Fill(trk->stepLength[trk->stepLength.size()-1]);
       if(ebin+1<errorStepElectron.size()) errorStepElectron[ebin+1] += fanoLAr*trk->edep;
       else printf(" ebin %u is bigger than vector size %u \n",ebin+1, (unsigned) errorStepElectron.size());
       bool isEIoni = trk->status & eIoni;
@@ -370,30 +377,40 @@ void anaTrk(TString tag = "2017-4-30-12-2-7")
         lambda,trk->length,trk->time,fstat,flar,double(status),double(boundaryLast));
 
   // start of track
+    double xstart=0;
+    double ystart=0;
+    double zstart=0;
+    double rstart=0;
+    double estart=0;
+    double wstart=0;
+    double xend=0;
+    double yend=0;
+    double zend=0;
+    double rend=0;
+    double eend=0;
+    double wend=0;
+    
     if(nhistory>0) {
       TVector3 pstart = trk->positionHistory[0];
-      double estart = trk->positionEnergy[0];
-      double wstart = hc/estart;
-      
-      double xstart = pstart.X()+xoffset;
-      double ystart = pstart.Y()+yoffset;
-      double zstart = pstart.Z()+zoffset;
-      double rstart = sqrt(xstart*xstart+ystart*ystart);
+      estart = trk->positionEnergy[0];
+      wstart = hc/estart;
+      xstart = pstart.X()+xoffset;
+      ystart = pstart.Y()+yoffset;
+      zstart = pstart.Z()+zoffset;
+      rstart = sqrt(xstart*xstart+ystart*ystart);
       hRtrkStart->Fill(rstart);
       hZtrkStart->Fill(zstart);
 
       TVector3 pend = trk->positionHistory[nhistory-1];
-      double eend = trk->positionEnergy[nhistory-1];
-      double wend = hc/eend;
-      double xend = pend.X()+xoffset;
-      double yend = pend.Y()+yoffset;
-      double zend = pend.Z()+zoffset;
-      double rend = sqrt(xend*xend+yend*yend);
+      eend = trk->positionEnergy[nhistory-1];
+      wend = hc/eend;
+      xend = pend.X()+xoffset;
+      yend = pend.Y()+yoffset;
+      zend = pend.Z()+zoffset;
+      rend = sqrt(xend*xend+yend*yend);
       hRtrkEnd->Fill(rend);
       hZtrkEnd->Fill(zend);
       ntpos->Fill(rstart,xstart,ystart,zstart,rend,xend,yend,zend,wstart,trk->length,fstat,flar,double(boundaryLast));
-      
-
     } else
       printf(" \t >>>>>> nhistory = %u \n",nhistory);
        
@@ -414,15 +431,20 @@ void anaTrk(TString tag = "2017-4-30-12-2-7")
       hLambdaBoundAbs->Fill(lambda);  
     }
 
-    if(trk->nInToGe>0&&printOut) {
-      printf(" *** Ge status %i pre/post %s / %s \n",status,trk->preName.Data(),trk->postName.Data());
+    if(trk->parentId>1&&printOut) {
+      //printf(" *** Ge status %i pre/post %s / %s \n",status,trk->preName.Data(),trk->postName.Data());
       printTrackStatus(itnames,status);
-      printf("     boundary size %lu \n", boundaryStatus.size() );
-      for(unsigned ib=0; ib< boundaryStatus.size(); ++ib ) 
-        printf("\t %i %i %s  pre %s   \n",ib, boundaryStatus[ib],bnames[boundaryStatus[ib]].Data(),trk->boundaryName[ib].c_str());
+      unsigned ilast =  boundaryStatus.size()-1;
+      printf("\t %i %i %s  pre %s   \n",ilast, boundaryStatus[ilast],bnames[boundaryStatus[ilast]].Data(),trk->boundaryName[ilast].c_str());
+      //printf("     boundary size %lu \n", boundaryStatus.size() );
+      //for(unsigned ib=0; ib< boundaryStatus.size(); ++ib ) 
       printf("\n");
     }
 
+    if(trk->boundaryName[trk->boundaryName.size()-1].find("phys_PMTWLS")!=std::string::npos) hPMTWLS->Fill(radius,zshift);
+    if(trk->boundaryName[trk->boundaryName.size()-1]==TString("group1Physical")) hgroup1Physical->Fill(radius,zshift);
+    if(trk->boundaryName[trk->boundaryName.size()-1]==TString("group1Physical")) hgroup1PhysicalXYStart->Fill(xstart,ystart);
+    if(trk->boundaryName[trk->boundaryName.size()-1]==TString("group1Physical")) hgroup1PhysicalXYEnd->Fill(xend,yend);
 
     if(volName!=TString("larPhysical")) {
       //if(!(status&scint&&status&absorbed)) {

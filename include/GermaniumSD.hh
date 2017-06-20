@@ -37,6 +37,7 @@
 #include "LegendAnalysis.hh"
 //#include "GermaniumSDHit.hh"
 #include "G4VSensitiveDetector.hh"
+#include "G4SDKineticEnergyFilter.hh"
 #include "G4SystemOfUnits.hh"
 #include "G4Step.hh"
 
@@ -63,6 +64,7 @@ private:
   TH1F* hEnergy;
   TNtuple *ntGe;
   G4int fCopy;
+  G4SDKineticEnergyFilter *fKineticFilter;
 
 };
 

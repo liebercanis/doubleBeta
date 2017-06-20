@@ -65,6 +65,10 @@
 PMTSD::PMTSD(G4String name, G4int nCells, G4String colName) 
 :G4VSensitiveDetector(name),numberOfCells(nCells),HCID(-1)
 {
+  fParticleFilter = new G4SDParticleFilter("PmtSDFilter");
+  fParticleFilter->add("opticalphoton");
+  fParticleFilter->show();
+  
   G4String HCname;
   collectionName.insert(HCname=colName);
   fDir = LegendAnalysis::Instance()->topHistDir()->mkdir("PMThits");

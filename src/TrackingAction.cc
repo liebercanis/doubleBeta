@@ -216,6 +216,7 @@ void::TrackingAction::fillTTrack(LTTrack* lttrk)
   lttrk->process=trackInformation->GetProcessName();
   lttrk->boundaryStatus = trackInformation->GetBoundaryStatusVector();
   lttrk->stepLength = trackInformation->GetStepLengthVector();
+  lttrk->stepKE = trackInformation->GetStepKEVector();
   lttrk->length=aTrack->GetTrackLength();
   lttrk->nstep=aTrack->GetCurrentStepNumber();
   lttrk->trkStepLength=aTrack->GetStepLength();

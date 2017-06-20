@@ -198,6 +198,7 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
   trackInformation->AddPositionHistory(aTrack->GetPosition());
   trackInformation->AddPositionEnergy(step->GetTotalEnergyDeposit());
   trackInformation->AddStepLength(step->GetStepLength());
+  trackInformation->AddStepKE(step->GetTrack()->GetKineticEnergy());
   
  
   //Optical Photons
@@ -283,15 +284,17 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
         case Detection:
           {
             aTrack->SetTrackStatus(fStopAndKill);
-            trackInformation->AddTrackStatusFlag(hitPMT);
-            //Note, this assumes that the volume causing detection
-            // is the photocathode because it is the only one with non-zero efficiency
-            //Triger sensitive detector manually since photon is absorbed but status was Detection
-            G4SDManager* SDman = G4SDManager::GetSDMpointer();
-            G4String sdName="PhotoCathode";//"/LegendDet/pmtSD";
-            PMTSD* pmtSD = dynamic_cast<PMTSD*>(SDman->FindSensitiveDetector(sdName));
-            if(pmtSD) pmtSD->ProcessHits_constStep(step,NULL);
-            else G4cout << " SteppingAction ERROR!!!!!   cannot find PhotoCathode " << G4endl;
+            // check if detector is PMT.
+            if(thePostPV->GetName().find("PMT")!=std::string::npos) {
+              trackInformation->AddTrackStatusFlag(hitPMT);
+              //Triger sensitive detector manually since photon is absorbed but status was Detection
+              //MG thinks Germanium will automatically be processed. 
+              G4SDManager* SDman = G4SDManager::GetSDMpointer();
+              G4String sdName="PhotoCathode";//"/LegendDet/pmtSD";
+              PMTSD* pmtSD = dynamic_cast<PMTSD*>(SDman->FindSensitiveDetector(sdName));
+              if(pmtSD) pmtSD->ProcessHits_constStep(step,NULL);
+              else G4cout << " SteppingAction ERROR!!!!!   cannot find PhotoCathode " << G4endl;
+            }
             break;
           }
         case FresnelReflection:
