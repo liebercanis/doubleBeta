@@ -32,8 +32,11 @@
 #define EventAction_h 1
 
 #include "LegendAnalysis.hh"
+//#include "LTTrack.hxx"
 #include "G4UserEventAction.hh"
 #include "globals.hh"
+#include "G4VTrajectory.hh"
+#include "G4SystemOfUnits.hh"
 #include "G4ThreeVector.hh"
 
 class RunAction;
@@ -65,10 +68,9 @@ class EventAction : public G4UserEventAction
 
   private:
 		RunAction* runAct;
-
-
-		G4double 	length[300];
-		G4int 		counter;
+    TDirectory *fDir;
+    TH1F *hEventPhotonLambda;
+    TH1F *hEventPhotonCount;
     G4int     fPrintModulo;
 };
 

@@ -79,19 +79,24 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
   /*************************************
   ** from LegendStepping Action 
   *************************************/
-
   if ( aTrack->GetCurrentStepNumber() == 1 ) fExpectedNextStatus = Undefined;
-  UserTrackInformation* trackInformation = (UserTrackInformation*) aTrack->GetUserInformation();
-  UserEventInformation* eventInformation = (UserEventInformation*)G4EventManager::GetEventManager()->GetConstCurrentEvent()->GetUserInformation();
-
-  
+  UserTrackInformation* trackInformation = dynamic_cast<UserTrackInformation*>(aTrack->GetUserInformation());
+  UserEventInformation* eventInformation = dynamic_cast<UserEventInformation*>(G4EventManager::GetEventManager()->GetConstCurrentEvent()->GetUserInformation());
 
   G4StepPoint* thePrePoint = step->GetPreStepPoint();
   G4VPhysicalVolume* thePrePV = thePrePoint->GetPhysicalVolume();
   
 
   G4StepPoint* thePostPoint = step->GetPostStepPoint();
+  trackInformation->AddPostStepStatus(thePostPoint->GetStepStatus());
+  
   G4VPhysicalVolume* thePostPV = thePostPoint->GetPhysicalVolume();
+ 
+  if(!thePostPV){//out of the world
+    G4cout<<"SteppingAction:: WARNING Primary Vertex is out of this world \n\t Ending Stepping Action!"<<G4endl;
+    fExpectedNextStatus=Undefined;
+    return;
+  }
 
   // determine if step is at Ge boundary
   G4String preName = thePrePV->GetName();
@@ -102,13 +107,7 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
   G4bool isPostGe = (postName.contains("B8")||postName.contains("P4")) && thePostPoint->GetStepStatus() == fGeomBoundary;
   G4bool isInToGe = isPreGroup1&&isPostGe;
   G4bool isOutOfGe = isPreGe&&isPostGroup1;
-  
-  if(!thePostPV){//out of the world
-    G4cout<<"SteppingAction:: WARNING Primary Vertex is out of this world \n\t Ending Stepping Action!"<<G4endl;
-    fExpectedNextStatus=Undefined;
-    return;
-  }
-
+ 
   //This is a primary track 
   // did we miss any secondaries from the primary track?
   trackInformation->SetParentId(aTrack->GetParentID());
@@ -172,7 +171,6 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
   G4int GeDetectorNumber=-1;
   G4int GePostNumber =0;
   if (  (volumename.find("B8") != string::npos) ||(volumename.find("P4") != string::npos ) ) {
-    GePostNumber = step->GetPostStepPoint()->GetTouchableHandle()->GetCopyNumber();
     if(GePostNumber!=0){
       inGeDetector = true;
       /*if(step->GetTotalEnergyDeposit() > 1.0*eV){
@@ -186,13 +184,17 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
     } 
   }
 
+  // if we do not have a boundary, do nothing.
+  if(!boundary) return;
+  boundaryStatus=boundary->GetStatus();
+  hBoundaryStatus->Fill(boundaryStatus);
+  trackInformation->AddBoundaryProcessStatus(boundaryStatus);
+  trackInformation->AddBoundaryName(preName);
 
-  if(boundary) {
-    boundaryStatus=boundary->GetStatus();
-    hBoundaryStatus->Fill(boundaryStatus);
-    trackInformation->AddBoundaryProcessStatus(boundaryStatus);
-    trackInformation->AddBoundaryName(preName);
-  }
+  /*
+  if(boundary->GetStatus()==NotAtBoundary) G4cout<<"SteppingAction:: NotAtBoundary" << processName << "  " 
+    << particleType->GetParticleType() << "  " << preName << "  " << postName << " expect  " << boundary->GetStatus() << "  " << thePostPoint->GetStepStatus() << "=? " <<  fGeomBoundary << G4endl;
+    */
 
   // add position and energy points of step to vectors.
   trackInformation->AddPositionHistory(aTrack->GetPosition());
@@ -210,6 +212,7 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
     */
   hParticleType->Fill(particleType->GetPDGEncoding());
 
+  
   if(particleType==G4OpticalPhoton::OpticalPhotonDefinition()){
 
 
@@ -272,9 +275,16 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
       if( isInToGe) trackInformation->IncInToGe();
       if( isOutOfGe) trackInformation->IncOutOfGe();
       // breaks not needed in case statement, but leaving in ... M.Gold
+      G4double wavelength =  CLHEP::h_Planck*CLHEP::c_light/aTrack->GetKineticEnergy()/nm;
       switch(boundaryStatus){
         case Absorption: 
           {
+            // optical photon absorbed in ge
+            if (  (postName.find("B8") != string::npos) ||(postName.find("P4") != string::npos ) ) {
+              trackInformation->AddTrackStatusFlag(absGe);
+              //G4cout << " SteppingAction Ge absorbed photon in  " <<  volumename << " preName  " << preName << " postName " << postName <<  " wave = " 
+              //  << wavelength  << G4endl; 
+            }
             //This all Transportation
             trackInformation->AddTrackStatusFlag(boundaryAbsorbed);
             eventInformation->IncAbsorption();
@@ -295,11 +305,17 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
               if(pmtSD) pmtSD->ProcessHits_constStep(step,NULL);
               else G4cout << " SteppingAction ERROR!!!!!   cannot find PhotoCathode " << G4endl;
             }
+            // how does it get here with the filter??
+            if (  (postName.find("B8") != string::npos) ||(postName.find("P4") != string::npos ) ) {
+              trackInformation->AddTrackStatusFlag(absGe);
+              //G4cout << " SteppingAction Ge Detection  photon in  " <<  volumename << " preName  " << preName << " postName " << postName <<  " wave = " 
+              //  << wavelength  << G4endl; 
+              }
             break;
           }
         case FresnelReflection:
           {
-  //G4cout<<"SteppingAction::  FresnelReflection reflectivity = "<< boundary->GetReflectivity() << "  " << thePrePV->GetName()<< "->"  << thePostPV->GetName() << " status "<< boundaryStatus << G4endl;
+            //G4cout<<"SteppingAction::  FresnelReflection reflectivity = "<< boundary->GetReflectivity() << "  " << thePrePV->GetName()<< "->"  << thePostPV->GetName() << " status "<< boundaryStatus << G4endl;
             
             trackInformation->AddTrackStatusFlag(fresnelReflect);
             break;
@@ -315,6 +331,7 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
           break;
         case SpikeReflection:
           {
+            trackInformation->AddTrackStatusFlag(spikeReflect);
             trackInformation->IncSpikeReflection();
             /*
               G4double LambdaE = 2.0*TMath::Pi()*1.973269602e-10 * mm * MeV;// in default Mev-mm units
@@ -333,10 +350,9 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
             trackInformation->AddTrackStatusFlag(backScatter);
             break;
           }
-          //added by Neil
-        case NotAtBoundary:
+        case FresnelRefraction:
           {
-            trackInformation->AddTrackStatusFlag(notBoundary);
+            trackInformation->AddTrackStatusFlag(fresnelRefract);
             break;
           }
         default:
@@ -348,7 +364,8 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
       if(processName == "OpWLS" ){ 
         trackInformation->AddTrackStatusFlag(hitWLS);
         // G4cout << " SteppingAction OpWLS boundary status = %i " << boundaryStatus << G4endl;
-        //aTrack->SetTrackStatus(fStopAndKill);  why stop and kill this?
+        // these tracks end up as "NotAtBoundary", so should be killed. 
+        aTrack->SetTrackStatus(fStopAndKill); 
       } 
     }  //end of if(thePostPoint->GetStepStatus()==fGeomBoundary)
   } 
@@ -368,25 +385,21 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
   
   // ionizing process
   if(processName == "eIoni" ) {   
-    trackInformation->AddTrackStatusFlag(eIoni);
     if(inGeDetector && GeDebug) G4cout<<"SteppingAction:: eIoni Process Name ... "<<processName<<" boundaryStatus " << boundaryStatus <<G4endl;
   }
 
   // ionizing process
   if(processName == "hIoni" ) {   
-    trackInformation->AddTrackStatusFlag(hIoni);
     if(inGeDetector && GeDebug) G4cout<<"SteppingAction:: hIoni Process Name ... "<<processName<<" boundaryStatus " << boundaryStatus <<G4endl;
   }
 
   // ionizing process
   if(processName == "ionIoni" ) {   
-    trackInformation->AddTrackStatusFlag(ionIoni);
     if(inGeDetector && GeDebug) G4cout<<"SteppingAction:: ionIoni Process Name ... "<<processName<<" boundaryStatus " << boundaryStatus <<G4endl;
   }
 
   // compt process
   if(processName == "compt" ) {   
-    trackInformation->AddTrackStatusFlag(compton);
     if(inGeDetector && GeDebug) G4cout<<"SteppingAction:: compt Process Name ... "<<processName<<" boundaryStatus " << boundaryStatus <<G4endl;
   }
 

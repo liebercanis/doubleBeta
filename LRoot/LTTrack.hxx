@@ -58,8 +58,9 @@ class LTTrack: public TNamed {
     std::vector<Double_t> positionEnergy;
     std::vector<Double_t> stepLength;
     std::vector<Double_t> stepKE;
+    std::vector<Int_t> postStatus;
   
-ClassDef(LTTrack,13)
+ClassDef(LTTrack,15)
 };
 #endif
 

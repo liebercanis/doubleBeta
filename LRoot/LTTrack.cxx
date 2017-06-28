@@ -51,6 +51,7 @@ void LTTrack::clear()
   positionEnergy.clear();
   stepLength.clear();
   stepKE.clear();
+  postStatus.clear();
   
 }
 void LTTrack::print(){

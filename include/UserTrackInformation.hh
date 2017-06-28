@@ -93,23 +93,28 @@
   inactive: track is stopped for some reason
    -This is the sum of all stopped flags so can be used to remove stopped flags
 */
-enum TrackStatus { active=1, hitPMT=2, absorbed=4, boundaryAbsorbed=8,
-                      absorbedLAr=16, inactive=32, hitWLS = 64, totalInternal=128, backScatter=256, notBoundary=512,
-                      fresnelReflect = 2*notBoundary,
-                      scint=2*fresnelReflect, 
-                      eIoni=2*scint, 
-                      hIoni=2*eIoni, 
-                      ionIoni=2*hIoni,
-                      compton= 2*ionIoni,
-                      hitGe=2*compton, 
-                      isBad=2*hitGe};
+
+enum TrackPostStepStatus {  isGeomBoundary=1 };
+
+// max is 16 bits!
+enum TrackStatus { active=1, scint=2, absorbed=4, boundaryAbsorbed=8,
+                      absorbedLAr=16, inactive=32, hitWLS = 64, totalInternal=128, backScatter=256, fresnelRefract=512,
+                      fresnelReflect = 2*fresnelRefract,
+                      spikeReflect=2*fresnelReflect, 
+                      hitPMT=2*spikeReflect, 
+                      hitGe=2*hitPMT,
+                      absGe=2*hitGe,
+                      isBad=2*absGe};
 
 class UserTrackInformation : public G4VUserTrackInformation
 {
   public:
 
     UserTrackInformation();
+    UserTrackInformation(const  UserTrackInformation& right);
+    
     virtual ~UserTrackInformation();
+    virtual void Print() const {};
 
     void  SetProcessName(G4String name){fProcessName=name;}
     G4String GetProcessName(){ return fProcessName;}
@@ -142,13 +147,12 @@ class UserTrackInformation : public G4VUserTrackInformation
     G4int GetSpikeReflection(){ return fSpikeReflection;}
     
 
-    inline virtual void Print() const{};
-
     void SetPrimary() { fPrimary=true; }
     G4bool IsPrimary() { return fPrimary;}
     void SetParentId( G4int id) { fParentId = id;}
     G4int GetParentId() { return fParentId;}
 
+      
     // vectors for step by step info
     void  AddBoundaryProcessStatus(G4int s){ fBoundaryStatus.push_back(s);}
     G4int BoudaryStatusSize() { return G4int( fBoundaryStatus.size() ); }
@@ -175,11 +179,24 @@ class UserTrackInformation : public G4VUserTrackInformation
     void  AddStepKE(G4double l ){ fStepKE.push_back(l);}
     G4double GetStepKE(int i){return fStepKE[i];}
     std::vector<G4double> GetStepKEVector() { return fStepKE; }
-    
-    
 
+    void AddPostStepStatus(G4int istat) { fPostStepStatus.push_back(istat);} 
+    std::vector<G4int> GetPostStepStatusVector() { return fPostStepStatus;} 
+    G4int GetPostStepStatusSize() { return G4int(fPostStepStatus.size());} 
+    G4int GetPostStepStatusLast() {
+      G4cout<< " user track post step size " << fPostStepStatus.size() << G4endl;
+      if(fPostStepStatus.size() > 0) return fPostStepStatus[fPostStepStatus.size()-1];
+      else return -1;
+    } 
+    G4int GetPostStepStatus(G4int i) { 
+      if(i<fPostStepStatus.size()&&i>=0) return fPostStepStatus[i];
+      else return -1;
+    }
+
+    G4String GetTrackStatusBitName(G4int ib) { return G4String( fTrackStatusNames[ib]);}
+    G4int GetTrackStatusSize() { return G4int(fTrackStatusNames.size() ) ; }  
+  
   private:
-
     G4int fStatus;
     G4int fParentId;
     G4bool fPrimary;
@@ -192,13 +209,14 @@ class UserTrackInformation : public G4VUserTrackInformation
     G4int fInToGe;
     G4int fOutOfGe;
     G4ThreeVector position; // end of track 
+    std::vector<int> fPostStepStatus; //  fGeomBoundary=1 
     std::vector<int> fBoundaryStatus;
     std::vector<std::string> fBoundaryName;
     std::vector<G4ThreeVector> fPositionHistory;
     std::vector<G4double> fPositionEnergy;
     std::vector<G4double> fStepLength;
     std::vector<G4double> fStepKE;
-    
-};
 
+    std::vector<std::string> fTrackStatusNames;
+};
 #endif

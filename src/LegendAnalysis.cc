@@ -74,6 +74,12 @@ void LegendAnalysis::Initialize()
   hWlsYield->GetYaxis()->SetTitle("  events ");
   hWlsYield->GetXaxis()->SetTitle("  photons/kev ");
 
+
+  hPmtHitCount = new TH1F("PmtHitCount"," photons detected per event  ",1000,0,1000);
+  hPmtHitCount->GetYaxis()->SetTitle("  events ");
+  hPmtHitCount->GetXaxis()->SetTitle("  photons detected  ");
+  
+
   topHistDir()->ls();
 
   fTreeFile->cd();
@@ -98,13 +104,16 @@ void LegendAnalysis::printSummary()
     
 void  LegendAnalysis::anaEvent( const G4Event *anEvent)
 {
-  //printf(" ++++++++++++++++++++++++++++++++++++++++++++++++ \n");
-  //printf("      LegendAnalysis:anaEvent called \n");
-  //printf(" ++++++++++++++++++++++++++++++++++++++++++++++++ \n");
   if(!anEvent) {
     G4cout << " LegendAnalysis called with NULL G4Event pointer!!! " << G4endl;
     return;
   }
+  /*
+  printf(" ++++++++++++++++++++++++++++++++++++++++++++++++ \n");
+  printf("      LegendAnalysis:anaEvent called event %i  \n",anEvent->GetEventID());
+  printf(" ++++++++++++++++++++++++++++++++++++++++++++++++ \n");
+  */
+  
   UserEventInformation* eventInformation = (UserEventInformation*)G4EventManager::GetEventManager()->GetConstCurrentEvent()->GetUserInformation();
   fEvent->evId = anEvent->GetEventID();
   fEvent->nPVert = anEvent->GetNumberOfPrimaryVertex();
@@ -147,7 +156,7 @@ void  LegendAnalysis::anaEvent( const G4Event *anEvent)
 
    //G4cout << " LegendAnalysis eprim " << fEvent->ePrimary/keV << " nscint " << fEvent->nArScint<< " nwls " <<fEvent->nWlsScint << 
    //  " sint yield " << double(fEvent->nArScint) / (fEvent->ePrimary/keV) << " wls yield " << double(fEvent->nWlsScint) / (fEvent->ePrimary/keV) << G4endl;
-  //  anaTrajectories( anEvent->GetTrajectoryContainer());
+  anaTrajectories( anEvent->GetTrajectoryContainer());
   
   // and end of analysis save this event
   //fEvent->print();
@@ -162,48 +171,54 @@ void  LegendAnalysis::anaTrajectories(G4TrajectoryContainer* trajectoryContainer
     return;
   }
   fEvent->nTraj = trajectoryContainer->entries();
+  // loop over trajectories 
+  int hitCount=0;
+  G4cout << " LegendAnalysis:: anaTrajectories ntraj= "<< fEvent->nTraj  << G4endl;
   for(int ij=0; ij < fEvent->nTraj; ++ij) {
     LegendTrajectory *gtrj = dynamic_cast<LegendTrajectory*>((*(trajectoryContainer))[ij]);
+    if(!gtrj) {
+      G4cout << "  LegendAnalysis:: NULL trajectory  " << ij << " which is impossible!! "  << endl;
+      continue;
+    }
+    G4cout << " LegendAnalysis:: track " << ij << " named " << gtrj->GetParticleName() << G4endl;
+    
     const G4Track* aTrack= gtrj->GetTrack();
-
-     if(!aTrack) {
+    if(!aTrack) {
       G4cout << "  LegendAnalysis:: no track for this trajectory  " << ij << endl;
       continue;
     }
-
+  
+    // start filling here
     LTTraject ltraj;
     // fill track info 
-  // Hereafter we call current volume the volume where the step has just gone through. Geometrical informations are available from preStepPoint.
-  G4StepPoint* currentPoint = aTrack->GetStep()->GetPreStepPoint();
-  G4StepPoint* nextPoint    = aTrack->GetStep()->GetPostStepPoint();
-  //G4VTouchable and its derivates keep these geometrical informations. We retrieve a touchable by creating a handle for it:
-  G4TouchableHandle ctouch = currentPoint->GetTouchableHandle();
-  ltraj.physVolName = ctouch->GetVolume()->GetName();
-  ltraj.copy = ctouch->GetCopyNumber();
-  ltraj.evId = G4EventManager::GetEventManager()->GetConstCurrentEvent()->GetEventID();
-  ltraj.trkId = aTrack->GetTrackID();
-  ltraj.trkParentId = aTrack->GetParentID();
-  ltraj.trkLength=aTrack->GetTrackLength();
-  ltraj.trkStep=aTrack->GetCurrentStepNumber();
-  // G4ThreeVector trkPos = aTrack->GetPosition();
-  // Global time (time since the current event began)
-  ltraj.time=aTrack->GetGlobalTime()/microsecond;
-  // Local time (time since the current track began)
-  ltraj.trkTime=aTrack->GetLocalTime()/microsecond;
-  ltraj.ke=aTrack->GetKineticEnergy()/electronvolt;
-  ltraj.trkEdep=aTrack->GetStep()->GetTotalEnergyDeposit()/electronvolt;
-  ltraj.name = aTrack->GetDefinition()->GetParticleName();
-
-    UserTrackInformation* trackInformation=(UserTrackInformation*) aTrack->GetUserInformation();
-    if(!trackInformation) {
-      continue;
-      G4cout << " LegendAnalysis:: track definition is  " << aTrack->GetDefinition()->GetParticleName()<< " no user info " << endl;
-    }
+    // Hereafter we call current volume the volume where the step has just gone through. Geometrical informations are available from preStepPoint.
+    G4StepPoint* currentPoint = aTrack->GetStep()->GetPreStepPoint();
+    G4StepPoint* nextPoint    = aTrack->GetStep()->GetPostStepPoint();
+    //G4VTouchable and its derivates keep these geometrical informations. We retrieve a touchable by creating a handle for it:
+    G4TouchableHandle ctouch = currentPoint->GetTouchableHandle();
+    if(!ctouch) 
+      G4cout << " LegendAnalysis:: no touch handle  " << aTrack->GetDefinition()->GetParticleName()<< "  " << endl;
+    
+    ltraj.physVolName = ctouch->GetVolume()->GetName();
+    ltraj.copy = ctouch->GetCopyNumber();
+    ltraj.evId = G4EventManager::GetEventManager()->GetConstCurrentEvent()->GetEventID();
+    ltraj.trkId = aTrack->GetTrackID();
+    ltraj.trkParentId = aTrack->GetParentID();
+    ltraj.trkLength=aTrack->GetTrackLength();
+    ltraj.trkStep=aTrack->GetCurrentStepNumber();
+    // G4ThreeVector trkPos = aTrack->GetPosition();
+    // Global time (time since the current event began)
+    ltraj.time=aTrack->GetGlobalTime()/microsecond;
+    // Local time (time since the current track began)
+    ltraj.trkTime=aTrack->GetLocalTime()/microsecond;
+    ltraj.ke=aTrack->GetKineticEnergy()/electronvolt;
+    ltraj.trkEdep=aTrack->GetStep()->GetTotalEnergyDeposit()/electronvolt;
+    ltraj.name = aTrack->GetDefinition()->GetParticleName();
     
     // find creator process 
     const G4VProcess* creator=aTrack->GetCreatorProcess();
-    //if(!creator) 
-      //G4cout << " LegendAnalysis:: track definition is  " << aTrack->GetDefinition()->GetParticleName()<< " no creator " << endl;
+    if(!creator) 
+      G4cout << " LegendAnalysis:: track definition is  " << aTrack->GetDefinition()->GetParticleName()<< " no creator " << endl;
 
    // fill from trajectory
     ltraj.trkStatus = gtrj->GetTrackStatus();
@@ -234,20 +249,9 @@ void  LegendAnalysis::anaTrajectories(G4TrajectoryContainer* trajectoryContainer
     // set primary 
     if(gtrj->IsPrimary()) {
       ltraj.type = LTTrajectType::PRI;
-      /*
-      if(creator) 
-        //G4cout << " LegendAnalysis primary creator process " << creator->GetProcessName() 
-        //<< " track status " << trackInformation->GetTrackStatus() <<  " PRIMARY TRACK track definition is  " << aTrack->GetDefinition()->GetParticleName()
-        //<< "  KE=" << ltraj.ke << G4endl;
-      if(!creator)  
-       G4cout << " LegendAnalysis primary no creator process " 
-        << " track status " << trackInformation->GetTrackStatus() <<  " PRIMARY TRACK track definition is  " << aTrack->GetDefinition()->GetParticleName()
-        << "  KE=" << ltraj.ke << G4endl;
-        */
     }
 
-    //G4cout <<  " ANALYSIS id " <<   ltraj.TrajId  << " parent "  << ltraj.ParentId << " PDG "  <<  ltraj.PDG << " charge " <<
-    //  ltraj.charge << G4endl;
+    //G4cout <<  " ANALYSIS id " <<   ltraj.trkId  << " parent "  << ltraj.parentId << " PDG "  <<  ltraj.PDG << " charge " << ltraj.charge << G4endl;
     if(ltraj.charge==0) {
       if(gtrj->GetParticleName()=="opticalphoton") fEvent->eOptical += ltraj.ke;
       else fEvent->eNeutral += ltraj.ke;
@@ -259,35 +263,12 @@ void  LegendAnalysis::anaTrajectories(G4TrajectoryContainer* trajectoryContainer
     //G4cout << " ANALYSIS E charged " << fEvent->eCharged << " neutral  " <<  fEvent->eNeutral << " optical  " << fEvent->eOptical << G4endl;
     
     ltraj.name = TString(gtrj->GetParticleName().data());
-    
+
+    G4cout << " particle name " << ltraj.name << G4endl;
+
     //enum LTTrajectType {UNK,PRI,SCI,WLS,HIT};
     ltraj.type = LTTrajectType::UNK;
-    if(gtrj->GetParticleName()=="opticalphoton") {
-      ++fEvent->nTrajOptPhotons;
-      G4double waveLength =  h_Planck*c_light/ltraj.ke/nm;//700 nm
-      if(gtrj->IsPmtHit()) {
-        ++fEvent->nTrajPmtHits;
-        fEvent->ePmt += ltraj.ke;
-        hPmtHits->Fill(waveLength);
-        ltraj.type = LTTrajectType::PMTHIT;
-        //G4cout<<"LegendAnalysis::PMTHIT trajectory"<<G4endl;
-        //G4cout << " LegendAnalysis hitPMT creator process " << creator->GetProcessName() 
-        //  << " track status " << trackInformation->GetTrackStatus() << " is hit  " 
-        //  << gtrj->IsHit() <<  " is wls " << gtrj->IsWLS() << "  KE=" << ltraj.ke  << G4endl;
-      } else if(gtrj->IsWLS()) {
-        ++fEvent->nTrajWlsScint;
-        hWls->Fill(waveLength);
-        ltraj.type = LTTrajectType::WLS;
-        //G4cout<<"LegendAnalysis::WLSTrajectories"<<G4endl;
-      } else {
-        ++fEvent->nTrajArScint;
-        hOptical->Fill(waveLength);
-        ltraj.type = LTTrajectType::SCI;
-        //G4cout<<"LegendAnalysis::ArScintTrajectories"<<G4endl;
-      }
-      // not optical 
-     } 
-    
+
     if(gtrj->IsGeHit()) {
       ltraj.type = LTTrajectType::GEHIT;
       ++fEvent->nTrajGeHits;
@@ -304,7 +285,31 @@ void  LegendAnalysis::anaTrajectories(G4TrajectoryContainer* trajectoryContainer
       hEGamma ->Fill(ltraj.ke/keV);
     }
     
+    if(gtrj->GetParticleName()==G4String("opticalphoton") ) { 
+      ++fEvent->nTrajOptPhotons;
+      G4double waveLength =  h_Planck*c_light/ltraj.ke/nm;//700 nm
+      if(gtrj->IsPmtHit()) {
+        ++fEvent->nTrajPmtHits;
+        fEvent->ePmt += ltraj.ke;
+        hPmtHits->Fill(waveLength);
+        ltraj.type = LTTrajectType::PMTHIT;
+        ++hitCount;
+      } else if(gtrj->IsWLS()) {
+        ++fEvent->nTrajWlsScint;
+        hWls->Fill(waveLength);
+        ltraj.type = LTTrajectType::WLS;
+        //G4cout<<"LegendAnalysis::WLSTrajectories"<<G4endl;
+      } else {
+        ++fEvent->nTrajArScint;
+        hOptical->Fill(waveLength);
+        ltraj.type = LTTrajectType::SCI;
+        //G4cout<<"LegendAnalysis::ArScintTrajectories"<<G4endl;
+      }
+    } // end loop over optical
+
     // save in tree
     fEvent->traject.push_back(ltraj);
-  }
+  } // loop over trajectories
+  hPmtHitCount->Fill(double(hitCount));
+  //G4cout << " Legend analaysis nTraj = " << fEvent->nTraj << " hit count= " << hitCount << G4endl; 
 }

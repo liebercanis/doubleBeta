@@ -27,6 +27,7 @@ void LTEvent::clear()
   nCherenkov=0;
   nAbsorbed=0;
   nAbsorbedBoundary=0;
+  nAbsGe=0;
   
 
   nTrajPmtHits=0;
@@ -57,6 +58,6 @@ void LTEvent::print(){
   if(nPVert>0) printf("\tPrimary vertex at position,t (%f,%f,%f,%f) num part %i \n",
       pvertex[0].Position.X(),pvertex[0].Position.Y(),pvertex[0].Position.Z(),pvertex[0].Position.T(),pvertex[0].nParticles);
   else  printf("\tNO primary vertex \n");
-  printf(" \tOptical %i Ar scint %i WLS scint %i PMT hits %i Ge hits %i \n",nOptPhotons,nArScint,nWlsScint,nPmtHits,nGeHits);
+  printf(" \tOptical %i Ar scint %i WLS scint %i PMT hits %i Ge hits %i Abs Ge %i\n",nOptPhotons,nArScint,nWlsScint,nPmtHits,nGeHits,nAbsGe);
   printf(" *************************************************** \n");
 }

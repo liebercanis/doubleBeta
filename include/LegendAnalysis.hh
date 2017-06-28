@@ -40,6 +40,7 @@ class LegendAnalysis
     TH1F *hEGamma;
     TH1F *hScintYield;
     TH1F *hWlsYield;
+    TH1F *hPmtHitCount;
     
  
   public:

@@ -39,13 +39,79 @@ UserTrackInformation::UserTrackInformation()
   fProcessName="";
   fPreName="";
   fPostName="";
+  fParentId=-1;
+  fPostStepStatus.clear();
   fBoundaryStatus.clear();
   fBoundaryName.clear();
   fPositionHistory.clear();
   fPositionEnergy.clear();
   fStepLength.clear();
   fStepKE.clear();
+
+  fTrackStatusNames.clear();
+  fTrackStatusNames.push_back("active");
+  fTrackStatusNames.push_back("scint");
+  fTrackStatusNames.push_back("absorbed");
+  fTrackStatusNames.push_back("boundaryAbsorbed");
+  fTrackStatusNames.push_back("absorbedLAr");
+  fTrackStatusNames.push_back("inactive");
+  fTrackStatusNames.push_back("hitWLS");
+  fTrackStatusNames.push_back("totalInternal");
+  fTrackStatusNames.push_back("backScatter");
+  fTrackStatusNames.push_back("fresnelRefract");
+  fTrackStatusNames.push_back("fresnelReflect");
+  fTrackStatusNames.push_back("spikeReflect");
+  fTrackStatusNames.push_back("hitPMT");
+  fTrackStatusNames.push_back("hitGe");
+  fTrackStatusNames.push_back("absGe");
+  fTrackStatusNames.push_back("isBad");
+  // G4cout << " UserTrackInfomation Track Status bits: " << G4endl;
+  //for (unsigned i=0; i< fTrackStatusNames.size() ; ++i) G4cout << " bit " << i << " value " << pow(2,i) << "  " << fTrackStatusNames[i] << G4endl;
+  
+  
 }
+UserTrackInformation::UserTrackInformation(const  UserTrackInformation& right) 
+{
+    //G4int 
+      fStatus=right.fStatus;
+    //G4int
+      fParentId=right.fParentId;
+    //G4bool
+      fPrimary=right.fPrimary;
+    //G4int  
+      fReflections=right.fReflections;
+    //G4int 
+      fSpikeReflection=right.fSpikeReflection;
+    //G4bool 
+      fForcedraw=right.fForcedraw;
+    //G4String
+      fProcessName=right.fProcessName;
+    //G4String 
+      fPreName=right.fPreName;
+    //G4String 
+      fPostName=right.fPostName;
+    //G4int 
+      fInToGe=right.fInToGe;
+    //G4int 
+      fOutOfGe=right.fOutOfGe;
+    //G4ThreeVector 
+      position=right.position; // end of track 
+    //std::vector<int>
+      fPostStepStatus=right.fPostStepStatus; //  fGeomBoundary=1 
+    //std::vector<int> 
+      fBoundaryStatus=right.fBoundaryStatus;
+    //std::vector<std::string> 
+      fBoundaryName=right.fBoundaryName;
+    //std::vector<G4ThreeVector> 
+      fPositionHistory=right.fPositionHistory;
+    //std::vector<G4double> 
+      fPositionEnergy=right.fPositionEnergy;
+    //std::vector<G4double> 
+      fStepLength=right.fStepLength;
+    //std::vector<G4double> 
+      fStepKE=right.fStepKE;  
+}
+
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 

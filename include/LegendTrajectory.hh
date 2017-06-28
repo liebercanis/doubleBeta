@@ -64,9 +64,6 @@ class LegendTrajectory : public G4Trajectory
     G4int GetTrackStatus(){ return fTrackStatus;}
     bool IsPmtHit() const { return fTrackStatus&TrackStatus::hitPMT;}
     bool IsGeHit() const { return fTrackStatus&TrackStatus::hitGe;}
-    bool IsEIoni() const { return fTrackStatus&TrackStatus::eIoni;}
-    bool IsHIoni() const { return fTrackStatus&TrackStatus::hIoni;}
-    bool IsIonIoni() const { return fTrackStatus&TrackStatus::ionIoni;}
     bool IsWLS() const { return fTrackStatus&TrackStatus::hitWLS;}
     bool IsPrimary() { return fPrimary; }
     void SetPrimary() { fPrimary=true;}

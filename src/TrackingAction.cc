@@ -85,8 +85,8 @@ TrackingAction::TrackingAction()
 
 void TrackingAction::PreUserTrackingAction(const G4Track* theTrack)
 {
-  //Let this be up to the user via vis.mac
-  //  fpTrackingManager->SetStoreTrajectory(true);
+  //if below commented out, Let this be up to the user via vis.mac
+  fpTrackingManager->SetStoreTrajectory(true);
   fpTrackingManager->SetTrajectory(new LegendTrajectory(theTrack) );
   fpTrackingManager->SetUserTrackInformation(new UserTrackInformation);
 }
@@ -104,7 +104,7 @@ void TrackingAction::PostUserTrackingAction(const G4Track* theTrack){
   
   //The UI command /tracking/storeTrajectory _bool_ does the same.
   fpTrackingManager->SetStoreTrajectory(true);
-  LegendTrajectory* trajectory=(LegendTrajectory*) fpTrackingManager->GimmeTrajectory();
+  LegendTrajectory* trajectory=dynamic_cast<LegendTrajectory*>(fpTrackingManager->GimmeTrajectory());
   if(!trajectory) {
     G4cout << " WARNING  TrackingAction::PostUserTrackingAction no trajectory found so returning " << G4endl;
     return;
@@ -112,7 +112,7 @@ void TrackingAction::PostUserTrackingAction(const G4Track* theTrack){
 
   //trajectory->SetForceDrawTrajectory(true);
   trajectory->SetDrawTrajectory(false);
-  trackInformation=(UserTrackInformation*) aTrack->GetUserInformation();
+  trackInformation= dynamic_cast<UserTrackInformation*>(aTrack->GetUserInformation());
   
   //LegendAnalysis::Instance()->FillTrajectory(trajectory);
 
@@ -143,9 +143,20 @@ void TrackingAction::PostUserTrackingAction(const G4Track* theTrack){
   G4TouchableHandle ctouch = currentPoint->GetTouchableHandle();
   fphysVolName = ctouch->GetVolume()->GetName();
   fcopy = ctouch->GetCopyNumber();
-  if(aTrack->GetDefinition() ==G4OpticalPhoton::OpticalPhotonDefinition()){
+  
+  if(trackInformation->GetTrackStatus()&hitGe) {
+      trajectory->SetDrawTrajectory(true);
+      ++ltEvent->nGeHits; 
+      // fill gLTTrack here
+      fillTTrack(gLTTrack);
+      fGeTree->Fill();
+      //G4cout << " TrackingAction hitGe ishit? " << trajectory->IsGeHit() << " nGeHits" << ltEvent->nGeHits << G4endl;
+  }
+
+  // only keep photons at geometrical boundary 
+  //if(aTrack->GetDefinition() ==G4OpticalPhoton::OpticalPhotonDefinition() && trackInformation->GetPostStepLast() == TrackPostStepStatus::isGeomBoundary) {
+  if(aTrack->GetDefinition() ==G4OpticalPhoton::OpticalPhotonDefinition() ) {
     ++ltEvent->nOptPhotons;
-    
     hTrackPhotonE->Fill(kineticE);
     if(trackInformation->GetTrackStatus()&absorbed) hAbsorbedPhotonE->Fill(kineticE);
     if(creator->GetProcessName() ==  "Scintillation") {
@@ -166,39 +177,40 @@ void TrackingAction::PostUserTrackingAction(const G4Track* theTrack){
       trajectory->SetDrawTrajectory(false);
       hWLSPhotonE->Fill(kineticE);
       ++ltEvent->nWlsScint; 
-      
-    }  
+    } else if(trackInformation->GetTrackStatus()&absGe) {
+      /*G4int ibit = G4int( log2(G4int(absGe)) );
+      G4cout << " \t TRACKINGACTION absGe = " << trackInformation->GetTrackStatus() << " & " << absGe << " bit " << ibit  << " name " <<  
+         trackInformation->GetTrackStatusBitName( ibit ) << G4endl;
+       for (G4int istat =0; istat< trackInformation->GetTrackStatusSize() ; ++istat) {
+         G4cout << " bit " << istat << " value " << pow(2,istat) << "  " << trackInformation->GetTrackStatusBitName(istat) << G4endl;
+       }*/
+      ++ltEvent->nAbsGe; 
+    } 
+    // fill optical photon tree
+    fillTTrack(fLTTrack);
+    // fLTTrack->print();
+    fTrackTree->Fill();
   } //optical 
 
-  if(trackInformation->GetTrackStatus()&hitGe) {
-      trajectory->SetDrawTrajectory(true);
-      ++ltEvent->nGeHits; 
-      // fill gLTTrack here
-      fillTTrack(gLTTrack);
-      fGeTree->Fill();
-
-      //G4cout << " TrackingAction hitGe ishit? " << trajectory->IsGeHit() << " nGeHits" << ltEvent->nGeHits << G4endl;
+  /* from Geant4 users guide for application developers,  Version: geant4 10.3 Publication date 9 December 2016 
+    The ideal place to copy a G4VUserTrackInformation object from a
+    mother track to its daughter tracks is 4UserTrackingAction::PostUserTrackingAction().
+  */
+  G4TrackVector* secondaries = fpTrackingManager->GimmeSecondaries();
+  if(secondaries){
+    UserTrackInformation* info =  dynamic_cast<UserTrackInformation*>(aTrack->GetUserInformation());
+    size_t nSeco = secondaries->size();
+    if(nSeco>0)   {
+      for(size_t i=0; i < nSeco; i++) { 
+        UserTrackInformation* infoNew = new UserTrackInformation(*info);
+        (*secondaries)[i]->SetUserInformation(infoNew);
+      }
+    }
   }
-
- if(trackInformation->GetTrackStatus()&eIoni) {
-      trajectory->SetDrawTrajectory(true);
-  }
-
- if(trackInformation->GetTrackStatus()&hIoni) {
-      trajectory->SetDrawTrajectory(true);
-  }
-
-  if(trackInformation->GetTrackStatus()&ionIoni) {
-      trajectory->SetDrawTrajectory(true);
-  }  
-  
-  // fill tree
-   //G4VTouchable and its derivates keep these geometrical informations. We retrieve a touchable by creating a handle for it:
-   
-  fillTTrack(fLTTrack);
-   //fLTTrack->print();
-  fTrackTree->Fill();
- }
+/* also “The concrete class object is deleted by the Geant4 kernel when the associated G4Track 
+** object is deleted. In case the user wants to keep the information, it should be copied to a trajectory corresponding to the track.
+*/
+}
 
 void::TrackingAction::fillTTrack(LTTrack* lttrk)
 {
@@ -212,6 +224,7 @@ void::TrackingAction::fillTTrack(LTTrack* lttrk)
   lttrk->trkId = aTrack->GetTrackID();
   lttrk->pdg = aTrack->GetDefinition()->GetPDGEncoding();
   lttrk->parentId = aTrack->GetParentID();
+  lttrk->postStatus=trackInformation->GetPostStepStatusVector();
   lttrk->status=trackInformation->GetTrackStatus();
   lttrk->process=trackInformation->GetProcessName();
   lttrk->boundaryStatus = trackInformation->GetBoundaryStatusVector();

@@ -51,6 +51,7 @@ class LTEvent: public TNamed {
     Int_t nCherenkov;
     Int_t nAbsorbed;
     Int_t nAbsorbedBoundary;
+    Int_t nAbsGe;
 
     Int_t PDG;
     Double_t ePrimary;

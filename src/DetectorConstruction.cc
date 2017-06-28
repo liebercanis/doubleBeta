@@ -419,7 +419,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4Polycone* Det_solid = new G4Polycone(detNamesPhys[0],0,2*M_PI,3,&zdet[0],&r_i[0],&rdet[0]);
   logicalGeDet = new G4LogicalVolume(Det_solid,fGeMaterial/*mat_fill*/,"GeDetLogical");
   
-  // place detectors in tubes
+  // place GERMANIUM detectors in tubes
   for(unsigned idet=0; idet < detPositions.size(); ++ idet) {
     //Added from MaGe
     new G4LogicalSkinSurface("Ge_Detector"+std::to_string(idet),logicalGeDet,fGeOpticalSurface);
@@ -433,7 +433,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4Tubs* WLSgroupTube = new G4Tubs("PMTgroupTube",grouprmax,grouprmax+WLSHalfThickness,groupzmax,0,twopi);
   //I think we need only one logical volume and just place it twice. There might be a nuance to this when using Sensitive Detector
   G4LogicalVolume* WLSgroupTubeLogical = new G4LogicalVolume(WLSgroupTube,fTPB,"WLSgroup1TubeLogical"); 
-  //WLSgroupTubeLogical->SetVisAttributes ( new G4VisAttributes(G4Colour(0.6,0.1,0.7) ) );
+  WLSgroupTubeLogical->SetVisAttributes ( new G4VisAttributes(G4Colour::Blue() ) );
   
   //Create a physical placement to create rough surfaces for tpb/LAr interface
   G4double roughness = 0.5;

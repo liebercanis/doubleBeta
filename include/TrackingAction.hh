@@ -36,7 +36,6 @@
 #include "LTTrack.hxx"
 
 #include "LegendTrajectory.hh"
-#include "G4UserTrackingAction.hh"
 #include "UserTrackInformation.hh"
 #include "G4VTrajectory.hh"
 #include "globals.hh"
@@ -54,6 +53,9 @@ class TrackingAction : public G4UserTrackingAction {
     virtual void PreUserTrackingAction(const G4Track*);
     virtual void PostUserTrackingAction(const G4Track*);
     void fillTTrack( LTTrack *lttrk);
+
+  private:
+
     UserTrackInformation* trackInformation;
     const G4Track* aTrack;
     TDirectory *fDir;
@@ -72,7 +74,6 @@ class TrackingAction : public G4UserTrackingAction {
     G4StepPoint* nextPoint;
     G4int fcopy;
     G4String fphysVolName;
-  private:
   
  
 };
