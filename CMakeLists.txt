@@ -56,7 +56,7 @@ find_package( ROOT REQUIRED)
 # NB: headers are included so they will show up in IDEs
 #
 file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cc)
-file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh ${PROJECT_SOURCE_DIR}/processes/*.hh ${PROJECT_SOURCE_DIR}/io/*.hh  )
+file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh ${PROJECT_SOURCE_DIR}/processes/*.hh ${PROJECT_SOURCE_DIR}/io/*.hh ${PROJECT_SOURCE_DIR}/generators/*.hh  )
 
 #MESSAGE(sources=${sources})
 #MESSAGE(headers=${headers})
