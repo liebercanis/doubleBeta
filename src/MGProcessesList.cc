@@ -180,7 +180,7 @@ MGProcessesList::MGProcessesList() : G4VModularPhysicsList(),
   G4DataQuestionaire it(photon, neutron, radioactive);
 
   constructOptical = true;
-  useLowE = true;
+  useLowE = false;//true;
   fUseBertiniCascade = true; // using Bertini cascade instead of Binary
   fUseFTFFlag = false;
   fUseNoHadPhysFlag = false;
@@ -250,6 +250,7 @@ void MGProcessesList::ConstructParticle()
 void MGProcessesList::ConstructProcess() 
 {
 
+  SetRealm("DarkMatter");
   AddTransportation();
   
   // parallel worlds must be added after G4Transportation
@@ -492,7 +493,6 @@ void MGProcessesList::SetCuts()
 {
   //special for low energy physics
   G4ProductionCutsTable::GetProductionCutsTable()->SetEnergyRange(250*eV,100.*GeV);
-
   SetCutValue( cutForGamma, "gamma" );
   SetCutValue( cutForElectron, "e-" );
   SetCutValue( cutForPositron, "e+" );
@@ -505,7 +505,8 @@ void MGProcessesList::SetCuts()
       if (G4RegionStore::GetInstance()->size() > 1) 
 	{
 	  //Set different cuts for the sensitive region
-	  G4Region* region = G4RegionStore::GetInstance()->GetRegion("SensitiveRegion");
+	  //TODO Need correct name if region specific cuts are desired
+    G4Region* region = G4RegionStore::GetInstance()->GetRegion("SensitiveRegion");
 	  if (region) 
 	    {
 	      MGLog(trace) << "Register cuts for SensitiveRegion" << endlog;
@@ -574,9 +575,10 @@ void MGProcessesList::SetRealm( G4String realm )
 		cutForGammaSensitive = 30*mm;
 		cutForElectronSensitive = 0.04*mm;
 		cutForPositronSensitive = 0.04*mm;
+    G4cout<<"Chelsea_CR"<<G4endl;
 		SetCuts();	
 	      } else
-		MGLog( error ) << "Error: invalid energy cut realm \"" << realm
+		G4cout << "Error: invalid energy cut realm \"" << realm
 			       << "\"." << G4endl
 			       << "Must use either \"BBdecay\" or \"DarkMatter\"." << G4endl;
 }
