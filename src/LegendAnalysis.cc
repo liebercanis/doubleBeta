@@ -180,7 +180,7 @@ void  LegendAnalysis::anaTrajectories(G4TrajectoryContainer* trajectoryContainer
       G4cout << "  LegendAnalysis:: NULL trajectory  " << ij << " which is impossible!! "  << endl;
       continue;
     }
-    G4cout << " LegendAnalysis:: track " << ij << " named " << gtrj->GetParticleName() << G4endl;
+    //G4cout << " LegendAnalysis:: track " << ij << " named " << gtrj->GetParticleName() << G4endl;
     
     const G4Track* aTrack= gtrj->GetTrack();
     if(!aTrack) {
@@ -264,7 +264,7 @@ void  LegendAnalysis::anaTrajectories(G4TrajectoryContainer* trajectoryContainer
     
     ltraj.name = TString(gtrj->GetParticleName().data());
 
-    G4cout << " particle name " << ltraj.name << G4endl;
+    //G4cout << " particle name " << ltraj.name << G4endl;
 
     //enum LTTrajectType {UNK,PRI,SCI,WLS,HIT};
     ltraj.type = LTTrajectType::UNK;

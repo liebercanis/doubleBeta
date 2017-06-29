@@ -135,6 +135,7 @@ protected:
   G4PhysicsTable* theIntegralTable;
   TDirectory *fDir;
   TH1F * hOpWLSIntegral;
+  TH1F * hOpWLSphotons;
 
 };
 

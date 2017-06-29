@@ -82,7 +82,12 @@ OpWLS::OpWLS(const G4String& processName, G4ProcessType type)
 
  // create directory 
   fDir = LegendAnalysis::Instance()->topHistDir()->mkdir("OpWLS");
+  fDir->cd();
   hOpWLSIntegral =NULL;
+  hOpWLSphotons = new TH1F("hOpWLSphotons"," WLS photons per Scint. photon ",10,0,10);
+  hOpWLSphotons->GetXaxis()->SetTitle(" WLS photons per scint photon ");
+  hOpWLSphotons->GetYaxis()->SetTitle(" number WLS photons ");
+  
     
 
   BuildThePhysicsTable();
@@ -142,6 +147,7 @@ OpWLS::PostStepDoIt(const G4Track& aTrack, const G4Step& aStep)
                                     GetConstProperty("WLSMEANNUMBERPHOTONS");
 
      NumPhotons = G4int(G4Poisson(MeanNumberOfPhotons));
+     hOpWLSphotons->Fill(double(NumPhotons));
 
      if (NumPhotons <= 0) {
 

@@ -1,7 +1,7 @@
 //#include <TLorentzVector.h>
 #include <TVector3.h>
 
-enum { SCINT,BOUNDABS,ABS,WLS,PMT,ABSGE,REFLECT,REFRACT,OUT,OTHER,LAST };
+enum { SCINT,ABS,OTHER,OUT,CONVERT,BOUNDABS,ABSGEWLS,ABSGESCINT,WLS,PMT,LAST };
 
 
 enum G4OpBoundaryProcessStatus {  Undefined,
@@ -99,10 +99,29 @@ int setBorderNames()
 }
 
 std::vector<std::string> trackStatusNames;
+std::vector<int> trackStatusValue;
 
 
 unsigned setTrackStatusNames()
 {
+  trackStatusValue.clear();
+  trackStatusValue.push_back(active);
+  trackStatusValue.push_back(scint);
+  trackStatusValue.push_back(absorbed);
+  trackStatusValue.push_back(boundaryAbsorbed);
+  trackStatusValue.push_back(absorbedLAr);
+  trackStatusValue.push_back(inactive);
+  trackStatusValue.push_back(hitWLS);
+  trackStatusValue.push_back(totalInternal);
+  trackStatusValue.push_back(backScatter);
+  trackStatusValue.push_back(fresnelRefract);
+  trackStatusValue.push_back(fresnelReflect);
+  trackStatusValue.push_back(spikeReflect);
+  trackStatusValue.push_back(hitPMT);
+  trackStatusValue.push_back(hitGe);
+  trackStatusValue.push_back(absGe);
+  trackStatusValue.push_back(isBad);
+
   trackStatusNames.clear();
   trackStatusNames.push_back("active");
   trackStatusNames.push_back("scint");
@@ -143,7 +162,9 @@ void printTrackStatus(int in,int status)
 
 void printTrackStatusNames()
 {
-  for (unsigned i=0; i< trackStatusNames.size() ; ++i) printf(" bit %i %s \n",i,trackStatusNames[i].c_str());
+  for (unsigned i=0; i< trackStatusNames.size() ; ++i) {
+    printf(" bit %i hex val %X %s \n",i,trackStatusValue[i],trackStatusNames[i].c_str());
+  }
 }
 
 
@@ -158,7 +179,7 @@ void anaTrk(TString tag = "2017-5-27-11-23-26")
 {
   int inames =setBorderNames();
   //printBorderNames(inames);
-  itnames = setTrackStatusNames();
+  unsigned itnames = setTrackStatusNames();
   printTrackStatusNames();
   TString inputFileName = TString("legendTree-")+tag+TString(".root");
   printf(" opening file %s \n",inputFileName.Data()); 
@@ -197,7 +218,7 @@ void anaTrk(TString tag = "2017-5-27-11-23-26")
   TH1::SetDefaultSumw2(true); // turn on error bars
 
   TH1F *hLambdaG = new TH1F("LambdaG"," absGe photon wavelength ",500,100,600);
-  TH1F *hOtherBound = new TH1F("OtherBound"," last boundary of other ",Dichroic,0,Dichroic);
+  TH1F *hCerenkovBound = new TH1F("CerenkovBound"," last boundary of other ",Dichroic,0,Dichroic);
   
   TH2F *hPMTWLS = new TH2F("PMTWLS"," PMTWLS z versus r ",rmax*5,0,rmax,zmax*2,-zmax,zmax);
   TH2F *hgroup1Physical = new TH2F("group1Physical"," z versus r ",rmax*5,0,rmax,zmax*2,-zmax,zmax);
@@ -210,9 +231,9 @@ void anaTrk(TString tag = "2017-5-27-11-23-26")
 
   TH1F *hLambdaLar = new TH1F("LambdaLar"," Ar scint photon absorbed in larPhysical wavelength ",500,100,600);
   TH1F *hLambdaWls = new TH1F("LambdaWls"," WLS photon wavelength ",500,100,600);
-  //TH1F *hLambdaNotAt = new TH1F("LambdaNotAt"," not at boundary photon wavelength ",500,100,600);
-  TH1F *hLambdaOther = new TH1F("LambdaOther"," other photon wavelength ",500,100,600);
-  TH1F *hLambdaAbsGe = new TH1F("LambdaAbsGe"," absGe photon wavelength ",500,100,600);
+  TH1F *hLambdaCerenkov = new TH1F("LambdaCerenkov"," other photon wavelength ",500,100,600);
+  TH1F *hLambdaAbsGeScint = new TH1F("LambdaAbsGeScint"," absGe photon wavelength ",500,100,600);
+  TH1F *hLambdaAbsGeWls = new TH1F("LambdaAbsGeWls"," absGe photon wavelength ",500,100,600);
 
   TH1F *hLambdaPmt = new TH1F("LambdaPmt"," pmt detected photon wavelength ",500,100,600);
  
@@ -229,8 +250,9 @@ void anaTrk(TString tag = "2017-5-27-11-23-26")
   TH1F *hRtrkScint = new TH1F("RtrkScint"," Ar Scint radial position ",rmax/10,0,rmax);
   TH1F *hZtrkScint = new TH1F("ZtrkScint"," Ar Scint z position ",zmax/5,-zmax,zmax);
 
-  TH1F *hLambdaReflect = new TH1F("LambdaReflect"," Ar scint photon absorbed wavelength ",500,100,600);
-  TH1F *hLambdaRefract = new TH1F("LambdaRefract"," Ar scint photon absorbed wavelength ",500,100,600);
+  TH1F *hLambdaNotAt = new TH1F("LambdaNotAt"," not at boundary  ",500,100,600);
+   
+  
     
 
   TH1F *hRele = new TH1F("Rele"," electron radial position ",rmax/5,0,rmax);
@@ -248,9 +270,13 @@ void anaTrk(TString tag = "2017-5-27-11-23-26")
   TH1F *hRtrkAbs = new TH1F("RtrkAbs"," absorbed radial position ",rmax/10,0,rmax);
   TH1F *hZtrkAbs = new TH1F("ZtrkAbs"," absorbed  z position ",zmax/5,-zmax,zmax);
   
+  TH1F *hRtrkWlsStart = new TH1F("RtrkWlsStart"," WLS starting radial position ",rmax/10,0,rmax);
+  TH1F *hRtrkStart = new TH1F("RtrkStart"," radial start position  ",rmax/10,0,rmax);
+  TH1F *hRtrkNotAt = new TH1F("RtrkNotAt"," not at  radial position ",rmax/10,0,rmax);
+  TH1F *hZtrkWlsStart = new TH1F("ZtrkWlsStart"," WLS starting z position ",zmax/5,-zmax,zmax);
+  TH1F *hZtrkStart = new TH1F("ZtrkStart"," z start position  ",zmax/5,-zmax,zmax);
+  TH1F *hZtrkNotAt = new TH1F("ZtrkNotAt"," not at z position ",zmax/5,-zmax,zmax);
   
-  TH1F *hRtrkStart = new TH1F("RtrkStart"," radial start position  ",rmax*5,0,rmax);
-  TH1F *hZtrkStart = new TH1F("ZtrkStart"," z start position  ",zmax*2,-zmax,zmax);
   hRtrkStart->SetMarkerColor(kBlue); hZtrkStart->SetMarkerColor(kBlue);
   hRtrkStart->SetMarkerStyle(22); hZtrkStart->SetMarkerStyle(22);
 
@@ -265,11 +291,12 @@ void anaTrk(TString tag = "2017-5-27-11-23-26")
   
   TH1F *hRtrk = new TH1F("Rtrk"," radial position ",rmax*5,0,rmax);
   TH1F *hRtrkWls = new TH1F("RtrkWls"," radial position ",rmax*5,0,rmax);
+
   TH1F *hRtrkPmt = new TH1F("RtrkPmt"," radial position ",rmax*5,0,rmax);
 
-  TH1F *hRtrkOther = new TH1F("RtrkOther"," other radial position ",rmax*5,0,rmax);
-  TH1F *hRScaledOther = new TH1F("RScaledOther"," (r/rmax)^2 ",1000,0,1);
-  TH1F *hZtrkOther = new TH1F("ZtrkOther"," other z position ",zmax*2,-zmax,zmax);
+  TH1F *hRtrkCerenkov = new TH1F("RtrkCerenkov"," other radial position ",rmax*5,0,rmax);
+  TH1F *hRScaledCerenkov = new TH1F("RScaledCerenkov"," (r/rmax)^2 ",1000,0,1);
+  TH1F *hZtrkCerenkov = new TH1F("ZtrkCerenkov"," other z position ",zmax*2,-zmax,zmax);
 
   TH1F *hRScaledAbs = new TH1F("RScaledAbs"," (r/rmax)^2 ",1000,0,1);
 
@@ -500,7 +527,18 @@ void anaTrk(TString tag = "2017-5-27-11-23-26")
         hZtrkPmt->Fill(zshift);
         hLambdaPmt->Fill(lambda);
      } else if(status&absGe) {
-       hLambdaAbsGe->Fill(lambda);
+      if(0) {
+          printf(" *** absorbed GE status %i pre/post %s / %s \n",status,trk->preName.Data(),trk->postName.Data());
+          printTrackStatus(itnames,status);
+          printf("     GEGEGEGEGE boundary size %lu \n", boundaryStatus.size() );
+          for(unsigned ib=0; ib< boundaryStatus.size(); ++ib ) 
+            printf("\t %i %i %s  ",ib, boundaryStatus[ib],bnames[boundaryStatus[ib]].Data());
+          printf("\n");
+        }
+        
+       
+       if(status&hitWLS) hLambdaAbsGeWls->Fill(lambda);
+       else hLambdaAbsGeScint->Fill(lambda);
        hRtrkAbsGe->Fill(radius);
        hRScaledAbsGe->Fill(rscale);
        hZtrkAbsGe->Fill( zshift);
@@ -509,13 +547,16 @@ void anaTrk(TString tag = "2017-5-27-11-23-26")
        hRScaledWls->Fill(rscale) ;
        hZtrkWls->Fill(zshift);
        hLambdaWls->Fill(lambda);
+       hRtrkWlsStart->Fill(rstart);
+       hZtrkWlsStart->Fill(zstart);
+       
      } else if(status&absorbed) {  // absorbed inside cylinder
-       if(printOut) {
+       if(0) {
           printf(" *** absorbed track status %i pre/post %s / %s \n",status,trk->preName.Data(),trk->postName.Data());
           printTrackStatus(itnames,status);
           printf("     boundary size %lu \n", boundaryStatus.size() );
           for(unsigned ib=0; ib< boundaryStatus.size(); ++ib ) 
-            printf("\t %i %i %s     \n",ib, boundaryStatus[ib],bnames[boundaryStatus[ib]].Data());
+            printf("\t %i %i %s   \n",ib, boundaryStatus[ib],bnames[boundaryStatus[ib]].Data());
           printf("\n");
         }
         
@@ -523,9 +564,11 @@ void anaTrk(TString tag = "2017-5-27-11-23-26")
         hRtrkAbs->Fill(radius);
         hRScaledAbs->Fill(rscale);
         hZtrkAbs->Fill( zshift);
-      } else if(status&fresnelReflect) {
-        hLambdaReflect->Fill(lambda);
-       if(1) {
+      } else if(boundaryLast==NotAtBoundary) {
+        hLambdaNotAt->Fill(lambda);
+        hRtrkNotAt->Fill(radius);
+        hZtrkNotAt->Fill( zshift);
+        if(0) {
           printf(" *** reflect track process %s status %i pre/post %s / %s ",trk->process.Data(),status,trk->preName.Data(),trk->postName.Data());
           if(status&spikeReflect) printf(" spike ");
           else if(status&totalInternal) printf(" total ");
@@ -538,25 +581,14 @@ void anaTrk(TString tag = "2017-5-27-11-23-26")
             printf("\t %i %i %s  %s   ",ib, boundaryStatus[ib],bnames[boundaryStatus[ib]].Data(),trk->boundaryName[ib].c_str());
           printf(" \n");
         }
-        
-      } else if(status&fresnelRefract) {
-         if(0) {
-          printf(" *** refract track process %s status %i pre/post %s / %s ",trk->process.Data(),status,trk->preName.Data(),trk->postName.Data());
-          if(status&spikeReflect) printf(" spike ");
-          else if(status&totalInternal) printf(" total ");
-          else printf(" what? ");
-          printf("\n");
-          printTrackStatus(itnames,status);
-         
-          printf("  refractrefractrefract boundary size %lu ", boundaryStatus.size() );
-          for(unsigned ib=0; ib< boundaryStatus.size(); ++ib ) 
-            printf("\t %i %i %s  %s   ",ib, boundaryStatus[ib],bnames[boundaryStatus[ib]].Data(),trk->boundaryName[ib].c_str());
-          printf(" \n");
-        }
-        
-        hLambdaRefract->Fill(lambda);
-      } else {
-        if(0) {
+      } else if(boundaryLast==Absorption&&trk->process.Contains("Cerenkov") )  {
+        hLambdaCerenkov->Fill(lambda);
+        hRtrkCerenkov->Fill(radius);
+        hRScaledCerenkov->Fill(rscale);
+        hZtrkCerenkov->Fill( zshift);
+        hCerenkovBound->Fill(double( boundaryStatus[ boundaryStatus.size()-1 ] ));
+     } else {
+       if(1) {
           printf(" *** other track process %s status %i pre/post %s / %s ",trk->process.Data(),status,trk->preName.Data(),trk->postName.Data());
           if(status&spikeReflect) printf(" spike ");
           else if(status&totalInternal) printf(" total ");
@@ -569,13 +601,7 @@ void anaTrk(TString tag = "2017-5-27-11-23-26")
             printf("\t %i %i %s  %s   ",ib, boundaryStatus[ib],bnames[boundaryStatus[ib]].Data(),trk->boundaryName[ib].c_str());
           printf(" \n");
         }
-        hLambdaOther->Fill(lambda);
-        hRtrkOther->Fill(radius);
-        hRScaledOther->Fill(rscale);
-        hZtrkOther->Fill( zshift);
-        hOtherBound->Fill(double( boundaryStatus[ boundaryStatus.size()-1 ] ));
      }
-      
     }
   }
 
@@ -583,10 +609,10 @@ void anaTrk(TString tag = "2017-5-27-11-23-26")
   for(unsigned i1=0; i1<errorStepElectron.size(); ++i1) errorStepElectron[i1]=sqrt(errorStepElectron[i1]);
   for(unsigned i2=0; i2<errorStepOptical.size(); ++i2) errorStepOptical[i2]=sqrt(errorStepOptical[i2]);
      
-  hLambdaOther->SetLineColor(kGreen);    
-  hRtrkOther->SetLineColor(kGreen); 
-  hRScaledOther->SetLineColor(kGreen); 
-  hZtrkOther->SetLineColor(kGreen); 
+  hLambdaCerenkov->SetLineColor(kGreen);    
+  hRtrkCerenkov->SetLineColor(kGreen); 
+  hRScaledCerenkov->SetLineColor(kGreen); 
+  hZtrkCerenkov->SetLineColor(kGreen); 
 
   hEStepElectron->SetError(&errorStepElectron[0]);
   hEStepOptical->SetError(&errorStepOptical[0]);
@@ -624,7 +650,7 @@ void anaTrk(TString tag = "2017-5-27-11-23-26")
 
   hRtrkAbsGe->SetLineColor(kOrange); hRtrkAbs->SetMarkerColor(kOrange);
   hZtrkAbsGe->SetLineColor(kOrange); hZtrkAbs->SetMarkerColor(kOrange);
-  hLambdaAbsGe->SetLineColor(kOrange);hLambdaAbs->SetMarkerColor(kOrange);
+  hLambdaAbsGeScint->SetLineColor(kOrange);hLambdaAbs->SetMarkerColor(kOrange);
   
   
   gStyle->SetOptStat(0);
@@ -638,60 +664,66 @@ void anaTrk(TString tag = "2017-5-27-11-23-26")
   
 
   TCanvas* cztrk = new TCanvas("Ztrk","Ztrk");
-  hZtrkWls->Draw(); hZtrkScint->Draw("sames"); hZtrkAbs->Draw("sames"); //hZtrkOther->Draw("sames");
+  hZtrkWls->Draw(); hZtrkScint->Draw("sames"); hZtrkAbs->Draw("sames"); //hZtrkCerenkov->Draw("sames");
   hZtrkAbsGe->Draw("sames");
   cztrk->Print(".pdf");
 
 
   TCanvas* clambda = new TCanvas("lambda","lambda");
-  hLambdaScint->Draw();  hLambdaWls->Draw("sames"); hLambdaAbs->Draw("sames"); //hLambdaOther->Draw("sames");
-  hLambdaAbsGe->Draw("sames");
+  hLambdaScint->Draw();  hLambdaWls->Draw("sames"); hLambdaAbs->Draw("sames"); //hLambdaCerenkov->Draw("sames");
+  hLambdaAbsGeScint->Draw("sames");
+  hLambdaAbsGeWls->Draw("sames");
   clambda->Print(".pdf");
   
  
   // report status words
   printf("\t fstat values: absorbed %i hitWLS %i hitPMT %i \n",absorbed,hitWLS,hitPMT);
   
-  //enum { SCINT,BOUNDABS,ABS,WLS,PMT,ABSGE,OTHER,LAST };
 
   double count[LAST];
   vector<TString> cname;
-  cname.push_back("            scint");
-  cname.push_back("boundary absorbed");
+  cname.push_back("        all scint");
   cname.push_back("         absorbed");
+  cname.push_back("     abs Cerenkov");
+  cname.push_back("          outside");
+  cname.push_back("     WLS  convert");
+  cname.push_back("     WLS absorbed");
+  cname.push_back("        absGe WLS");
+  cname.push_back("      absGe scint");
   cname.push_back("              WLS");
   cname.push_back("              PMT");
-  cname.push_back("            absGe");
-  cname.push_back("          reflect");
-  cname.push_back("          refract");
-  cname.push_back("          outside");
-  cname.push_back("  not at boundary");
 
   count[SCINT]  = hLambdaScint->Integral();
   count[BOUNDABS] = hLambdaBoundAbs->Integral();
   count[ABS] = hLambdaAbs->Integral();
   count[WLS]  = hLambdaWls->Integral();
   count[PMT] = hLambdaPmt->Integral();
-  count[ABSGE] = hLambdaAbsGe->Integral();
-  count[REFLECT] = hLambdaReflect->Integral();
-  count[REFRACT] = hLambdaRefract->Integral();
+  count[ABSGEWLS] = hLambdaAbsGeWls->Integral();
+  count[ABSGESCINT] = hLambdaAbsGeScint->Integral();
+  count[CONVERT] = hLambdaNotAt->Integral();
   count[OUT] = hLambdaLar->Integral();
-  count[OTHER] = hLambdaOther->Integral();
+  count[OTHER] = hLambdaCerenkov->Integral();
   
 
   printf("\n\tphoton totals: %s  # events = %i \n ",tag.Data(),nEvents);
 
   printf(" %s %.0f \n",cname[SCINT].Data(),count[SCINT]);
   double notScint = 0;
-  double notScintNotWls = 0;
   for(int ic=SCINT+1; ic < LAST; ++ic) {
-    if(ic!=WLS) notScintNotWls += count[ic];
     notScint += count[ic];
     double ratio=0,eratio=0;
     calcRatio(count[ic],count[SCINT],ratio,eratio);
     printf(" %s %.0f  percent scint = %0.3f +/- %0.3f  \n",cname[ic].Data(),count[ic],ratio*100,eratio*100);
   }
-  printf(" sum of all not scint is %i not scint not Wls %i \n", int(notScint),int(notScintNotWls) );
+  double cratio=0, ecratio=0;
+  double wlsTotal = count[BOUNDABS]+count[WLS]+count[ABSGEWLS];
+  calcRatio(wlsTotal,count[CONVERT],cratio,ecratio);
+  printf(" fraction WLS of converted = %0.3f +/- %0.3f  \n",cratio,ecratio);
+  
+  printf(" sum of all not scint is %i \n", int(notScint));
+
+  TH1F* hZtrkDivide = (TH1F*) hZtrkWlsStart->Clone("ZtrkDivide");
+  hZtrkDivide->Divide(hZtrkNotAt);
 
   // end of ana 
   outfile->Write();
